@@ -1,0 +1,71 @@
+/**
+ * 样式变量定义
+ */
+
+// 主题色
+$primary-color: #6b4eff;
+$primary-light: #8b7aff;
+$primary-dark: #5240cc;
+
+// 文字颜色
+$text-primary: #333333;
+$text-secondary: #666666;
+$text-placeholder: #999999;
+$text-disabled: #cccccc;
+
+// 背景颜色
+$bg-primary: #ffffff;
+$bg-secondary: #f5f5f5;
+$bg-page: #f8f8f8;
+
+// 边框颜色
+$border-color: #eeeeee;
+$border-light: #f5f5f5;
+
+// 功能色
+$success-color: #52c41a;
+$warning-color: #faad14;
+$error-color: #ff4d4f;
+$info-color: #1890ff;
+
+// 运势颜色
+$fortune-high: #ff6b6b;
+$fortune-medium: #ffa940;
+$fortune-low: #69c0ff;
+
+// 字体大小
+$font-size-xs: 20rpx;
+$font-size-sm: 24rpx;
+$font-size-base: 28rpx;
+$font-size-md: 32rpx;
+$font-size-lg: 36rpx;
+$font-size-xl: 40rpx;
+$font-size-xxl: 48rpx;
+
+// 间距
+$spacing-xs: 8rpx;
+$spacing-sm: 16rpx;
+$spacing-base: 24rpx;
+$spacing-md: 32rpx;
+$spacing-lg: 48rpx;
+$spacing-xl: 64rpx;
+
+// 圆角
+$radius-sm: 8rpx;
+$radius-base: 16rpx;
+$radius-lg: 24rpx;
+$radius-xl: 32rpx;
+$radius-round: 50%;
+
+// 阴影
+$shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+$shadow-base: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+$shadow-lg: 0 8rpx 24rpx rgba(0, 0, 0, 0.12);
+
+// 动画
+$transition-fast: 0.15s ease;
+$transition-base: 0.3s ease;
+$transition-slow: 0.5s ease;
+
+// 安全区域
+$safe-area-bottom: env(safe-area-inset-bottom);

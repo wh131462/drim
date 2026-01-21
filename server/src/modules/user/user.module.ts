@@ -1,0 +1,24 @@
+import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { UserController } from './user.controller';
+import { UserService } from './user.service';
+import { WechatService } from '@/shared/wechat/wechat.service';
+
+@Module({
+  imports: [
+    JwtModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get('JWT_SECRET'),
+        signOptions: {
+          expiresIn: configService.get('JWT_EXPIRES_IN', '7d'),
+        },
+      }),
+    }),
+  ],
+  controllers: [UserController],
+  providers: [UserService, WechatService],
+  exports: [UserService, JwtModule],
+})
+export class UserModule {}
