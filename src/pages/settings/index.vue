@@ -1,478 +1,555 @@
 <template>
-  <view class="page settings-page">
-    <!-- 用户信息 -->
-    <view class="user-section card">
-      <view class="user-avatar">
-        <image
-          :src="userInfo?.avatar || '/static/images/default-avatar.png'"
-          mode="aspectFill"
-          class="avatar-img"
+    <view
+        class="page settings-page"
+        :class="{ 'dark-mode': userStore.isDarkMode }"
+    >
+        <!-- 导航栏 -->
+        <NavBar title="设置" />
+
+        <view class="settings-content">
+            <!-- 常规设置 -->
+            <view class="section-label">常规设置</view>
+            <view class="settings-list">
+                <view class="settings-item">
+                    <text class="settings-label">消息通知</text>
+                    <switch
+                        class="toggle-switch"
+                        :checked="settings.notification"
+                        color="#6B4EFF"
+                        @change="handleNotificationChange"
+                    />
+                </view>
+                <view
+                    class="settings-item"
+                    @tap="showTimePicker = true"
+                >
+                    <text class="settings-label">每日记梦提醒</text>
+                    <view class="settings-value">
+                        <text>{{ settings.reminderTime }}</text>
+                        <image
+                            class="arrow-icon"
+                            src="/static/icons/arrow-right.svg"
+                            mode="aspectFit"
+                        />
+                    </view>
+                </view>
+                <view class="settings-item">
+                    <text class="settings-label">深色模式</text>
+                    <switch
+                        class="toggle-switch"
+                        :checked="settings.darkMode"
+                        color="#6B4EFF"
+                        @change="handleDarkModeChange"
+                    />
+                </view>
+            </view>
+
+            <!-- 隐私与安全 -->
+            <view class="section-label">隐私与安全</view>
+            <view class="settings-list">
+                <view
+                    class="settings-item"
+                    @tap="handlePrivacySettings"
+                >
+                    <text class="settings-label">隐私设置</text>
+                    <view class="settings-value">
+                        <image
+                            class="arrow-icon"
+                            src="/static/icons/arrow-right.svg"
+                            mode="aspectFit"
+                        />
+                    </view>
+                </view>
+                <view
+                    class="settings-item"
+                    @tap="handleExportData"
+                >
+                    <text class="settings-label">数据导出</text>
+                    <view class="settings-value">
+                        <image
+                            class="arrow-icon"
+                            src="/static/icons/arrow-right.svg"
+                            mode="aspectFit"
+                        />
+                    </view>
+                </view>
+            </view>
+
+            <!-- 关于 -->
+            <view class="section-label">关于</view>
+            <view class="settings-list">
+                <view
+                    class="settings-item"
+                    @tap="handleAbout"
+                >
+                    <text class="settings-label">关于梦见</text>
+                    <view class="settings-value">
+                        <text>v1.0.0</text>
+                        <image
+                            class="arrow-icon"
+                            src="/static/icons/arrow-right.svg"
+                            mode="aspectFit"
+                        />
+                    </view>
+                </view>
+                <view
+                    class="settings-item"
+                    @tap="handleAgreement"
+                >
+                    <text class="settings-label">用户协议</text>
+                    <view class="settings-value">
+                        <image
+                            class="arrow-icon"
+                            src="/static/icons/arrow-right.svg"
+                            mode="aspectFit"
+                        />
+                    </view>
+                </view>
+                <view
+                    class="settings-item"
+                    @tap="handlePrivacy"
+                >
+                    <text class="settings-label">隐私政策</text>
+                    <view class="settings-value">
+                        <image
+                            class="arrow-icon"
+                            src="/static/icons/arrow-right.svg"
+                            mode="aspectFit"
+                        />
+                    </view>
+                </view>
+            </view>
+
+            <!-- 退出登录 -->
+            <view class="settings-list logout-list">
+                <view
+                    class="settings-item logout-item"
+                    @tap="handleLogout"
+                >
+                    <text class="logout-text">退出登录</text>
+                </view>
+            </view>
+
+            <!-- 版权信息 -->
+            <view class="version-info">
+                <text>Drim v1.0.0</text>
+                <text class="copyright">Copyright © 2026 EternalHeart. All Rights Reserved.</text>
+            </view>
+        </view>
+
+        <!-- 时间选择器 -->
+        <TimePicker
+            v-model="showTimePicker"
+            :time="settings.reminderTime"
+            :is-dark="userStore.isDarkMode"
+            @confirm="handleReminderTimeConfirm"
         />
-        <view class="avatar-edit" @tap="handleChangeAvatar">
-          <text>📷</text>
-        </view>
-      </view>
-      <view class="user-info">
-        <input
-          class="nickname-input"
-          v-model="editNickname"
-          :placeholder="userInfo?.nickname || '点击设置昵称'"
-          @blur="handleSaveNickname"
-          maxlength="12"
-        />
-        <text class="user-id">ID: {{ userInfo?.id?.slice(0, 8) || '未登录' }}</text>
-      </view>
     </view>
-
-    <!-- 设置列表 -->
-    <view class="settings-group card">
-      <view class="group-title">通知设置</view>
-      <view class="settings-item">
-        <view class="item-left">
-          <text class="item-icon">🔔</text>
-          <text class="item-label">接收推送通知</text>
-        </view>
-        <switch
-          :checked="settings.notification"
-          color="#7c3aed"
-          @change="handleNotificationChange"
-        />
-      </view>
-      <view class="settings-item">
-        <view class="item-left">
-          <text class="item-icon">📅</text>
-          <text class="item-label">每日记梦提醒</text>
-        </view>
-        <switch
-          :checked="settings.dailyReminder"
-          color="#7c3aed"
-          @change="handleDailyReminderChange"
-        />
-      </view>
-    </view>
-
-    <view class="settings-group card">
-      <view class="group-title">隐私设置</view>
-      <view class="settings-item" @tap="handleClearCache">
-        <view class="item-left">
-          <text class="item-icon">🗑️</text>
-          <text class="item-label">清除缓存</text>
-        </view>
-        <view class="item-right">
-          <text class="item-value">{{ cacheSize }}</text>
-          <text class="item-arrow">›</text>
-        </view>
-      </view>
-      <view class="settings-item" @tap="handleExportData">
-        <view class="item-left">
-          <text class="item-icon">📤</text>
-          <text class="item-label">导出我的数据</text>
-        </view>
-        <view class="item-right">
-          <text class="item-arrow">›</text>
-        </view>
-      </view>
-    </view>
-
-    <view class="settings-group card">
-      <view class="group-title">关于</view>
-      <view class="settings-item" @tap="handleFeedback">
-        <view class="item-left">
-          <text class="item-icon">💬</text>
-          <text class="item-label">意见反馈</text>
-        </view>
-        <view class="item-right">
-          <text class="item-arrow">›</text>
-        </view>
-      </view>
-      <view class="settings-item" @tap="handlePrivacy">
-        <view class="item-left">
-          <text class="item-icon">🔒</text>
-          <text class="item-label">隐私政策</text>
-        </view>
-        <view class="item-right">
-          <text class="item-arrow">›</text>
-        </view>
-      </view>
-      <view class="settings-item" @tap="handleAgreement">
-        <view class="item-left">
-          <text class="item-icon">📄</text>
-          <text class="item-label">用户协议</text>
-        </view>
-        <view class="item-right">
-          <text class="item-arrow">›</text>
-        </view>
-      </view>
-      <view class="settings-item">
-        <view class="item-left">
-          <text class="item-icon">ℹ️</text>
-          <text class="item-label">版本号</text>
-        </view>
-        <view class="item-right">
-          <text class="item-value">v1.0.0</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 退出登录 -->
-    <view class="logout-section" v-if="isLoggedIn">
-      <button class="logout-btn" @tap="handleLogout">退出登录</button>
-    </view>
-
-    <!-- 版权信息 -->
-    <view class="copyright">
-      <text>© 2024 梦见 · 用心解读每一个梦</text>
-    </view>
-  </view>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
-import { useUserStore } from '@/stores/modules/user'
-import { userApi } from '@/api'
+import { ref, reactive, onMounted } from 'vue';
+import { useUserStore } from '@/stores';
+import NavBar from '@/components/NavBar/index.vue';
+import TimePicker from '@/components/TimePicker/index.vue';
+import { settingsApi, type UserSettings } from '@/api/modules/settings';
+import { exportApi } from '@/api/modules/export';
 
-// Store
-const userStore = useUserStore()
+const userStore = useUserStore();
+const navBarHeight = ref(0);
+const serverSettings = ref<UserSettings | null>(null);
+const showTimePicker = ref(false);
 
-// 状态
-const editNickname = ref('')
-const cacheSize = ref('0KB')
+// 设置数据
 const settings = reactive({
-  notification: true,
-  dailyReminder: true
-})
-
-// 计算属性
-const userInfo = computed(() => userStore.userInfo)
-const isLoggedIn = computed(() => userStore.isLoggedIn)
+    notification: true,
+    reminderTime: '08:00',
+    darkMode: userStore.isDarkMode
+});
 
 // 方法
-async function loadSettings() {
-  // 从本地存储加载设置
-  try {
-    const savedSettings = uni.getStorageSync('app_settings')
-    if (savedSettings) {
-      Object.assign(settings, JSON.parse(savedSettings))
-    }
-    editNickname.value = userInfo.value?.nickname || ''
-
-    // 计算缓存大小
-    calculateCacheSize()
-  } catch (error) {
-    console.error('加载设置失败:', error)
-  }
-}
-
-function calculateCacheSize() {
-  try {
-    const info = uni.getStorageInfoSync()
-    const size = info.currentSize || 0
-    if (size < 1024) {
-      cacheSize.value = `${size}KB`
-    } else {
-      cacheSize.value = `${(size / 1024).toFixed(1)}MB`
-    }
-  } catch (error) {
-    cacheSize.value = '0KB'
-  }
-}
-
-function saveSettings() {
-  try {
-    uni.setStorageSync('app_settings', JSON.stringify(settings))
-  } catch (error) {
-    console.error('保存设置失败:', error)
-  }
-}
-
-function handleChangeAvatar() {
-  uni.chooseImage({
-    count: 1,
-    sizeType: ['compressed'],
-    sourceType: ['album', 'camera'],
-    success: async (res) => {
-      const tempFilePath = res.tempFilePaths[0]
-      // TODO: 上传头像到服务器
-      uni.showToast({ title: '头像更新成功', icon: 'success' })
-    }
-  })
-}
-
-async function handleSaveNickname() {
-  if (!editNickname.value || editNickname.value === userInfo.value?.nickname) {
-    return
-  }
-
-  try {
-    await userApi.updateUserInfo({ nickname: editNickname.value })
-    userStore.setUserInfo({ ...userInfo.value!, nickname: editNickname.value })
-    uni.showToast({ title: '昵称已更新', icon: 'success' })
-  } catch (error) {
-    uni.showToast({ title: '更新失败', icon: 'none' })
-    editNickname.value = userInfo.value?.nickname || ''
-  }
-}
-
-function handleNotificationChange(e: any) {
-  settings.notification = e.detail.value
-  saveSettings()
-
-  if (e.detail.value) {
-    // 请求通知权限
-    uni.requestSubscribeMessage({
-      tmplIds: ['template-id-1', 'template-id-2'],
-      success: () => {
-        uni.showToast({ title: '已开启通知', icon: 'success' })
-      },
-      fail: () => {
-        settings.notification = false
-        saveSettings()
-        uni.showToast({ title: '请在设置中允许通知', icon: 'none' })
-      }
-    })
-  }
-}
-
-function handleDailyReminderChange(e: any) {
-  settings.dailyReminder = e.detail.value
-  saveSettings()
-  uni.showToast({
-    title: e.detail.value ? '已开启提醒' : '已关闭提醒',
-    icon: 'success'
-  })
-}
-
-function handleClearCache() {
-  uni.showModal({
-    title: '清除缓存',
-    content: '确定要清除所有缓存数据吗？',
-    success: (res) => {
-      if (res.confirm) {
-        try {
-          // 保留登录信息
-          const token = uni.getStorageSync('token')
-          const userInfo = uni.getStorageSync('userInfo')
-
-          uni.clearStorageSync()
-
-          // 恢复登录信息
-          if (token) uni.setStorageSync('token', token)
-          if (userInfo) uni.setStorageSync('userInfo', userInfo)
-
-          cacheSize.value = '0KB'
-          uni.showToast({ title: '缓存已清除', icon: 'success' })
-        } catch (error) {
-          uni.showToast({ title: '清除失败', icon: 'none' })
+function loadLocalSettings() {
+    try {
+        const savedSettings = uni.getStorageSync('app_settings');
+        if (savedSettings) {
+            Object.assign(settings, JSON.parse(savedSettings));
         }
-      }
+    } catch (error) {
+        console.error('加载本地设置失败:', error);
     }
-  })
 }
 
-function handleExportData() {
-  uni.showModal({
-    title: '导出数据',
-    content: '将为您导出所有梦境记录，确定继续吗？',
-    success: (res) => {
-      if (res.confirm) {
-        uni.showLoading({ title: '导出中...' })
-        // TODO: 调用导出接口
-        setTimeout(() => {
-          uni.hideLoading()
-          uni.showToast({ title: '导出成功，请查看微信文件', icon: 'success' })
-        }, 1500)
-      }
+function saveLocalSettings() {
+    try {
+        uni.setStorageSync('app_settings', JSON.stringify(settings));
+    } catch (error) {
+        console.error('保存本地设置失败:', error);
     }
-  })
 }
 
-function handleFeedback() {
-  // 打开客服会话
-  // 小程序需要配置客服
-  uni.showToast({ title: '请联系客服反馈', icon: 'none' })
+// 从服务端加载设置
+async function loadServerSettings() {
+    try {
+        serverSettings.value = await settingsApi.getSettings();
+        // 同步到本地 settings
+        settings.notification = serverSettings.value.notification.enabled;
+        settings.reminderTime = serverSettings.value.notification.reminderTime;
+    } catch (error) {
+        console.error('加载服务端设置失败:', error);
+    }
 }
 
-function handlePrivacy() {
-  uni.navigateTo({
-    url: '/pages/webview/index?url=https://example.com/privacy&title=隐私政策'
-  })
+async function handleNotificationChange(e: any) {
+    const enabled = e.detail.value;
+
+    if (enabled) {
+        // #ifdef MP-WEIXIN
+        // 请求订阅消息授权
+        const templateId = import.meta.env.VITE_WECHAT_REMINDER_TEMPLATE_ID || '';
+        if (!templateId) {
+            settings.notification = enabled;
+            await settingsApi.updateSettings({ notificationEnabled: enabled });
+            uni.showToast({ title: '已开启通知', icon: 'success' });
+            return;
+        }
+
+        uni.requestSubscribeMessage({
+            tmplIds: [templateId],
+            success: async (res: any) => {
+                const accepted = res[templateId] === 'accept';
+                await settingsApi.updateSubscription(accepted);
+
+                if (accepted) {
+                    await settingsApi.updateSettings({ notificationEnabled: true });
+                    settings.notification = true;
+                    saveLocalSettings();
+                    uni.showToast({ title: '已开启通知', icon: 'success' });
+                } else {
+                    settings.notification = false;
+                    uni.showToast({ title: '需要授权才能接收通知', icon: 'none' });
+                }
+            },
+            fail: () => {
+                settings.notification = false;
+                uni.showToast({ title: '授权失败', icon: 'none' });
+            }
+        });
+        // #endif
+
+        // #ifndef MP-WEIXIN
+        settings.notification = enabled;
+        await settingsApi.updateSettings({ notificationEnabled: enabled });
+        saveLocalSettings();
+        uni.showToast({ title: '已开启通知', icon: 'success' });
+        // #endif
+    } else {
+        await settingsApi.updateSettings({ notificationEnabled: false });
+        settings.notification = false;
+        saveLocalSettings();
+        uni.showToast({ title: '已关闭通知', icon: 'success' });
+    }
+}
+
+async function handleReminderTimeConfirm(selectedTime: string) {
+    try {
+        await settingsApi.updateSettings({ reminderTime: selectedTime });
+        settings.reminderTime = selectedTime;
+        saveLocalSettings();
+
+        if (!settings.notification) {
+            uni.showModal({
+                title: '提醒时间已设置',
+                content: `已设置为 ${selectedTime}，但消息通知尚未开启。开启通知后才能收到提醒哦~`,
+                confirmText: '去开启',
+                cancelText: '稍后再说',
+                success: (modalRes) => {
+                    if (modalRes.confirm) {
+                        settings.notification = true;
+                        handleNotificationChange({ detail: { value: true } });
+                    }
+                }
+            });
+        } else {
+            uni.showToast({ title: '已设置提醒时间', icon: 'success' });
+        }
+    } catch (error) {
+        uni.showToast({ title: '设置失败', icon: 'none' });
+    }
+}
+
+function handleDarkModeChange(e: any) {
+    settings.darkMode = e.detail.value;
+    saveLocalSettings();
+
+    // 通知 userStore 切换深色模式
+    userStore.toggleDarkMode(settings.darkMode);
+
+    uni.showToast({
+        title: settings.darkMode ? '已开启深色模式' : '已关闭深色模式',
+        icon: 'success'
+    });
+}
+
+function handlePrivacySettings() {
+    uni.navigateTo({ url: '/pages/privacy-settings/index' });
+}
+
+async function handleExportData() {
+    try {
+        uni.showLoading({ title: '获取数据...' });
+
+        // 先预览数据
+        const preview = await exportApi.preview();
+        uni.hideLoading();
+
+        const { statistics } = preview;
+
+        uni.showModal({
+            title: '确认导出',
+            content: `将导出以下数据：\n- 梦境记录：${statistics.totalDreams} 条\n- 解析结果：${statistics.totalAnalyses} 条\n- 完成任务：${statistics.completedTasks} 条\n\n数据将以 JSON 格式下载`,
+            confirmText: '开始导出',
+            success: (res) => {
+                if (res.confirm) {
+                    // #ifdef MP-WEIXIN
+                    const downloadUrl = exportApi.getDownloadUrl();
+                    uni.showLoading({ title: '导出中...' });
+
+                    uni.downloadFile({
+                        url: downloadUrl,
+                        success: (downloadRes) => {
+                            uni.hideLoading();
+                            if (downloadRes.statusCode === 200) {
+                                uni.saveFile({
+                                    tempFilePath: downloadRes.tempFilePath,
+                                    success: (saveRes) => {
+                                        uni.showToast({ title: '导出成功', icon: 'success' });
+                                        // 打开文件
+                                        uni.openDocument({
+                                            filePath: saveRes.savedFilePath,
+                                            showMenu: true
+                                        });
+                                    },
+                                    fail: () => {
+                                        uni.showToast({ title: '保存失败', icon: 'none' });
+                                    }
+                                });
+                            }
+                        },
+                        fail: () => {
+                            uni.hideLoading();
+                            uni.showToast({ title: '下载失败', icon: 'none' });
+                        }
+                    });
+                    // #endif
+
+                    // #ifdef H5
+                    window.open(exportApi.getDownloadUrl());
+                    // #endif
+                }
+            }
+        });
+    } catch (error) {
+        uni.hideLoading();
+        uni.showToast({ title: '获取数据失败', icon: 'none' });
+    }
+}
+
+function handleAbout() {
+    uni.navigateTo({ url: '/pages/about/index' });
 }
 
 function handleAgreement() {
-  uni.navigateTo({
-    url: '/pages/webview/index?url=https://example.com/agreement&title=用户协议'
-  })
+    uni.navigateTo({ url: '/pages/agreement/index' });
+}
+
+function handlePrivacy() {
+    uni.navigateTo({ url: '/pages/privacy-policy/index' });
 }
 
 function handleLogout() {
-  uni.showModal({
-    title: '退出登录',
-    content: '确定要退出登录吗？',
-    confirmColor: '#ff4d4f',
-    success: (res) => {
-      if (res.confirm) {
-        userStore.logout()
-        uni.showToast({ title: '已退出登录', icon: 'success' })
-        setTimeout(() => {
-          uni.switchTab({ url: '/pages/index/index' })
-        }, 1500)
-      }
-    }
-  })
+    uni.showModal({
+        title: '退出登录',
+        content: '确定要退出登录吗？',
+        confirmColor: '#ff4d4f',
+        success: (res) => {
+            if (res.confirm) {
+                userStore.logout();
+                uni.showToast({ title: '已退出登录', icon: 'success' });
+                setTimeout(() => {
+                    uni.switchTab({ url: '/pages/index/index' });
+                }, 1500);
+            }
+        }
+    });
 }
 
 // 生命周期
 onMounted(() => {
-  loadSettings()
-})
+    loadLocalSettings();
+    loadServerSettings();
+
+    const systemInfo = uni.getSystemInfoSync();
+    const statusBarHeight = systemInfo.statusBarHeight || 0;
+    navBarHeight.value = statusBarHeight + 44;
+});
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
-@import '@/styles/mixins.scss';
+@use '@/styles/variables.scss' as *;
+@use '@/styles/mixins.scss' as *;
+@use '@/styles/dark.scss' as *;
 
 .settings-page {
-  min-height: 100vh;
-  background: $bg-page;
-  padding: $spacing-base;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 40rpx);
+    min-height: 100vh;
+    background: $bg-page;
+    transition: background-color 0.3s ease;
+
+    &.dark-mode {
+        background: $dark-bg-page;
+
+        .section-label {
+            color: $dark-text-secondary;
+        }
+
+        .settings-list {
+            background: $dark-bg-card;
+            box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.3);
+        }
+
+        .settings-item {
+            background: $dark-bg-card;
+            border-bottom-color: $dark-border-color;
+            color: $dark-text-primary;
+
+            &:active {
+                background: #252525;
+            }
+        }
+
+        .settings-value {
+            color: $dark-text-secondary;
+        }
+
+        .arrow-icon {
+            filter: brightness(0) saturate(100%) invert(100%);
+            opacity: 0.5;
+        }
+
+        .logout-item:active {
+            background: #2a1515;
+        }
+
+        .version-info text {
+            color: $dark-text-placeholder;
+        }
+    }
 }
 
-.card {
-  background: #fff;
-  border-radius: $radius-lg;
-  margin-bottom: $spacing-base;
-  overflow: hidden;
+// 内容区域
+.settings-content {
+    padding: 40rpx;
+    padding-top: calc(v-bind('navBarHeight') * 2rpx + 40rpx);
 }
 
-.user-section {
-  display: flex;
-  align-items: center;
-  padding: $spacing-lg;
+// 区块标题
+.section-label {
+    font-size: 24rpx;
+    font-weight: 700;
+    color: $text-secondary;
+    margin-bottom: 16rpx;
+    margin-left: 8rpx;
 }
 
-.user-avatar {
-  position: relative;
-  margin-right: $spacing-base;
-}
-
-.avatar-img {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 50%;
-  background: $bg-secondary;
-}
-
-.avatar-edit {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 40rpx;
-  height: 40rpx;
-  background: $primary-color;
-  border-radius: 50%;
-  @include flex-center;
-  font-size: 24rpx;
-  border: 4rpx solid #fff;
-}
-
-.user-info {
-  flex: 1;
-}
-
-.nickname-input {
-  font-size: $font-size-lg;
-  font-weight: 500;
-  color: $text-primary;
-  margin-bottom: 8rpx;
-  padding: 0;
-}
-
-.user-id {
-  font-size: $font-size-sm;
-  color: $text-placeholder;
-}
-
-.settings-group {
-  padding: $spacing-sm 0;
-}
-
-.group-title {
-  font-size: $font-size-sm;
-  color: $text-placeholder;
-  padding: $spacing-xs $spacing-base;
-  padding-bottom: $spacing-sm;
+// 设置列表
+.settings-list {
+    background: #fff;
+    border-radius: 24rpx;
+    overflow: hidden;
+    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+    margin-bottom: 40rpx;
 }
 
 .settings-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $spacing-base;
-  background: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 32rpx 40rpx;
+    border-bottom: 2rpx solid #f7fafc;
+    font-size: 30rpx;
+    color: $text-primary;
+    background: #fff;
+    transition: background 0.2s;
 
-  &:active {
-    background: $bg-secondary;
-  }
+    &:active {
+        background: #f9fafb;
+    }
+
+    &:last-child {
+        border-bottom: none;
+    }
 }
 
-.item-left {
-  display: flex;
-  align-items: center;
+.settings-label {
+    font-weight: 500;
 }
 
-.item-icon {
-  font-size: $font-size-lg;
-  margin-right: $spacing-sm;
+.settings-value {
+    color: $text-secondary;
+    font-size: 28rpx;
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
 }
 
-.item-label {
-  font-size: $font-size-base;
-  color: $text-primary;
+.arrow-icon {
+    width: 32rpx;
+    height: 32rpx;
+    opacity: 0.4;
+    filter: brightness(0) saturate(100%) invert(47%) sepia(8%) saturate(362%) hue-rotate(169deg) brightness(95%)
+        contrast(87%);
+    transition:
+        filter 0.3s ease,
+        opacity 0.3s ease;
 }
 
-.item-right {
-  display: flex;
-  align-items: center;
+// 开关样式
+.toggle-switch {
+    transform: scale(0.9);
 }
 
-.item-value {
-  font-size: $font-size-sm;
-  color: $text-secondary;
-  margin-right: $spacing-xs;
+// 退出登录
+.logout-list {
+    margin-top: 64rpx;
 }
 
-.item-arrow {
-  font-size: $font-size-lg;
-  color: $text-placeholder;
+.logout-item {
+    justify-content: center;
+
+    &:active {
+        background: #fff5f5;
+    }
 }
 
-.logout-section {
-  padding: $spacing-lg $spacing-base;
+.logout-text {
+    color: $error-color;
+    font-weight: 600;
 }
 
-.logout-btn {
-  width: 100%;
-  height: 88rpx;
-  background: #fff;
-  color: $error-color;
-  font-size: $font-size-base;
-  border-radius: $radius-lg;
-  @include flex-center;
-  border: 2rpx solid rgba($error-color, 0.3);
+// 版权信息
+.version-info {
+    text-align: center;
+    margin-top: 40rpx;
+    display: flex;
+    flex-direction: column;
+    gap: 8rpx;
 
-  &:active {
-    background: rgba($error-color, 0.05);
-  }
-}
+    text {
+        font-size: 24rpx;
+        color: $text-placeholder;
+    }
 
-.copyright {
-  text-align: center;
-  padding: $spacing-lg 0;
-
-  text {
-    font-size: $font-size-xs;
-    color: $text-placeholder;
-  }
+    .copyright {
+        font-size: 22rpx;
+    }
 }
 </style>

@@ -1,347 +1,383 @@
 <template>
-  <view class="page result-page">
-    <!-- 加载中 -->
-    <view v-if="loading" class="loading-container">
-      <view class="loading-animation"></view>
-      <text class="loading-text">AI 正在解析你的梦境...</text>
+    <view
+        class="page result-page"
+        :class="{ 'dark-mode': userStore.isDarkMode }"
+    >
+        <!-- 导航栏 -->
+        <NavBar title="梦境解析" />
+
+        <!-- 加载中 -->
+        <view
+            v-if="loading"
+            class="loading-container"
+        >
+            <view class="loading-animation"></view>
+            <text class="loading-text">{{ loadingText }}</text>
+        </view>
+
+        <!-- 错误状态 -->
+        <view
+            v-else-if="error"
+            class="error-container"
+        >
+            <text class="error-icon">😔</text>
+            <text class="error-title">解析遇到问题</text>
+            <text class="error-message">{{ error }}</text>
+            <view class="error-actions">
+                <view
+                    class="retry-btn"
+                    @tap="loadAnalysis"
+                >
+                    <text>重新加载</text>
+                </view>
+                <view
+                    class="back-btn"
+                    @tap="goBack"
+                >
+                    <text>返回</text>
+                </view>
+            </view>
+        </view>
+
+        <!-- 解析结果 -->
+        <template v-else-if="analysis">
+            <view
+                class="result-content"
+                :style="{ paddingTop: navBarHeight * 2 + 'rpx' }"
+            >
+                <!-- 头部区域 -->
+                <view class="result-header">
+                    <view class="score-circle">
+                        <text class="score-number">{{ analysis.fortuneScore }}</text>
+                    </view>
+                    <text class="score-label">运势评分</text>
+                </view>
+
+                <!-- 解析卡片 -->
+                <view class="card analysis-card">
+                    <text class="analysis-title">{{ analysis.theme }}</text>
+                    <text class="analysis-text">{{ analysis.interpretation }}</text>
+                </view>
+            </view>
+        </template>
     </view>
-
-    <!-- 解析结果 -->
-    <view v-else-if="analysis" class="result-content">
-      <!-- 主题 -->
-      <view class="theme-section">
-        <view class="theme-icon">🌙</view>
-        <view class="theme-title">梦境解析</view>
-        <view class="theme-text">{{ analysis.theme }}</view>
-      </view>
-
-      <!-- 心理解读 -->
-      <view class="card interpretation-card">
-        <view class="card-title">心理解读</view>
-        <view class="card-content">{{ analysis.interpretation }}</view>
-      </view>
-
-      <!-- 运势 -->
-      <view class="card fortune-card">
-        <view class="card-title">今日运势</view>
-        <view class="fortune-score">
-          <view class="score-stars">
-            <text v-for="i in 5" :key="i" class="star" :class="{ active: i <= Math.ceil(analysis.fortuneScore / 20) }">
-              ⭐
-            </text>
-          </view>
-          <text class="score-number">{{ analysis.fortuneScore }}分</text>
-        </view>
-        <view class="fortune-tips">
-          <view class="tip-item">
-            <text class="tip-label">事业</text>
-            <text class="tip-text">{{ analysis.fortuneTips.career }}</text>
-          </view>
-          <view class="tip-item">
-            <text class="tip-label">感情</text>
-            <text class="tip-text">{{ analysis.fortuneTips.love }}</text>
-          </view>
-          <view class="tip-item">
-            <text class="tip-label">健康</text>
-            <text class="tip-text">{{ analysis.fortuneTips.health }}</text>
-          </view>
-        </view>
-      </view>
-
-      <!-- 改运任务 -->
-      <view class="card task-card">
-        <view class="card-title">🎯 改运任务</view>
-        <view class="task-content">{{ analysis.task.content }}</view>
-        <view class="task-reward">完成可获得 +{{ analysis.task.rewardPoints }} 幸运值</view>
-        <view class="task-actions">
-          <button class="task-btn complete-btn" @tap="handleCompleteTask">已完成</button>
-          <button class="task-btn later-btn" @tap="handleLater">稍后提醒</button>
-        </view>
-      </view>
-
-      <!-- 免责声明 -->
-      <view class="disclaimer">{{ analysis.disclaimer }}</view>
-
-      <!-- 分享按钮 -->
-      <view class="share-section">
-        <button class="share-btn" open-type="share">分享给朋友</button>
-      </view>
-    </view>
-  </view>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { analysisApi } from '@/api'
-import type { Analysis } from '@/types/analysis'
+import { ref, onMounted, onUnmounted } from 'vue';
+import { onLoad } from '@dcloudio/uni-app';
+import { useDreamStore, useUserStore } from '@/stores';
+import { dreamApi, analysisApi } from '@/api';
+import type { Dream } from '@/types/dream';
+import NavBar from '@/components/NavBar/index.vue';
 
-// 获取页面参数
-const props = defineProps<{
-  dreamId?: string
-}>()
+const dreamStore = useDreamStore();
+const userStore = useUserStore();
+const loading = ref(true);
+const analysis = ref<any>(null);
+const error = ref<string | null>(null);
+const navBarHeight = ref(0);
+const dreamId = ref('');
+const loadingText = ref('AI 正在解析你的梦境...');
+let pollTimer: ReturnType<typeof setTimeout> | null = null;
+let pollCount = 0;
+const MAX_POLL_COUNT = 60; // 最多轮询 60 次，约 60 秒
 
-// 数据
-const loading = ref(true)
-const analysis = ref<Analysis | null>(null)
+// 获取URL参数
+onLoad((options: any) => {
+    dreamId.value = options.dreamId || '';
+});
 
-// 生命周期
 onMounted(async () => {
-  // 获取页面参数
-  const pages = getCurrentPages()
-  const currentPage = pages[pages.length - 1] as { options?: { dreamId?: string } }
-  const dreamId = currentPage.options?.dreamId
+    const systemInfo = uni.getSystemInfoSync();
+    navBarHeight.value = systemInfo.statusBarHeight + 44;
 
-  if (!dreamId) {
-    uni.showToast({ title: '参数错误', icon: 'none' })
-    return
-  }
+    // 触发解析并轮询结果
+    await startAnalysis();
+});
 
-  await loadAnalysis(dreamId)
-})
+onUnmounted(() => {
+    // 清理轮询定时器
+    if (pollTimer) {
+        clearTimeout(pollTimer);
+        pollTimer = null;
+    }
+});
 
-// 方法
-async function loadAnalysis(dreamId: string) {
-  try {
-    loading.value = true
-
-    // 请求解析
-    const { analysisId } = await analysisApi.request({ dreamId })
-
-    // 轮询获取结果
-    await pollAnalysisResult(analysisId)
-  } catch (error) {
-    uni.showToast({ title: '解析失败', icon: 'none' })
-  } finally {
-    loading.value = false
-  }
-}
-
-async function pollAnalysisResult(analysisId: string, maxRetries = 10) {
-  for (let i = 0; i < maxRetries; i++) {
-    const result = await analysisApi.getById(analysisId)
-
-    if (result.status === 'completed') {
-      analysis.value = result
-      return
+// 触发解析
+async function startAnalysis() {
+    if (!dreamId.value) {
+        error.value = '参数错误，请返回重试';
+        loading.value = false;
+        return;
     }
 
-    if (result.status === 'failed') {
-      throw new Error('解析失败')
+    try {
+        loading.value = true;
+        error.value = null;
+        pollCount = 0;
+
+        // 1. 请求解析
+        loadingText.value = '正在启动 AI 解析...';
+        const response = await analysisApi.request({ dreamId: dreamId.value });
+
+        // 如果已经完成，直接获取结果
+        if (response.status === 'completed') {
+            await loadAnalysisResult(response.analysisId);
+            return;
+        }
+
+        // 2. 开始轮询
+        loadingText.value = 'AI 正在解析你的梦境...';
+        pollForResult(response.analysisId);
+    } catch (err: any) {
+        console.error('触发解析失败:', err);
+        error.value = err?.message || '解析请求失败，请稍后重试';
+        loading.value = false;
     }
-
-    // 等待 2 秒后重试
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-  }
-
-  throw new Error('解析超时')
 }
 
-function handleCompleteTask() {
-  uni.showToast({ title: '任务完成！幸运值+10', icon: 'success' })
+// 轮询检查解析结果
+function pollForResult(analysisId: string) {
+    pollTimer = setTimeout(async () => {
+        pollCount++;
+
+        if (pollCount > MAX_POLL_COUNT) {
+            error.value = '解析超时，请稍后重试';
+            loading.value = false;
+            return;
+        }
+
+        try {
+            const result = await analysisApi.getById(analysisId);
+
+            if (result.status === 'completed') {
+                analysis.value = result;
+                loading.value = false;
+            } else if (result.status === 'failed') {
+                error.value = 'AI 解析失败，请重试';
+                loading.value = false;
+            } else {
+                // 继续轮询，更新提示文字
+                if (pollCount > 10) {
+                    loadingText.value = '正在深度分析梦境含义...';
+                } else if (pollCount > 20) {
+                    loadingText.value = '即将完成，请稍候...';
+                }
+                pollForResult(analysisId);
+            }
+        } catch (err: any) {
+            console.error('获取解析结果失败:', err);
+            // 网络错误时继续重试
+            if (pollCount < MAX_POLL_COUNT) {
+                pollForResult(analysisId);
+            } else {
+                error.value = err?.message || '获取解析结果失败';
+                loading.value = false;
+            }
+        }
+    }, 1000); // 每秒轮询一次
 }
 
-function handleLater() {
-  uni.showToast({ title: '已设置提醒', icon: 'success' })
+// 直接加载解析结果
+async function loadAnalysisResult(analysisId: string) {
+    try {
+        const result = await analysisApi.getById(analysisId);
+        analysis.value = result;
+    } catch (err: any) {
+        console.error('加载解析结果失败:', err);
+        error.value = err?.message || '加载失败，请稍后重试';
+    } finally {
+        loading.value = false;
+    }
 }
 
-// 分享配置
-onShareAppMessage(() => {
-  return {
-    title: `我梦见了：${analysis.value?.theme}`,
-    path: `/pages/index/index`
-  }
-})
+// 重新加载（用于错误后重试）
+async function loadAnalysis() {
+    await startAnalysis();
+}
+
+function goBack() {
+    uni.navigateBack({ delta: 1 });
+}
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
-@import '@/styles/mixins.scss';
+@use '@/styles/variables.scss' as *;
+@use '@/styles/dark.scss' as *;
 
 .result-page {
-  min-height: 100vh;
-  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    min-height: 100vh;
+    background: linear-gradient(180deg, #6b4eff 0%, #f5f5f5 50%);
+    transition: background 0.3s ease;
+
+    &.dark-mode {
+        background: linear-gradient(180deg, $dark-primary-color 0%, $dark-bg-page 50%);
+
+        .score-circle {
+            background: $dark-bg-card;
+            box-shadow: 0 8rpx 24rpx rgba(139, 110, 255, 0.3);
+        }
+
+        .score-number {
+            color: $dark-primary-color;
+        }
+
+        .card {
+            background: $dark-bg-card;
+            box-shadow: $dark-shadow-sm;
+        }
+
+        .analysis-title {
+            color: $dark-text-primary;
+        }
+
+        .analysis-text {
+            color: $dark-text-secondary;
+        }
+
+        .loading-text {
+            color: $dark-text-secondary;
+        }
+
+        .error-title {
+            color: $dark-text-primary;
+        }
+
+        .error-message {
+            color: $dark-text-secondary;
+        }
+
+        .retry-btn {
+            background: $dark-primary-color;
+        }
+
+        .back-btn {
+            background: $dark-bg-card;
+            color: $dark-text-secondary;
+        }
+    }
 }
 
 .loading-container {
-  @include flex-center;
-  flex-direction: column;
-  min-height: 100vh;
-  padding: $spacing-xl;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    gap: 32rpx;
 }
 
-.loading-animation {
-  width: 120rpx;
-  height: 120rpx;
-  border: 4rpx solid rgba(255, 255, 255, 0.2);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: $spacing-base;
+.error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    padding: 48rpx;
+    text-align: center;
 }
 
-.loading-text {
-  font-size: $font-size-md;
-  color: rgba(255, 255, 255, 0.8);
+.error-icon {
+    font-size: 120rpx;
+    margin-bottom: 32rpx;
+}
+
+.error-title {
+    font-size: 36rpx;
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: 16rpx;
+}
+
+.error-message {
+    font-size: 28rpx;
+    color: $text-secondary;
+    margin-bottom: 48rpx;
+    line-height: 1.6;
+}
+
+.error-actions {
+    display: flex;
+    gap: 24rpx;
+}
+
+.retry-btn {
+    padding: 24rpx 48rpx;
+    background: $primary-color;
+    color: #fff;
+    border-radius: 48rpx;
+    font-size: 28rpx;
+    font-weight: 600;
+
+    &:active {
+        opacity: 0.8;
+    }
+}
+
+.back-btn {
+    padding: 24rpx 48rpx;
+    background: #f5f5f5;
+    color: $text-secondary;
+    border-radius: 48rpx;
+    font-size: 28rpx;
+
+    &:active {
+        background: #eee;
+    }
 }
 
 .result-content {
-  padding: $spacing-base;
-  padding-bottom: $spacing-xl;
+    padding: 40rpx;
 }
 
-.theme-section {
-  text-align: center;
-  padding: $spacing-xl 0;
+.result-header {
+    text-align: center;
+    margin-bottom: 48rpx;
 }
 
-.theme-icon {
-  font-size: 80rpx;
-  margin-bottom: $spacing-sm;
-}
-
-.theme-title {
-  font-size: $font-size-lg;
-  color: rgba(255, 255, 255, 0.6);
-  margin-bottom: $spacing-sm;
-}
-
-.theme-text {
-  font-size: $font-size-xl;
-  font-weight: 600;
-  color: #fff;
-}
-
-.card {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: $radius-lg;
-  padding: $spacing-base;
-  margin-bottom: $spacing-base;
-}
-
-.card-title {
-  font-size: $font-size-md;
-  font-weight: 500;
-  color: #fff;
-  margin-bottom: $spacing-sm;
-}
-
-.card-content {
-  font-size: $font-size-base;
-  color: rgba(255, 255, 255, 0.8);
-  line-height: 1.8;
-}
-
-.fortune-score {
-  @include flex-center;
-  margin-bottom: $spacing-base;
-}
-
-.score-stars {
-  margin-right: $spacing-sm;
-
-  .star {
-    opacity: 0.3;
-
-    &.active {
-      opacity: 1;
-    }
-  }
+.score-circle {
+    width: 200rpx;
+    height: 200rpx;
+    border-radius: 50%;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24rpx;
+    box-shadow: 0 8rpx 24rpx rgba(107, 78, 255, 0.3);
 }
 
 .score-number {
-  font-size: $font-size-xl;
-  font-weight: 600;
-  color: #ffd700;
+    font-size: 80rpx;
+    font-weight: 800;
+    color: $primary-color;
 }
 
-.fortune-tips {
-  .tip-item {
-    @include flex-between;
-    padding: $spacing-sm 0;
-    border-bottom: 1rpx solid rgba(255, 255, 255, 0.1);
-
-    &:last-child {
-      border-bottom: none;
-    }
-  }
-
-  .tip-label {
-    font-size: $font-size-base;
-    color: rgba(255, 255, 255, 0.6);
-  }
-
-  .tip-text {
-    font-size: $font-size-base;
+.score-label {
+    font-size: 28rpx;
     color: #fff;
-    flex: 1;
-    text-align: right;
-    margin-left: $spacing-base;
-  }
 }
 
-.task-content {
-  font-size: $font-size-md;
-  color: #fff;
-  margin-bottom: $spacing-sm;
+.card {
+    background: #fff;
+    border-radius: 32rpx;
+    padding: 48rpx;
+    box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+    margin-bottom: 32rpx;
 }
 
-.task-reward {
-  font-size: $font-size-sm;
-  color: #ffd700;
-  margin-bottom: $spacing-base;
+.analysis-title {
+    display: block;
+    font-size: 40rpx;
+    font-weight: 700;
+    color: $text-primary;
+    margin-bottom: 24rpx;
 }
 
-.task-actions {
-  display: flex;
-  gap: $spacing-sm;
-}
-
-.task-btn {
-  flex: 1;
-  height: 72rpx;
-  border-radius: $radius-base;
-  font-size: $font-size-base;
-  @include flex-center;
-}
-
-.complete-btn {
-  background: $primary-color;
-  color: #fff;
-}
-
-.later-btn {
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-}
-
-.disclaimer {
-  font-size: $font-size-sm;
-  color: rgba(255, 255, 255, 0.4);
-  text-align: center;
-  margin: $spacing-base 0;
-}
-
-.share-section {
-  margin-top: $spacing-lg;
-}
-
-.share-btn {
-  width: 100%;
-  height: 88rpx;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  font-size: $font-size-md;
-  border-radius: $radius-lg;
-  @include flex-center;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.analysis-text {
+    font-size: 30rpx;
+    color: $text-secondary;
+    line-height: 1.8;
 }
 </style>
