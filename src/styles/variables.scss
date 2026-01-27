@@ -4,8 +4,12 @@
 
 // 主题色
 $primary-color: #6b4eff;
-$primary-light: #8b7aff;
+$primary-light: #e0d9ff;
 $primary-dark: #5240cc;
+$primary-gradient: linear-gradient(135deg, #6b4eff 0%, #9f7aea 100%);
+
+// 阴影
+$shadow-primary: 0 20rpx 50rpx -10rpx rgba(107, 78, 255, 0.4);
 
 // 文字颜色
 $text-primary: #333333;

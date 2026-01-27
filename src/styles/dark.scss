@@ -1,0 +1,30 @@
+/**
+ * 深色模式样式变量
+ */
+
+// 深色模式下的主题色
+$dark-primary-color: #8b6eff;
+$dark-primary-light: #2a2440;
+$dark-primary-dark: #9f7aea;
+
+// 深色模式下的文字颜色
+$dark-text-primary: #e8e8e8;
+$dark-text-secondary: #b0b0b0;
+$dark-text-placeholder: #777777;
+$dark-text-disabled: #555555;
+
+// 深色模式下的背景颜色
+$dark-bg-primary: #1a1a1a;
+$dark-bg-secondary: #252525;
+$dark-bg-page: #0f0f0f;
+$dark-bg-card: #1e1e1e;
+
+// 深色模式下的边框颜色
+$dark-border-color: #333333;
+$dark-border-light: #2a2a2a;
+
+// 深色模式下的阴影
+$dark-shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.3);
+$dark-shadow-base: 0 4rpx 16rpx rgba(0, 0, 0, 0.4);
+$dark-shadow-lg: 0 8rpx 24rpx rgba(0, 0, 0, 0.5);
+$dark-shadow-primary: 0 20rpx 50rpx -10rpx rgba(139, 110, 255, 0.3);
