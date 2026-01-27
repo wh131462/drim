@@ -18,9 +18,10 @@ model User {
   avatar          String?   @db.VarChar(512)
   gender          Int       @default(0)
   phone           String?   @db.VarChar(20)
+  // 特权状态：通过连续打卡/积分兑换获得，非付费
   isVip           Boolean   @default(false) @map("is_vip")
-  vipExpireAt     DateTime? @map("vip_expire_at")
-  luckyPoints     Int       @default(0) @map("lucky_points")
+  vipExpireAt     DateTime? @map("vip_expire_at") // 特权过期时间
+  luckyPoints     Int       @default(0) @map("lucky_points") // 幸运积分，用于兑换权益
   consecutiveDays Int       @default(0) @map("consecutive_days")
   lastDreamDate   DateTime? @map("last_dream_date") @db.Date
   totalDreams     Int       @default(0) @map("total_dreams")
@@ -35,31 +36,63 @@ model User {
   pointRecords  PointRecord[]
   adRecords     AdRecord[]
   achievements  UserAchievement[]
+  preference    UserPreference?
 
   @@index([unionId])
   @@index([createdAt])
   @@map("users")
 }
 
+// 用户偏好设置表
+model UserPreference {
+  id                   String   @id @default(cuid())
+  userId               String   @unique @map("user_id")
+
+  // 消息通知
+  notificationEnabled  Boolean  @default(true) @map("notification_enabled")
+  reminderTime         String   @default("08:00") @map("reminder_time") @db.VarChar(5)
+  subscriptionAccepted Boolean  @default(false) @map("subscription_accepted")
+
+  // 隐私设置
+  defaultDreamPublic   Boolean  @default(false) @map("default_dream_public")
+  allowProfileView     Boolean  @default(true) @map("allow_profile_view")
+
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("user_preferences")
+}
+
 // 梦境表
 model Dream {
-  id         String      @id @default(cuid())
-  userId     String      @map("user_id")
-  content    String      @db.Text
-  tags       String?     @db.VarChar(255) // JSON数组存储
-  emotion    String?     @db.VarChar(32)
-  wordCount  Int         @default(0) @map("word_count")
-  status     DreamStatus @default(pending)
-  createdAt  DateTime    @default(now()) @map("created_at")
-  updatedAt  DateTime    @updatedAt @map("updated_at")
-  deletedAt  DateTime?   @map("deleted_at")
+  id               String      @id @default(cuid())
+  userId           String      @map("user_id")
+  content          String      @db.Text
+  originalContent  String      @db.Text @map("original_content") // 原始内容
+  tags             String?     @db.VarChar(255) // JSON数组存储
+  emotion          String?     @db.VarChar(32)
+  wordCount        Int         @default(0) @map("word_count")
+  status           DreamStatus @default(pending)
+  isPublic         Boolean     @default(false) @map("is_public") // 是否公开
+  currentVersionId String?     @map("current_version_id") // 当前版本ID
+  viewCount        Int         @default(0) @map("view_count") // 浏览次数
+  likeCount        Int         @default(0) @map("like_count") // 点赞次数
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+  deletedAt        DateTime?   @map("deleted_at")
 
-  user     User      @relation(fields: [userId], references: [id])
-  analysis Analysis?
-  task     Task?
+  user          User          @relation(fields: [userId], references: [id])
+  analysis      Analysis?
+  task          Task?
+  versions      DreamVersion[]
+  exploreViews  ExploreView[]
 
   @@index([userId, createdAt])
   @@index([status])
+  @@index([isPublic, createdAt])
+  @@index([isPublic, tags])
   @@map("dreams")
 }
 
@@ -126,21 +159,22 @@ model PointRecord {
   @@map("point_records")
 }
 
-// 订单表
+// 权益兑换记录表（原订单表，现用于积分兑换记录）
+// 注意：不再用于付费，改为积分兑换权益
 model Order {
   id            String      @id @default(cuid())
   userId        String      @map("user_id")
   orderNo       String      @unique @map("order_no")
-  type          OrderType
-  productId     String      @map("product_id")
-  productName   String      @db.VarChar(64) @map("product_name")
-  amount        Decimal     @db.Decimal(10, 2)
-  payAmount     Decimal     @db.Decimal(10, 2) @map("pay_amount")
+  type          OrderType   // 兑换类型
+  productId     String      @map("product_id") // 权益ID
+  productName   String      @db.VarChar(64) @map("product_name") // 权益名称
+  amount        Decimal     @db.Decimal(10, 2) // 消耗积分
+  payAmount     Decimal     @db.Decimal(10, 2) @map("pay_amount") // 实际消耗（考虑折扣）
   status        OrderStatus @default(pending)
-  payType       String?     @db.VarChar(16) @map("pay_type")
-  transactionId String?     @db.VarChar(64) @map("transaction_id")
-  paidAt        DateTime?   @map("paid_at")
-  expireAt      DateTime    @map("expire_at")
+  payType       String?     @db.VarChar(16) @map("pay_type") // 兑换方式：points/streak
+  transactionId String?     @db.VarChar(64) @map("transaction_id") // 保留字段
+  paidAt        DateTime?   @map("paid_at") // 兑换时间
+  expireAt      DateTime    @map("expire_at") // 权益过期时间
   createdAt     DateTime    @default(now()) @map("created_at")
   updatedAt     DateTime    @updatedAt @map("updated_at")
 
@@ -151,13 +185,14 @@ model Order {
   @@map("orders")
 }
 
-// VIP套餐表
+// 权益套餐表（原VIP套餐表，现用于定义可兑换的权益）
+// 权益通过积分兑换或连续打卡获得，不再需要付费
 model VipPlan {
-  id            String   @id
-  name          String   @db.VarChar(32)
-  durationDays  Int      @map("duration_days")
-  price         Decimal  @db.Decimal(10, 2)
-  originalPrice Decimal  @db.Decimal(10, 2) @map("original_price")
+  id            String   @id // 权益ID: ad_free_1day, ad_free_7day, unlimited_polish 等
+  name          String   @db.VarChar(32) // 权益名称
+  durationDays  Int      @map("duration_days") // 有效天数
+  price         Decimal  @db.Decimal(10, 2) // 所需积分
+  originalPrice Decimal  @db.Decimal(10, 2) @map("original_price") // 原价积分（用于展示折扣）
   sortOrder     Int      @default(0) @map("sort_order")
   isActive      Boolean  @default(true) @map("is_active")
   createdAt     DateTime @default(now()) @map("created_at")
@@ -229,6 +264,63 @@ model Config {
   @@map("configs")
 }
 
+// 梦境版本表
+model DreamVersion {
+  id            String        @id @default(cuid())
+  dreamId       String        @map("dream_id")
+  userId        String        @map("user_id")
+  type          VersionType
+  content       String        @db.Text
+  polishedFrom  String?       @map("polished_from") // 基于哪个版本润色
+  polishPrompt  String?       @db.Text @map("polish_prompt")
+  aiModel       String?       @db.VarChar(64) @map("ai_model")
+  tokensUsed    Int?          @map("tokens_used")
+  versionNumber Int           @map("version_number")
+  isCurrent     Boolean       @default(false) @map("is_current")
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  dream Dream @relation(fields: [dreamId], references: [id], onDelete: Cascade)
+
+  @@index([dreamId, createdAt])
+  @@index([userId])
+  @@map("dream_versions")
+}
+
+// 探索浏览记录表
+model ExploreView {
+  id           BigInt   @id @default(autoincrement())
+  viewerId     String   @map("viewer_id") // 浏览者ID
+  dreamId      String   @map("dream_id")
+  authorId     String   @map("author_id") // 作者ID
+  viewDuration Int?     @map("view_duration") // 浏览时长(秒)
+  isLiked      Boolean  @default(false) @map("is_liked")
+  source       String   @db.VarChar(16) // random/filter/search
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  dream Dream @relation(fields: [dreamId], references: [id], onDelete: Cascade)
+
+  @@index([viewerId])
+  @@index([dreamId])
+  @@index([createdAt])
+  @@map("explore_views")
+}
+
+// AI 润色配额表
+model PolishQuota {
+  id         BigInt   @id @default(autoincrement())
+  userId     String   @map("user_id")
+  date       DateTime @db.Date // 日期
+  total      Int      @default(3) // 每日总配额
+  used       Int      @default(0) // 已使用
+  remaining  Int      @default(3) // 剩余
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, date])
+  @@index([userId, date])
+  @@map("polish_quotas")
+}
+
 // 枚举类型
 enum DreamStatus {
   pending
@@ -262,4 +354,10 @@ enum OrderStatus {
   paid
   cancelled
   refunded
+}
+
+enum VersionType {
+  original
+  polished
+  edited
 }
