@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
+        <title>探索 - 梦见</title>
+        <link
+            rel="stylesheet"
+            href="styles.css"
+        />
+        <style>
+            /* Explore Page Specific Styles */
+            .explore-header {
+                background: linear-gradient(135deg, #6b4eff 0%, #9f7aea 100%);
+                padding: 60px 16px 32px;
+                color: white;
+                border-radius: 0 0 24px 24px;
+                margin-bottom: 16px;
+            }
+
+            .search-bar {
+                background: rgba(255, 255, 255, 0.2);
+                backdrop-filter: blur(10px);
+                border-radius: 24px;
+                padding: 12px 20px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-top: 16px;
+            }
+
+            .search-bar input {
+                background: none;
+                border: none;
+                color: white;
+                flex: 1;
+                font-size: 15px;
+            }
+
+            .search-bar input::placeholder {
+                color: rgba(255, 255, 255, 0.7);
+            }
+
+            .filter-tabs {
+                display: flex;
+                gap: 8px;
+                padding: 0 16px 16px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+
+            .filter-tabs::-webkit-scrollbar {
+                display: none;
+            }
+
+            .filter-chip {
+                background: white;
+                border: 1.5px solid #e2e8f0;
+                border-radius: 20px;
+                padding: 8px 16px;
+                font-size: 13px;
+                color: var(--text-secondary);
+                white-space: nowrap;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .filter-chip.active {
+                background: var(--primary-color);
+                border-color: var(--primary-color);
+                color: white;
+            }
+
+            .dream-feed {
+                padding: 0 16px 80px;
+            }
+
+            .public-dream-card {
+                background: white;
+                border-radius: 16px;
+                padding: 20px;
+                margin-bottom: 16px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+                transition: all 0.2s;
+            }
+
+            .public-dream-card:active {
+                transform: scale(0.98);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            }
+
+            .dream-author {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 16px;
+            }
+
+            .author-avatar {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background: var(--primary-light);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+            }
+
+            .author-info {
+                flex: 1;
+            }
+
+            .author-name {
+                font-size: 14px;
+                font-weight: 600;
+                color: var(--text-main);
+            }
+
+            .author-time {
+                font-size: 12px;
+                color: var(--text-light);
+            }
+
+            .dream-content {
+                font-size: 15px;
+                line-height: 1.7;
+                color: var(--text-main);
+                margin-bottom: 16px;
+                max-height: 4.8em;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: -webkit-box;
+                -webkit-line-clamp: 3;
+                -webkit-box-orient: vertical;
+            }
+
+            .dream-tags {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+                margin-bottom: 16px;
+            }
+
+            .tag-chip {
+                background: var(--primary-light);
+                color: var(--primary-color);
+                padding: 4px 12px;
+                border-radius: 12px;
+                font-size: 12px;
+            }
+
+            .dream-stats {
+                display: flex;
+                align-items: center;
+                gap: 20px;
+                padding-top: 16px;
+                border-top: 1px solid #f7fafc;
+            }
+
+            .stat-item {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 13px;
+                color: var(--text-secondary);
+            }
+
+            .random-btn {
+                position: fixed;
+                bottom: 80px;
+                right: 20px;
+                width: 56px;
+                height: 56px;
+                background: linear-gradient(135deg, #6b4eff 0%, #9f7aea 100%);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 8px 20px rgba(107, 78, 255, 0.4);
+                cursor: pointer;
+                transition: all 0.3s;
+                z-index: 10;
+            }
+
+            .random-btn:active {
+                transform: scale(0.9) rotate(180deg);
+            }
+
+            .empty-state {
+                text-align: center;
+                padding: 60px 40px;
+            }
+
+            .empty-icon {
+                font-size: 64px;
+                margin-bottom: 16px;
+                opacity: 0.3;
+            }
+
+            .empty-text {
+                color: var(--text-light);
+                font-size: 14px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="app-container">
+            <!-- Header -->
+            <div class="explore-header">
+                <h1 class="text-xxl font-bold">✨ 探索梦境</h1>
+                <p
+                    class="text-sm"
+                    style="margin-top: 8px; opacity: 0.9"
+                >
+                    发现他人的精彩梦境世界
+                </p>
+
+                <div class="search-bar">
+                    <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <circle
+                            cx="8.5"
+                            cy="8.5"
+                            r="5.5"
+                        />
+                        <path d="M12.5 12.5L16 16" />
+                    </svg>
+                    <input
+                        type="text"
+                        placeholder="搜索梦境内容..."
+                    />
+                </div>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="filter-tabs">
+                <div class="filter-chip active">全部</div>
+                <div class="filter-chip">🏃 追逐</div>
+                <div class="filter-chip">🦅 飞行</div>
+                <div class="filter-chip">💧 水</div>
+                <div class="filter-chip">🐕 动物</div>
+                <div class="filter-chip">👨‍👩‍👧 亲人</div>
+                <div class="filter-chip">😊 开心</div>
+                <div class="filter-chip">😨 恐惧</div>
+            </div>
+
+            <!-- Dream Feed -->
+            <div class="dream-feed">
+                <!-- Dream Card 1 -->
+                <div class="public-dream-card">
+                    <div class="dream-author">
+                        <div class="author-avatar">🌙</div>
+                        <div class="author-info">
+                            <div class="author-name">梦想家</div>
+                            <div class="author-time">2小时前</div>
+                        </div>
+                    </div>
+
+                    <div class="dream-content">
+                        我梦见自己站在一片广袤的草原上，头顶是湛蓝的天空，白云轻轻飘过。突然，我发现自己可以飞起来，像鸟儿一样自由翱翔...
+                    </div>
+
+                    <div class="dream-tags">
+                        <span class="tag-chip">🦅 飞行</span>
+                        <span class="tag-chip">😊 开心</span>
+                    </div>
+
+                    <div class="dream-stats">
+                        <div class="stat-item">
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <path
+                                    d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                                />
+                            </svg>
+                            <span>24</span>
+                        </div>
+                        <div class="stat-item">
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="3"
+                                />
+                            </svg>
+                            <span>156</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dream Card 2 -->
+                <div class="public-dream-card">
+                    <div class="dream-author">
+                        <div class="author-avatar">⭐</div>
+                        <div class="author-info">
+                            <div class="author-name">追梦人</div>
+                            <div class="author-time">5小时前</div>
+                        </div>
+                    </div>
+
+                    <div class="dream-content">
+                        我梦见自己回到了童年的家，阳光透过窗户洒进来，妈妈在厨房做饭的香味飘过来，一切都是那么温暖和熟悉...
+                    </div>
+
+                    <div class="dream-tags">
+                        <span class="tag-chip">👨‍👩‍👧 亲人</span>
+                        <span class="tag-chip">😊 开心</span>
+                    </div>
+
+                    <div class="dream-stats">
+                        <div class="stat-item">
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <path
+                                    d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                                />
+                            </svg>
+                            <span>18</span>
+                        </div>
+                        <div class="stat-item">
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="3"
+                                />
+                            </svg>
+                            <span>89</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dream Card 3 -->
+                <div class="public-dream-card">
+                    <div class="dream-author">
+                        <div class="author-avatar">🌟</div>
+                        <div class="author-info">
+                            <div class="author-name">夜行者</div>
+                            <div class="author-time">1天前</div>
+                        </div>
+                    </div>
+
+                    <div class="dream-content">
+                        在梦里我站在海边看日出，海浪一层一层地涌上来，天空渐渐从深蓝变成粉红色，太阳从海平面慢慢升起...
+                    </div>
+
+                    <div class="dream-tags">
+                        <span class="tag-chip">💧 水</span>
+                        <span class="tag-chip">😊 开心</span>
+                    </div>
+
+                    <div class="dream-stats">
+                        <div class="stat-item">
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <path
+                                    d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                                />
+                            </svg>
+                            <span>32</span>
+                        </div>
+                        <div class="stat-item">
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="3"
+                                />
+                            </svg>
+                            <span>203</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Random Button -->
+            <div class="random-btn">
+                <svg
+                    width="28"
+                    height="28"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="white"
+                    stroke-width="2.5"
+                >
+                    <polyline points="23 4 23 10 17 10" />
+                    <polyline points="1 20 1 14 7 14" />
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                </svg>
+            </div>
+
+            <!-- Tab Bar -->
+            <div class="tabbar">
+                <a
+                    href="index.html"
+                    class="tab-item"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                        <polyline points="9 22 9 12 15 12 15 22" />
+                    </svg>
+                    <span>首页</span>
+                </a>
+                <a
+                    href="explore.html"
+                    class="tab-item active"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <circle
+                            cx="11"
+                            cy="11"
+                            r="8"
+                        />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                    <span>探索</span>
+                </a>
+                <a
+                    href="record.html"
+                    class="tab-item"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                    </svg>
+                    <span>记梦</span>
+                </a>
+                <a
+                    href="profile.html"
+                    class="tab-item"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle
+                            cx="12"
+                            cy="7"
+                            r="4"
+                        />
+                    </svg>
+                    <span>我的</span>
+                </a>
+            </div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
+        <title>梦见 - 分享</title>
+        <link
+            rel="stylesheet"
+            href="styles.css"
+        />
+        <style>
+            body {
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: flex-end;
+                justify-content: center;
+                height: 100vh;
+                margin: 0;
+            }
+
+            .app-container {
+                background: transparent;
+                min-height: auto;
+                box-shadow: none;
+                padding: 0;
+                width: 100%;
+            }
+
+            .share-sheet {
+                background: #f8f9fd;
+                border-top-left-radius: 24px;
+                border-top-right-radius: 24px;
+                padding: 32px 24px;
+                animation: slideUp 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            }
+
+            @keyframes slideUp {
+                0% {
+                    transform: translateY(100%);
+                }
+                100% {
+                    transform: translateY(0);
+                }
+            }
+
+            .poster-preview {
+                background: white;
+                border-radius: 16px;
+                box-shadow: var(--shadow-lg);
+                padding: 20px;
+                margin-bottom: 32px;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .poster-content {
+                background: var(--primary-gradient);
+                border-radius: 12px;
+                padding: 30px 20px;
+                color: white;
+                text-align: center;
+                min-height: 300px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+
+            .poster-score {
+                font-size: 48px;
+                font-weight: 800;
+                font-family: 'DIN Alternate', sans-serif;
+                text-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            }
+
+            .share-options {
+                display: flex;
+                justify-content: space-around;
+                margin-bottom: 24px;
+            }
+
+            .share-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+                font-size: 12px;
+                color: var(--text-secondary);
+                cursor: pointer;
+            }
+
+            .share-icon-circle {
+                width: 48px;
+                height: 48px;
+                border-radius: 50%;
+                background: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: var(--shadow-sm);
+                transition: transform 0.2s;
+            }
+
+            .share-item:active .share-icon-circle {
+                transform: scale(0.95);
+            }
+
+            .cancel-btn {
+                width: 100%;
+                padding: 16px;
+                background: white;
+                border: none;
+                border-radius: 16px;
+                font-weight: 600;
+                color: var(--text-main);
+                font-size: 16px;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="app-container">
+            <div class="share-sheet">
+                <h3
+                    class="text-center font-bold"
+                    style="margin-bottom: 20px"
+                >
+                    分享梦境解析
+                </h3>
+
+                <div class="poster-preview">
+                    <div class="poster-content">
+                        <div>
+                            <div style="font-size: 12px; opacity: 0.8; margin-bottom: 8px">DREAM ANALYSIS</div>
+                            <h2 style="font-size: 20px; margin-bottom: 4px">对自由的渴望与向往</h2>
+                        </div>
+
+                        <div class="poster-score">85</div>
+
+                        <div style="font-size: 12px; line-height: 1.6; opacity: 0.9">
+                            "这个梦境反映了你内心对自由的渴望。草地象征着广阔的可能性..."
+                        </div>
+
+                        <div
+                            style="
+                                border-top: 1px solid rgba(255, 255, 255, 0.2);
+                                padding-top: 12px;
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                            "
+                        >
+                            <div style="text-align: left">
+                                <div style="font-weight: bold; font-size: 14px">梦见</div>
+                                <div style="font-size: 10px; opacity: 0.8">扫码查看解析</div>
+                            </div>
+                            <div style="width: 40px; height: 40px; background: white; border-radius: 4px"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="share-options">
+                    <div class="share-item">
+                        <div
+                            class="share-icon-circle"
+                            style="background: #07c160"
+                        >
+                            <svg
+                                style="width: 24px; height: 24px; fill: white"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    d="M12 2C6.48 2 2 6.48 2 12c0 5.01 3.69 9.17 8.5 9.9v-7h-2.5v-2.9h2.5V9.8c0-2.47 1.48-3.83 3.68-3.83 1.05 0 2.19.19 2.19.19v2.41h-1.23c-1.22 0-1.61.76-1.61 1.54v1.89h2.72l-.44 2.9h-2.28v7C18.31 21.17 22 17.01 22 12c0-5.52-4.48-10-10-10z"
+                                />
+                            </svg>
+                        </div>
+                        微信好友
+                    </div>
+                    <div class="share-item">
+                        <div
+                            class="share-icon-circle"
+                            style="background: #07c160"
+                        >
+                            <svg
+                                style="width: 24px; height: 24px; fill: white"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"
+                                />
+                            </svg>
+                        </div>
+                        朋友圈
+                    </div>
+                    <div class="share-item">
+                        <div class="share-icon-circle">
+                            <svg
+                                style="width: 24px; height: 24px; fill: #666"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z"
+                                />
+                            </svg>
+                        </div>
+                        保存图片
+                    </div>
+                </div>
+
+                <button
+                    class="cancel-btn"
+                    onclick="window.history.back()"
+                >
+                    取消
+                </button>
+            </div>
+        </div>
+    </body>
+</html>

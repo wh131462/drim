@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
+        <title>梦见 - 梦境详情</title>
+        <link
+            rel="stylesheet"
+            href="styles.css"
+        />
+        <style>
+            .detail-header {
+                background: var(--primary-gradient);
+                padding: 20px 24px 60px;
+                color: white;
+                position: relative;
+                z-index: 1;
+            }
+
+            .dream-meta {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 16px;
+                font-size: 13px;
+                opacity: 0.9;
+            }
+
+            .dream-content-card {
+                background: white;
+                border-radius: 20px;
+                padding: 24px;
+                margin: -40px 20px 20px;
+                box-shadow: var(--shadow-md);
+                position: relative;
+                z-index: 2;
+            }
+
+            .dream-2px;
+                border-radius: 8px;
+                font-size: 12px;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            .analysis-section {
+                .5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
+                        飞行
+                    </div>
+                    <div class="detail-tag">
+                        <svg style="width:14px;background: #F8F9FD;
+                border-radius: 16px;
+                padding: 20px;
+                margin-top: 24px;
+            }
+
+            .analysis-title {
+                font-size: 14px;
+                font-weight: 7text {
+                font-size: 16px;
+                line-height: 1.8;
+                color: var(--text-main);
+                margin-bottom: 20px;
+                text-align: justify;
+            }
+
+            .tag-list {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-bottom: 20px;
+            }
+
+            .detail-tag {
+                background: #F0F4FF;
+                color: var(--primary-color);
+                padding: 6px 100;
+                color: var(--text-main);
+                margin-bottom: 12px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .analysis-text {
+                font-size: 14px;
+                color: var(--text-secondary);
+                line-height: 1.6;
+            }
+
+            .fortune-badge {
+                background: rgba(255, 255, 255, 0.2);
+                backdrop-filter: blur(10px);
+                padding: 4px 12px;
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: 600;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+            }
+
+            .version-info-bar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding-bottom: 16px;
+                margin-bottom: 16px;
+                border-bottom: 1px solid #F7FAFC;
+            }
+
+            .version-badges {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .version-type-badge {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 6px 12px;
+                background: var(--primary-light);
+                color: var(--primary-color);
+                border-radius: 12px;
+                font-size: 12px;
+                font-weight: 600;
+            }
+
+            .version-type-badge.original {
+                background: #D1FAE5;
+                color: #10B981;
+            }
+
+            .privacy-badge {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                padding: 6px 10px;
+                background: #F7FAFC;
+                color: var(--text-secondary);
+                border-radius: 12px;
+                font-size: 11px;
+                font-weight: 500;
+            }
+
+            .privacy-badge.public {
+                background: #E0F2FE;
+                color: #0284C7;
+            }
+
+            .version-history-link {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                padding: 6px 12px;
+                background: white;
+                border: 1.5px solid var(--border-color);
+                border-radius: 12px;
+                font-size: 12px;
+                color: var(--text-secondary);
+                text-decoration: none;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .version-history-link:active {
+                transform: scale(0.95);
+                border-color: var(--primary-color);
+                color: var(--primary-color);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="app-container">
+            <!-- Navbar -->
+            <div class="navbar navbar-transparent text-white">
+                <button
+                    class="btn-icon text-white"
+                    style="position: absolute; left: 16px"
+                    onclick="window.history.back()"
+                >
+                    <svg
+                        class="icon-svg"
+                        viewBox="0 0 24 24"
+                    >
+                        <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+                    </svg>
+                </button>
+                <div style="flex: 1"></div>
+                <button
+                    class="btn-icon text-white"
+                    style="position: absolute; right: 16px"
+                >
+                    <svg
+                        class="icon-svg"
+                        style="width: 20px; height: 20px"
+                        viewBox="0 0 24 24"
+                    >
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="detail-header">
+                <div class="dream-meta">
+                    <span>2026年1月21日 星期三</span>
+                    <span class="fortune-badge">运势 85分</span>
+                </div>
+                <h1
+                    class="text-xl font-bold"
+                    style="margin-bottom: 8px"
+                >
+                    对自由的渴望与向往
+                </h1>
+                <div
+                    class="text-xs"
+                    style="opacity: 0.8"
+                >
+                    08:30 记录
+                </div>
+            </div>
+
+            <div class="dream-content-card">
+                <!-- Version Info Bar -->
+                <div class="version-info-bar">
+                    <div class="version-badges">
+                        <!-- Version Type Badge -->
+                        <div class="version-type-badge">
+                            <svg
+                                width="12"
+                                height="12"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                            >
+                                <path
+                                    d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+                                />
+                            </svg>
+                            润色版 v2
+                        </div>
+
+                        <!-- Privacy Badge -->
+                        <div class="privacy-badge">
+                            <svg
+                                width="10"
+                                height="10"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                            >
+                                <path
+                                    d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"
+                                />
+                            </svg>
+                            私密
+                        </div>
+                    </div>
+
+                    <!-- Version History Link -->
+                    <a
+                        href="dream-versions.html"
+                        class="version-history-link"
+                    >
+                        <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <circle
+                                cx="12"
+                                cy="12"
+                                r="10"
+                            />
+                            <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                        历史
+                    </a>
+                </div>
+
+                <div class="tag-list">
+                    <div class="detail-tag">
+                        <svg
+                            style="width: 14px; height: 14px; fill: currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8z"
+                            />
+                        </svg>
+                        自然
+                    </div>
+                    <div
+                        class="detail-tag"
+                        style="background: #fff7e6; color: #faad14"
+                    >
+                        <svg
+                            style="width: 14px; height: 14px; fill: currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"
+                            />
+                        </svg>
+                        开心
+                    </div>
+                </div>
+
+                <div class="dream-text">
+                    我梦见自己在一片草地上奔跑，天空很蓝，阳光很温暖。突然我发现自己能飞起来，越飞越高，俯瞰着整个大地。风在耳边呼啸，但我一点也不害怕，反而觉得非常自由和快乐。后来我飞到了一片森林上空，看到很多小动物在林间穿梭...
+                </div>
+
+                <div class="analysis-section">
+                    <div class="analysis-title">
+                        <svg
+                            style="width: 18px; height: 18px; fill: var(--primary-color)"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6C7.8 12.16 7 10.63 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"
+                            />
+                        </svg>
+                        AI 解析
+                    </div>
+                    <div class="analysis-text">
+                        这个梦境反映了你内心对自由的渴望。草地象征着广阔的可能性，奔跑代表追逐梦想的动力，而飞翔则意味着突破限制、超越自我的愿望。近期你可能在某些方面感到束缚，这个梦是潜意识在提醒你勇敢追求内心真正想要的东西。
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

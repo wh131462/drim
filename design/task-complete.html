@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
+        <title>梦见 - 任务完成</title>
+        <link
+            rel="stylesheet"
+            href="styles.css"
+        />
+        <style>
+            body {
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                margin: 0;
+            }
+
+            .app-container {
+                background: transparent;
+                min-height: auto;
+                box-shadow: none;
+                padding: 0 24px;
+                width: 100%;
+            }
+
+            .modal {
+                background: white;
+                border-radius: 24px;
+                padding: 32px 24px;
+                text-align: center;
+                position: relative;
+                animation: popIn 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            }
+
+            @keyframes popIn {
+                0% {
+                    transform: scale(0.8);
+                    opacity: 0;
+                }
+                100% {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+            }
+
+            .success-icon {
+                width: 80px;
+                height: 80px;
+                background: #f6ffed;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 20px;
+                color: var(--success-color);
+            }
+
+            .success-icon svg {
+                width: 40px;
+                height: 40px;
+                fill: currentColor;
+            }
+
+            .reward-amount {
+                font-size: 36px;
+                font-weight: 800;
+                color: #faad14;
+                margin: 8px 0;
+                font-family: 'DIN Alternate', sans-serif;
+            }
+
+            .reward-label {
+                font-size: 14px;
+                color: var(--text-light);
+                margin-bottom: 24px;
+            }
+
+            .ad-btn {
+                background: linear-gradient(90deg, #ffd700 0%, #ffa500 100%);
+                color: #333;
+                font-weight: bold;
+                border: none;
+                width: 100%;
+                padding: 14px;
+                border-radius: 24px;
+                margin-bottom: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                box-shadow: 0 4px 12px rgba(255, 165, 0, 0.2);
+            }
+
+            .close-btn {
+                background: transparent;
+                border: none;
+                color: var(--text-secondary);
+                font-size: 14px;
+                padding: 8px;
+                cursor: pointer;
+            }
+
+            .confetti {
+                position: absolute;
+                top: -20px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                z-index: -1;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="app-container">
+            <div class="modal">
+                <div class="success-icon">
+                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>
+                </div>
+
+                <h2 class="text-xl font-bold">打卡成功!</h2>
+                <div class="reward-amount">+10</div>
+                <div class="reward-label">获得积分奖励</div>
+
+                <button
+                    class="ad-btn"
+                    onclick="alert('播放激励视频广告')"
+                >
+                    <svg
+                        style="width: 20px; height: 20px; fill: currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8 12.5v-9l6 4.5-6 4.5z"
+                        />
+                    </svg>
+                    看视频领取双倍积分
+                </button>
+
+                <button
+                    class="close-btn"
+                    onclick="window.history.back()"
+                >
+                    不用了，谢谢
+                </button>
+            </div>
+        </div>
+    </body>
+</html>

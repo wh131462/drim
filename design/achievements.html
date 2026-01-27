@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
+        <title>梦见 - 我的成就</title>
+        <link
+            rel="stylesheet"
+            href="styles.css"
+        />
+        <style>
+            .achievements-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 16px;
+                padding: 20px;
+            }
+
+            .achievement-item {
+                background: white;
+                border-radius: var(--radius-md);
+                padding: 16px 8px;
+                text-align: center;
+                box-shadow: var(--shadow-sm);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                opacity: 0.5;
+                filter: grayscale(1);
+                transition: all 0.3s;
+            }
+
+            .achievement-item.unlocked {
+                opacity: 1;
+                filter: grayscale(0);
+                background: linear-gradient(180deg, #ffffff 0%, #f8f9ff 100%);
+                border: 1px solid #e0d9ff;
+            }
+
+            .achievement-icon {
+                font-size: 32px;
+                margin-bottom: 8px;
+                display: block;
+            }
+
+            .achievement-name {
+                font-size: 12px;
+                font-weight: 600;
+                color: var(--text-main);
+                margin-bottom: 4px;
+            }
+
+            .achievement-date {
+                font-size: 10px;
+                color: var(--text-light);
+            }
+
+            .progress-section {
+                background: white;
+                margin: 0 20px 20px;
+                padding: 20px;
+                border-radius: var(--radius-lg);
+                box-shadow: var(--shadow-sm);
+            }
+
+            .progress-header {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 12px;
+            }
+
+            .progress-bar {
+                height: 8px;
+                background: #edf2f7;
+                border-radius: 4px;
+                overflow: hidden;
+            }
+
+            .progress-fill {
+                height: 100%;
+                background: var(--primary-gradient);
+                border-radius: 4px;
+                width: 65%;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="app-container">
+            <!-- Navbar -->
+            <div class="navbar">
+                <button
+                    class="btn-icon"
+                    style="position: absolute; left: 16px"
+                    onclick="window.history.back()"
+                >
+                    <svg
+                        class="icon-svg"
+                        viewBox="0 0 24 24"
+                    >
+                        <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+                    </svg>
+                </button>
+                我的成就
+            </div>
+
+            <div style="padding: 20px 20px 0">
+                <h2 class="text-xl font-bold">成就概览</h2>
+                <p
+                    class="text-secondary text-sm"
+                    style="margin-top: 4px"
+                >
+                    已解锁 5 / 9 个成就
+                </p>
+            </div>
+
+            <div
+                class="progress-section"
+                style="margin-top: 16px"
+            >
+                <div class="progress-header">
+                    <span class="text-sm font-bold">当前等级：Lv.3 追梦人</span>
+                    <span class="text-xs text-primary">850/1000 EXP</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+            </div>
+
+            <div class="achievements-grid">
+                <div class="achievement-item unlocked">
+                    <span class="achievement-icon">🌙</span>
+                    <span class="achievement-name">初次记梦</span>
+                    <span class="achievement-date">2026.01.01</span>
+                </div>
+                <div class="achievement-item unlocked">
+                    <span class="achievement-icon">✨</span>
+                    <span class="achievement-name">入门梦想家</span>
+                    <span class="achievement-date">2026.01.10</span>
+                </div>
+                <div class="achievement-item">
+                    <span class="achievement-icon">🌟</span>
+                    <span class="achievement-name">资深梦想家</span>
+                    <span class="achievement-date">未解锁</span>
+                </div>
+
+                <div class="achievement-item unlocked">
+                    <span class="achievement-icon">🔥</span>
+                    <span class="achievement-name">三日连续</span>
+                    <span class="achievement-date">2026.01.03</span>
+                </div>
+                <div class="achievement-item unlocked">
+                    <span class="achievement-icon">🔥🔥</span>
+                    <span class="achievement-name">周周有梦</span>
+                    <span class="achievement-date">2026.01.07</span>
+                </div>
+                <div class="achievement-item">
+                    <span class="achievement-icon">🔥🔥🔥</span>
+                    <span class="achievement-name">月度坚持</span>
+                    <span class="achievement-date">未解锁</span>
+                </div>
+
+                <div class="achievement-item unlocked">
+                    <span class="achievement-icon">🎯</span>
+                    <span class="achievement-name">任务新手</span>
+                    <span class="achievement-date">2026.01.15</span>
+                </div>
+                <div class="achievement-item">
+                    <span class="achievement-icon">🏆</span>
+                    <span class="achievement-name">任务达人</span>
+                    <span class="achievement-date">未解锁</span>
+                </div>
+                <div class="achievement-item">
+                    <span class="achievement-icon">👑</span>
+                    <span class="achievement-name">梦境大师</span>
+                    <span class="achievement-date">未解锁</span>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

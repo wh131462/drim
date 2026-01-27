@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
+        <title>梦见 - 我的</title>
+        <link
+            rel="stylesheet"
+            href="styles.css"
+        />
+        <style>
+            .profile-header {
+                background: white;
+                padding: 30px 24px 24px;
+                display: flex;
+                align-items: center;
+                margin-bottom: 12px;
+                position: relative;
+            }
+
+            .profile-header::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 1px;
+                background: linear-gradient(90deg, transparent, #e2e8f0 20%, #e2e8f0 80%, transparent);
+            }
+
+            .avatar {
+                width: 72px;
+                height: 72px;
+                border-radius: 50%;
+                background: #edf2f7;
+                margin-right: 20px;
+                border: 3px solid white;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                overflow: hidden;
+                position: relative;
+            }
+
+            .avatar svg {
+                width: 100%;
+                height: 100%;
+                fill: #cbd5e0;
+                transform: scale(1.1) translateY(4px);
+            }
+
+            .vip-badge {
+                background: var(--vip-gradient);
+                color: #ffd700;
+                font-size: 10px;
+                padding: 4px 10px;
+                border-radius: 12px;
+                margin-left: 8px;
+                font-weight: 700;
+                letter-spacing: 0.5px;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 16px;
+                padding: 0 20px;
+                margin-bottom: 24px;
+            }
+
+            .stat-item {
+                background: white;
+                border-radius: 16px;
+                padding: 16px 12px;
+                text-align: center;
+                box-shadow: var(--shadow-sm);
+                transition: transform 0.2s;
+            }
+
+            .stat-item:active {
+                transform: scale(0.98);
+            }
+
+            .stat-value {
+                font-size: 24px;
+                font-weight: 800;
+                color: var(--text-main);
+                margin-bottom: 4px;
+                font-family: 'DIN Alternate', sans-serif;
+            }
+
+            .stat-label {
+                font-size: 11px;
+                color: var(--text-secondary);
+                font-weight: 500;
+            }
+
+            .calendar-grid {
+                display: grid;
+                grid-template-columns: repeat(7, 1fr);
+                gap: 10px;
+                text-align: center;
+                margin-top: 20px;
+            }
+
+            .calendar-day {
+                font-size: 12px;
+                color: var(--text-secondary);
+                aspect-ratio: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 10px;
+                position: relative;
+                transition: all 0.2s;
+            }
+
+            .calendar-day.active {
+                background: var(--primary-color);
+                color: white;
+                box-shadow: 0 4px 10px rgba(107, 78, 255, 0.3);
+            }
+
+            .calendar-day.has-dream:not(.active) {
+                background: #f0f4ff;
+                color: var(--primary-color);
+                font-weight: 600;
+            }
+
+            .calendar-day.has-dream::after {
+                content: '';
+                position: absolute;
+                bottom: 6px;
+                width: 4px;
+                height: 4px;
+                background: currentColor;
+                border-radius: 50%;
+                opacity: 0.6;
+            }
+
+            .menu-list {
+                background: white;
+                margin: 20px;
+                border-radius: var(--radius-lg);
+                box-shadow: var(--shadow-sm);
+                overflow: hidden;
+            }
+
+            .menu-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 18px 20px;
+                border-bottom: 1px solid #f7fafc;
+                font-size: 15px;
+                cursor: pointer;
+                transition: background 0.2s;
+            }
+
+            .menu-item:active {
+                background: #f9fafb;
+            }
+
+            .menu-item:last-child {
+                border-bottom: none;
+            }
+
+            .menu-icon {
+                width: 20px;
+                height: 20px;
+                fill: currentColor;
+                opacity: 0.8;
+            }
+        </style>
+    </head>
+    <body>
+        <div
+            class="app-container"
+            style="padding-bottom: 100px"
+        >
+            <!-- Navbar -->
+            <div class="navbar">我的</div>
+
+            <div class="profile-header">
+                <div class="avatar">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                        />
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex items-center">
+                        <span class="text-xl font-bold">梦游者</span>
+                        <span class="vip-badge">
+                            <svg
+                                style="width: 10px; height: 10px; fill: currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                                />
+                            </svg>
+                            VIP
+                        </span>
+                    </div>
+                    <div
+                        class="text-xs text-light"
+                        style="margin-top: 6px"
+                    >
+                        ID: user_123456
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-item ripple">
+                    <div class="stat-value">15</div>
+                    <div class="stat-label">记梦总数</div>
+                </div>
+                <div class="stat-item ripple">
+                    <div
+                        class="stat-value"
+                        style="color: var(--primary-color)"
+                    >
+                        7
+                    </div>
+                    <div class="stat-label">连续打卡</div>
+                </div>
+                <div class="stat-item ripple">
+                    <div
+                        class="stat-value"
+                        style="color: #faad14"
+                    >
+                        120
+                    </div>
+                    <div class="stat-label">幸运值</div>
+                </div>
+            </div>
+
+            <div
+                class="card"
+                style="margin-top: 0; border-radius: 20px"
+            >
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-bold">梦境日历</h3>
+                    <span
+                        class="text-xs font-bold text-primary bg-primary-light"
+                        style="padding: 4px 10px; border-radius: 12px; background: rgba(107, 78, 255, 0.1)"
+                        >2026年1月</span
+                    >
+                </div>
+                <div class="calendar-grid">
+                    <div
+                        class="calendar-day text-xs text-light"
+                        style="font-weight: 500"
+                    >
+                        日
+                    </div>
+                    <div
+                        class="calendar-day text-xs text-light"
+                        style="font-weight: 500"
+                    >
+                        一
+                    </div>
+                    <div
+                        class="calendar-day text-xs text-light"
+                        style="font-weight: 500"
+                    >
+                        二
+                    </div>
+                    <div
+                        class="calendar-day text-xs text-light"
+                        style="font-weight: 500"
+                    >
+                        三
+                    </div>
+                    <div
+                        class="calendar-day text-xs text-light"
+                        style="font-weight: 500"
+                    >
+                        四
+                    </div>
+                    <div
+                        class="calendar-day text-xs text-light"
+                        style="font-weight: 500"
+                    >
+                        五
+                    </div>
+                    <div
+                        class="calendar-day text-xs text-light"
+                        style="font-weight: 500"
+                    >
+                        六
+                    </div>
+
+                    <div class="calendar-day"></div>
+                    <div class="calendar-day"></div>
+                    <div class="calendar-day"></div>
+                    <div class="calendar-day"></div>
+                    <div class="calendar-day has-dream">1</div>
+                    <div class="calendar-day">2</div>
+                    <div class="calendar-day has-dream">3</div>
+
+                    <div class="calendar-day">4</div>
+                    <div class="calendar-day">5</div>
+                    <div class="calendar-day">6</div>
+                    <div
+                        class="calendar-day has-dream"
+                        onclick="window.location.href = 'dream-detail.html'"
+                    >
+                        7
+                    </div>
+                    <div class="calendar-day">8</div>
+                    <div class="calendar-day">9</div>
+                    <div class="calendar-day">10</div>
+
+                    <div class="calendar-day">11</div>
+                    <div class="calendar-day">12</div>
+                    <div class="calendar-day">13</div>
+                    <div class="calendar-day">14</div>
+                    <div class="calendar-day">15</div>
+                    <div class="calendar-day">16</div>
+                    <div class="calendar-day">17</div>
+
+                    <div class="calendar-day">18</div>
+                    <div class="calendar-day">19</div>
+                    <div
+                        class="calendar-day has-dream"
+                        onclick="window.location.href = 'dream-detail.html'"
+                    >
+                        20
+                    </div>
+                    <div
+                        class="calendar-day active has-dream"
+                        onclick="window.location.href = 'dream-detail.html'"
+                    >
+                        21
+                    </div>
+                    <div class="calendar-day">22</div>
+                    <div class="calendar-day">23</div>
+                    <div class="calendar-day">24</div>
+                </div>
+            </div>
+
+            <div class="menu-list">
+                <div
+                    class="menu-item"
+                    onclick="window.location.href = 'vip.html'"
+                >
+                    <div class="flex items-center gap-sm">
+                        <div style="background: #fff7e6; padding: 6px; border-radius: 8px">
+                            <svg
+                                class="menu-icon"
+                                style="color: #faad14"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                                />
+                            </svg>
+                        </div>
+                        <span style="font-weight: 500">会员中心</span>
+                    </div>
+                    <svg
+                        style="width: 16px; height: 16px; fill: #cbd5e0"
+                        viewBox="0 0 24 24"
+                    >
+                        <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+                    </svg>
+                </div>
+                <div
+                    class="menu-item"
+                    onclick="window.location.href = 'achievements.html'"
+                >
+                    <div class="flex items-center gap-sm">
+                        <div style="background: #e6fffb; padding: 6px; border-radius: 8px">
+                            <svg
+                                class="menu-icon"
+                                style="color: #13c2c2"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-1c0-2.33 4.67-3.5 7-3.5s7 1.17 7 3.5v1z"
+                                />
+                            </svg>
+                        </div>
+                        <span style="font-weight: 500">我的成就</span>
+                    </div>
+                    <svg
+                        style="width: 16px; height: 16px; fill: #cbd5e0"
+                        viewBox="0 0 24 24"
+                    >
+                        <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+                    </svg>
+                </div>
+                <div
+                    class="menu-item"
+                    onclick="window.location.href = 'settings.html'"
+                >
+                    <div class="flex items-center gap-sm">
+                        <div style="background: #f0f0f0; padding: 6px; border-radius: 8px">
+                            <svg
+                                class="menu-icon"
+                                style="color: #595959"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L3.16 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.58 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"
+                                />
+                            </svg>
+                        </div>
+                        <span style="font-weight: 500">设置</span>
+                    </div>
+                    <svg
+                        style="width: 16px; height: 16px; fill: #cbd5e0"
+                        viewBox="0 0 24 24"
+                    >
+                        <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Tab Bar -->
+            <div class="tabbar">
+                <a
+                    href="index.html"
+                    class="tab-item"
+                >
+                    <svg viewBox="0 0 24 24">
+                        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                    </svg>
+                    <span>首页</span>
+                </a>
+                <a
+                    href="record.html"
+                    class="tab-item"
+                >
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                        />
+                    </svg>
+                    <span>记梦</span>
+                </a>
+                <a
+                    href="profile.html"
+                    class="tab-item active"
+                >
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                        />
+                    </svg>
+                    <span>我的</span>
+                </a>
+            </div>
+        </div>
+    </body>
+</html>

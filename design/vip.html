@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
+        <title>梦见 - 权益中心</title>
+        <link
+            rel="stylesheet"
+            href="styles.css"
+        />
+        <style>
+            body {
+                background: #121212;
+                color: #e0e0e0;
+            }
+
+            .app-container {
+                background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1e 100%);
+                min-height: 100vh;
+            }
+
+            /* 积分头部 */
+            .points-header {
+                background: transparent;
+                padding: 20px 24px 40px;
+                text-align: center;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .points-header::before {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 200px;
+                height: 200px;
+                background: radial-gradient(circle, rgba(107, 78, 255, 0.3) 0%, transparent 70%);
+                filter: blur(30px);
+                animation: pulse 4s ease-in-out infinite;
+            }
+
+            @keyframes pulse {
+                0%,
+                100% {
+                    opacity: 0.5;
+                    transform: translate(-50%, -50%) scale(1);
+                }
+                50% {
+                    opacity: 0.8;
+                    transform: translate(-50%, -50%) scale(1.2);
+                }
+            }
+
+            .points-display {
+                position: relative;
+                display: inline-flex;
+                flex-direction: column;
+                align-items: center;
+                margin-bottom: 16px;
+            }
+
+            .points-number {
+                font-size: 48px;
+                font-weight: 800;
+                background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                line-height: 1;
+            }
+
+            .points-label {
+                font-size: 12px;
+                color: rgba(255, 255, 255, 0.7);
+                margin-top: 4px;
+            }
+
+            .header-subtitle {
+                font-size: 13px;
+                color: rgba(255, 255, 255, 0.7);
+            }
+
+            /* 特权状态 */
+            .privilege-status {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                padding: 10px 20px;
+                margin: -10px 20px 20px;
+                background: rgba(107, 78, 255, 0.15);
+                border-radius: 8px;
+                border: 1px solid rgba(107, 78, 255, 0.3);
+            }
+
+            .privilege-badge {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            .privilege-text {
+                font-size: 14px;
+                font-weight: 600;
+                color: #ffd700;
+            }
+
+            .privilege-expire {
+                font-size: 12px;
+                color: rgba(255, 255, 255, 0.6);
+            }
+
+            /* 积分获取 */
+            .earn-section {
+                padding: 16px 20px;
+            }
+
+            .section-title {
+                font-size: 18px;
+                font-weight: 700;
+                color: #fff;
+                margin-bottom: 12px;
+            }
+
+            .earn-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .earn-card {
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 10px;
+                padding: 12px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                border: 1px solid rgba(255, 255, 255, 0.08);
+            }
+
+            .earn-icon {
+                font-size: 20px;
+            }
+
+            .earn-name {
+                font-size: 13px;
+                color: #fff;
+            }
+
+            .earn-points {
+                font-size: 12px;
+                color: #ffd700;
+                font-weight: 600;
+            }
+
+            /* 权益卡片 */
+            .benefit-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                padding: 0 20px;
+                margin-top: 12px;
+            }
+
+            .benefit-card {
+                background: rgba(255, 255, 255, 0.05);
+                backdrop-filter: blur(10px);
+                border-radius: 10px;
+                padding: 16px 12px;
+                text-align: center;
+                border: 1px solid rgba(255, 255, 255, 0.08);
+            }
+
+            .benefit-icon-wrap {
+                width: 36px;
+                height: 36px;
+                margin: 0 auto 8px;
+                background: linear-gradient(135deg, rgba(107, 78, 255, 0.2) 0%, rgba(107, 78, 255, 0.05) 100%);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .benefit-icon {
+                font-size: 20px;
+            }
+
+            .benefit-name {
+                font-size: 13px;
+                font-weight: 700;
+                color: #fff;
+                margin-bottom: 4px;
+            }
+
+            .benefit-desc {
+                font-size: 11px;
+                color: rgba(255, 255, 255, 0.6);
+            }
+
+            /* 兑换列表 */
+            .exchange-section {
+                padding: 24px 20px 40px;
+            }
+
+            .exchange-list {
+                margin-top: 12px;
+            }
+
+            .exchange-item {
+                background: rgba(255, 255, 255, 0.05);
+                border: 2px solid rgba(255, 255, 255, 0.08);
+                border-radius: 12px;
+                padding: 16px;
+                margin-bottom: 12px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                position: relative;
+                transition: all 0.2s;
+            }
+
+            .exchange-item.active {
+                border-color: rgba(107, 78, 255, 0.6);
+                background: rgba(107, 78, 255, 0.08);
+                box-shadow: 0 4px 16px rgba(107, 78, 255, 0.3);
+            }
+
+            .exchange-item.disabled {
+                opacity: 0.5;
+            }
+
+            .exchange-tag {
+                position: absolute;
+                top: -8px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: linear-gradient(90deg, #6b4eff 0%, #8b6eff 100%);
+                color: #fff;
+                font-size: 10px;
+                padding: 2px 10px;
+                border-radius: 10px;
+                font-weight: bold;
+                box-shadow: 0 2px 6px rgba(107, 78, 255, 0.4);
+            }
+
+            .exchange-name {
+                font-size: 15px;
+                font-weight: 700;
+                color: #fff;
+                margin-bottom: 4px;
+            }
+
+            .exchange-duration {
+                font-size: 12px;
+                color: rgba(255, 255, 255, 0.65);
+            }
+
+            .price-current {
+                color: #ffd700;
+                font-weight: 800;
+                font-size: 18px;
+            }
+
+            .price-original {
+                text-decoration: line-through;
+                color: rgba(255, 255, 255, 0.4);
+                font-size: 11px;
+                margin-top: 2px;
+            }
+
+            /* 兑换按钮 */
+            .exchange-btn {
+                background: linear-gradient(135deg, #6b4eff 0%, #8b6eff 100%);
+                color: #fff;
+                font-weight: 800;
+                border: none;
+                width: 100%;
+                padding: 14px;
+                border-radius: 28px;
+                margin-top: 16px;
+                font-size: 15px;
+                box-shadow: 0 6px 24px rgba(107, 78, 255, 0.4);
+                transition: all 0.2s;
+            }
+
+            .exchange-btn:active {
+                transform: scale(0.98);
+                box-shadow: 0 4px 16px rgba(107, 78, 255, 0.3);
+            }
+
+            .exchange-btn.disabled {
+                opacity: 0.6;
+                box-shadow: none;
+            }
+
+            /* 提示 */
+            .tips {
+                margin-top: 16px;
+                padding: 12px;
+                background: rgba(255, 215, 0, 0.08);
+                border-radius: 8px;
+                border: 1px solid rgba(255, 215, 0, 0.15);
+            }
+
+            .tip-item {
+                display: block;
+                font-size: 12px;
+                color: rgba(255, 255, 255, 0.7);
+                line-height: 1.6;
+            }
+
+            .text-gold {
+                color: #ffd700;
+            }
+            .text-dim {
+                color: rgba(255, 255, 255, 0.6);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="app-container">
+            <!-- Navbar -->
+            <div
+                class="navbar"
+                style="background: transparent; border: none; color: #ffd700"
+            >
+                <button
+                    class="btn-icon"
+                    style="position: absolute; left: 16px; color: #ffd700"
+                    onclick="window.history.back()"
+                >
+                    <svg
+                        class="icon-svg"
+                        viewBox="0 0 24 24"
+                    >
+                        <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+                    </svg>
+                </button>
+                权益中心
+            </div>
+
+            <!-- 积分头部 -->
+            <div class="points-header">
+                <div class="points-display">
+                    <span class="points-number">520</span>
+                    <span class="points-label">幸运积分</span>
+                </div>
+                <p class="header-subtitle">通过记梦、完成任务获取积分，兑换专属权益</p>
+            </div>
+
+            <!-- 特权状态 -->
+            <div class="privilege-status">
+                <div class="privilege-badge">
+                    <span>✨</span>
+                    <span class="privilege-text">特权生效中</span>
+                </div>
+                <span class="privilege-expire">剩余 5 天</span>
+            </div>
+
+            <!-- 积分获取 -->
+            <div class="earn-section">
+                <h3 class="section-title">积分获取</h3>
+                <div class="earn-grid">
+                    <div class="earn-card">
+                        <span class="earn-icon">🌙</span>
+                        <div>
+                            <div class="earn-name">每日记梦</div>
+                            <div class="earn-points">+10 积分</div>
+                        </div>
+                    </div>
+                    <div class="earn-card">
+                        <span class="earn-icon">✅</span>
+                        <div>
+                            <div class="earn-name">完成任务</div>
+                            <div class="earn-points">+10 积分</div>
+                        </div>
+                    </div>
+                    <div class="earn-card">
+                        <span class="earn-icon">📺</span>
+                        <div>
+                            <div class="earn-name">看广告翻倍</div>
+                            <div class="earn-points">+10 积分</div>
+                        </div>
+                    </div>
+                    <div class="earn-card">
+                        <span class="earn-icon">🔥</span>
+                        <div>
+                            <div class="earn-name">连续打卡奖励</div>
+                            <div class="earn-points">+20-200 积分</div>
+                        </div>
+                    </div>
+                    <div class="earn-card">
+                        <span class="earn-icon">🏆</span>
+                        <div>
+                            <div class="earn-name">解锁成就</div>
+                            <div class="earn-points">+10-100 积分</div>
+                        </div>
+                    </div>
+                    <div class="earn-card">
+                        <span class="earn-icon">📤</span>
+                        <div>
+                            <div class="earn-name">分享梦境</div>
+                            <div class="earn-points">+5 积分</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 可享权益 -->
+            <div class="earn-section">
+                <h3 class="section-title">可享权益</h3>
+            </div>
+            <div class="benefit-grid">
+                <div class="benefit-card">
+                    <div class="benefit-icon-wrap">
+                        <span class="benefit-icon">🚫</span>
+                    </div>
+                    <div class="benefit-name">免广告</div>
+                    <div class="benefit-desc">解析无需看广告</div>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon-wrap">
+                        <span class="benefit-icon">♾️</span>
+                    </div>
+                    <div class="benefit-name">无限润色</div>
+                    <div class="benefit-desc">不限次数AI润色</div>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon-wrap">
+                        <span class="benefit-icon">📚</span>
+                    </div>
+                    <div class="benefit-name">历史查看</div>
+                    <div class="benefit-desc">查看全部历史记录</div>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon-wrap">
+                        <span class="benefit-icon">🔮</span>
+                    </div>
+                    <div class="benefit-name">深度解析</div>
+                    <div class="benefit-desc">更详细的心理分析</div>
+                </div>
+            </div>
+
+            <!-- 积分兑换 -->
+            <div class="exchange-section">
+                <h3 class="section-title">积分兑换</h3>
+
+                <div class="exchange-list">
+                    <div class="exchange-item">
+                        <div>
+                            <div class="exchange-name">免广告特权</div>
+                            <div class="exchange-duration">有效期 1 天</div>
+                        </div>
+                        <div style="text-align: right">
+                            <div class="price-current">50 积分</div>
+                        </div>
+                    </div>
+
+                    <div class="exchange-item active">
+                        <span class="exchange-tag">超值推荐</span>
+                        <div>
+                            <div class="exchange-name">免广告特权</div>
+                            <div class="exchange-duration">有效期 7 天</div>
+                        </div>
+                        <div style="text-align: right">
+                            <div class="price-current">280 积分</div>
+                            <div class="price-original">350 积分</div>
+                        </div>
+                    </div>
+
+                    <div class="exchange-item">
+                        <span class="exchange-tag">最划算</span>
+                        <div>
+                            <div class="exchange-name">免广告特权</div>
+                            <div class="exchange-duration">有效期 30 天</div>
+                        </div>
+                        <div style="text-align: right">
+                            <div class="price-current">900 积分</div>
+                            <div class="price-original">1500 积分</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="exchange-btn">立即兑换 280 积分</button>
+
+                <div class="tips">
+                    <span class="tip-item">💡 连续打卡7天可免费获得1天免广告特权</span>
+                    <span class="tip-item">💡 看广告可额外获得积分奖励</span>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

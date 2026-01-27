@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
+        <title>梦见 - 设置</title>
+        <link
+            rel="stylesheet"
+            href="styles.css"
+        />
+        <style>
+            .settings-list {
+                background: white;
+                border-radius: var(--radius-md);
+                overflow: hidden;
+                box-shadow: var(--shadow-sm);
+                margin-bottom: 20px;
+            }
+
+            .settings-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 16px 20px;
+                border-bottom: 1px solid var(--border-color);
+                font-size: 15px;
+                color: var(--text-main);
+                background: white;
+                transition: background 0.2s;
+            }
+
+            .settings-item:active {
+                background: #f9fafb;
+            }
+
+            .settings-item:last-child {
+                border-bottom: none;
+            }
+
+            .settings-label {
+                font-weight: 500;
+            }
+
+            .settings-value {
+                color: var(--text-secondary);
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            /* Toggle Switch */
+            .toggle-switch {
+                position: relative;
+                display: inline-block;
+                width: 44px;
+                height: 24px;
+            }
+
+            .toggle-switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+            .toggle-slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #e2e8f0;
+                transition: 0.4s;
+                border-radius: 34px;
+            }
+
+            .toggle-slider:before {
+                position: absolute;
+                content: '';
+                height: 20px;
+                width: 20px;
+                left: 2px;
+                bottom: 2px;
+                background-color: white;
+                transition: 0.4s;
+                border-radius: 50%;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            input:checked + .toggle-slider {
+                background-color: var(--primary-color);
+            }
+
+            input:checked + .toggle-slider:before {
+                transform: translateX(20px);
+            }
+
+            .logout-btn {
+                color: var(--error-color);
+                font-weight: 600;
+                width: 100%;
+                text-align: center;
+                display: block;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="app-container">
+            <!-- Navbar -->
+            <div class="navbar">
+                <button
+                    class="btn-icon"
+                    style="position: absolute; left: 16px"
+                    onclick="window.history.back()"
+                >
+                    <svg
+                        class="icon-svg"
+                        viewBox="0 0 24 24"
+                    >
+                        <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+                    </svg>
+                </button>
+                设置
+            </div>
+
+            <div style="padding: 20px">
+                <div
+                    class="text-xs text-secondary font-bold"
+                    style="margin-bottom: 8px; margin-left: 4px"
+                >
+                    常规设置
+                </div>
+                <div class="settings-list">
+                    <div class="settings-item">
+                        <span class="settings-label">消息通知</span>
+                        <label class="toggle-switch">
+                            <input
+                                type="checkbox"
+                                checked
+                            />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-item">
+                        <span class="settings-label">每日记梦提醒</span>
+                        <div class="settings-value">
+                            08:00
+                            <svg
+                                class="icon-svg"
+                                style="width: 16px; height: 16px"
+                                viewBox="0 0 24 24"
+                            >
+                                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="settings-item">
+                        <span class="settings-label">深色模式</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div
+                    class="text-xs text-secondary font-bold"
+                    style="margin-bottom: 8px; margin-left: 4px"
+                >
+                    隐私与安全
+                </div>
+                <div class="settings-list">
+                    <div class="settings-item">
+                        <span class="settings-label">隐私设置</span>
+                        <div class="settings-value">
+                            <svg
+                                class="icon-svg"
+                                style="width: 16px; height: 16px"
+                                viewBox="0 0 24 24"
+                            >
+                                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="settings-item">
+                        <span class="settings-label">数据导出</span>
+                        <div class="settings-value">
+                            <svg
+                                class="icon-svg"
+                                style="width: 16px; height: 16px"
+                                viewBox="0 0 24 24"
+                            >
+                                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    class="text-xs text-secondary font-bold"
+                    style="margin-bottom: 8px; margin-left: 4px"
+                >
+                    关于
+                </div>
+                <div class="settings-list">
+                    <div class="settings-item">
+                        <span class="settings-label">关于梦见</span>
+                        <div class="settings-value">
+                            v1.0.0
+                            <svg
+                                class="icon-svg"
+                                style="width: 16px; height: 16px"
+                                viewBox="0 0 24 24"
+                            >
+                                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="settings-item">
+                        <span class="settings-label">用户协议</span>
+                        <div class="settings-value">
+                            <svg
+                                class="icon-svg"
+                                style="width: 16px; height: 16px"
+                                viewBox="0 0 24 24"
+                            >
+                                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="settings-item">
+                        <span class="settings-label">隐私政策</span>
+                        <div class="settings-value">
+                            <svg
+                                class="icon-svg"
+                                style="width: 16px; height: 16px"
+                                viewBox="0 0 24 24"
+                            >
+                                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    class="settings-list"
+                    style="margin-top: 32px"
+                >
+                    <div class="settings-item">
+                        <span class="logout-btn">退出登录</span>
+                    </div>
+                </div>
+
+                <div
+                    class="text-center text-xs text-light"
+                    style="margin-top: 20px"
+                >
+                    Dream v1.0.0 Build 20260122
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
