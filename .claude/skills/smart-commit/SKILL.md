@@ -13,6 +13,7 @@ description: 智能分组提交代码。按功能/模块划分未提交的代码
 2. **使用 git config 作者** - 保持当前 git 配置的 user.name 和 user.email 作为提交作者
 3. **代码安全优先** - 遇到 husky 预处理失败时，必须确保代码不丢失
 4. **原子化提交** - 每个 commit 应该是一个独立的功能单元
+5. **遵守 commitlint** - 本项目使用 `@commitlint/config-conventional`，commit message 必须符合规范
 
 ## 执行流程
 
@@ -40,26 +41,43 @@ git log --oneline -10
 
 根据以下维度对变更进行分组：
 
-1. **按目录/模块分组**（本项目结构）
-    - `noteapp/web/` - NoteApp 前端
-    - `noteapp/ele/` - NoteApp Electron 客户端
-    - `packages/` - 共享包
+1. **按目录/模块分组**（本项目 monorepo 结构）
+    - `src/` - 前端 uni-app 项目（scope: `client`）
+        - `src/pages/` - 页面组件
+        - `src/components/` - 公共组件
+        - `src/api/` - API 接口层
+        - `src/stores/` - Pinia 状态管理
+        - `src/composables/` - 组合式函数
+        - `src/styles/` - 样式文件
+        - `src/static/` - 静态资源
+        - `src/utils/` - 工具函数
+        - `src/types/` - 类型定义
+        - `src/constants/` - 常量定义
+    - `server/` - 后端 NestJS 项目（scope: `server`）
+        - `server/src/modules/` - 业务模块（user, dream, analysis, task, points, vip, explore, polish, version, achievement, settings, scheduler, ad, export, privilege）
+        - `server/src/common/` - 通用功能（guards, filters, interceptors, decorators, pipes）
+        - `server/src/shared/` - 共享服务（ai, cache, logger, wechat）
+        - `server/prisma/` - 数据库 schema 和迁移
+    - `design/` - 设计资源
+    - `scripts/` - 脚本工具
+    - `docs/` - 项目文档
     - `.claude/` - Claude 配置
-    - 根目录配置文件
+    - 根目录配置文件（package.json, tsconfig.json, vite.config.ts, eslint 配置等）
 
 2. **按功能类型分组**
-    - `feat:` - 新功能
-    - `fix:` - bug 修复
-    - `refactor:` - 代码重构
-    - `style:` - 样式/格式调整
-    - `docs:` - 文档更新
-    - `chore:` - 构建/工具/配置变更
-    - `test:` - 测试相关
-    - `perf:` - 性能优化
+    - `feat` - 新功能
+    - `fix` - bug 修复
+    - `refactor` - 代码重构
+    - `style` - 样式/格式调整
+    - `docs` - 文档更新
+    - `chore` - 构建/工具/配置变更
+    - `test` - 测试相关
+    - `perf` - 性能优化
 
 3. **按业务功能分组**
-    - 识别相关联的文件（如组件 + hooks + 类型定义）
-    - 将同一功能的变更归为一组
+    - 识别相关联的文件（如页面 + API + Store + 类型定义）
+    - 将同一功能的前后端变更可根据情况合并或拆分
+    - 同一模块的 controller + service + dto 变更归为一组
 
 ### 第三步：与用户确认分组方案
 
@@ -68,12 +86,17 @@ git log --oneline -10
 ```
 建议将变更分为以下 N 个 commit:
 
-1. feat: 添加 XXX 功能
-   - file1.tsx
-   - file2.ts
+1. feat(server): 添加 XXX 模块
+   - server/src/modules/xxx/xxx.controller.ts
+   - server/src/modules/xxx/xxx.service.ts
 
-2. fix: 修复 YYY 问题
-   - file3.ts
+2. feat(client): XXX 页面
+   - src/pages/xxx/index.vue
+   - src/api/modules/xxx.ts
+
+3. chore: 更新项目配置
+   - package.json
+   - vite.config.ts
 
 请确认或调整分组方案。
 ```
@@ -90,16 +113,30 @@ git reset HEAD
 git add <file1> <file2> ...
 
 # 3. 提交（不带 Co-Authored-By）
-git commit -m "<type>: <description>"
+git commit -m "<type>(<scope>): <description>"
 ```
 
 ## Commit Message 规范
 
-### 格式（本项目风格）
+### 格式（遵循 conventional commits + 本项目风格）
+
+```
+<type>(<scope>): <简短中文描述>
+```
+
+或不带 scope（跨模块或通用变更）：
 
 ```
 <type>: <简短中文描述>
 ```
+
+### Scope 约定
+
+| Scope    | 适用范围                     |
+| -------- | ---------------------------- |
+| client   | 前端 `src/` 目录下的变更     |
+| server   | 后端 `server/` 目录下的变更  |
+| 无 scope | 根目录配置、跨前后端、文档等 |
 
 ### Type 类型
 
@@ -108,7 +145,7 @@ git commit -m "<type>: <description>"
 | feat     | 新功能                 |
 | fix      | Bug 修复               |
 | refactor | 代码重构（不改变功能） |
-| style    | 格式调整（空格、分号） |
+| style    | 样式/格式调整          |
 | docs     | 文档变更               |
 | test     | 测试相关               |
 | chore    | 构建/工具变更          |
@@ -117,15 +154,21 @@ git commit -m "<type>: <description>"
 ### 示例（参考本项目历史）
 
 ```
-feat: 微信登录
-fix: 修复阴影
-fix: 优化创意工坊
-chore: 移除不需要的文件
+feat(server): 核心业务模块
+feat(server): 扩展业务模块
+feat(client): 页面和组件
+feat(client): api 层和状态管理
+style: 样式系统和静态资源
+docs: 完善项目文档
+chore: 项目配置和 monorepo 设置
 ```
 
 ## 错误处理：Husky 预处理失败
 
-当 `git commit` 因 husky pre-commit hook 失败时：
+本项目的 git hooks 流程：
+
+- **pre-commit**: 运行 `lint-staged`（对暂存文件执行 prettier + eslint）
+- **commit-msg**: 运行 `commitlint`（校验 commit message 格式）
 
 ### 1. 保存当前状态
 
@@ -139,28 +182,37 @@ git stash push -m "backup-before-fix-$(date +%Y%m%d-%H%M%S)"
 
 ### 2. 分析失败原因
 
-常见失败原因：
+**lint-staged 失败**（pre-commit hook）：
 
-- ESLint 错误
-- TypeScript 类型错误
-- 格式化问题
+lint-staged 会对暂存文件执行以下操作：
+
+- `*.{js,ts,jsx,tsx,vue,mjs,cjs}` → `prettier --write` + `eslint --fix`
+- `*.{html,css,scss,less,json,md,yaml,yml}` → `prettier --write`
 
 ```bash
-# 运行 lint 检查
-pnpm lint
+# 手动检查 eslint 问题（前端）
+pnpm eslint --no-error-on-unmatched-pattern <暂存的文件>
 
-# 运行类型检查
-pnpm type-check
+# 手动检查 eslint 问题（后端）
+cd server && pnpm lint
 ```
+
+**commitlint 失败**（commit-msg hook）：
+
+commit message 必须符合 conventional commits 格式。常见错误：
+
+- 缺少 type 前缀
+- type 不在允许列表中
+- 格式不正确（如多了空格、缺少冒号后的空格）
 
 ### 3. 修复问题
 
 ```bash
-# 自动修复 lint 问题
-pnpm lint --fix
+# 自动格式化
+npx prettier --write <文件列表>
 
-# 格式化代码
-pnpm format
+# 自动修复 eslint
+npx eslint --fix <文件列表>
 ```
 
 ### 4. 恢复并重新提交
@@ -169,11 +221,11 @@ pnpm format
 # 恢复 stash
 git stash pop
 
-# 重新添加文件
+# 重新添加文件（包含修复后的变更）
 git add <files>
 
-# 重新提交
-git commit -m "<message>"
+# 重新提交（确保 message 格式正确）
+git commit -m "<type>(<scope>): <description>"
 ```
 
 ### 5. 如果修复失败
