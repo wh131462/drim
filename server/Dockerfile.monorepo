@@ -49,12 +49,16 @@ COPY server/prisma ./prisma/
 # 复制构建产物
 COPY --from=builder /app/dist ./dist
 
+# 复制启动脚本
+COPY server/scripts/docker-entrypoint.sh ./scripts/
+
 # 创建 uploads 目录并设置权限
-RUN mkdir -p /app/uploads/avatars && chown -R nestjs:nodejs /app/uploads
+RUN mkdir -p /app/uploads/avatars && chown -R nestjs:nodejs /app/uploads && \
+    chmod +x /app/scripts/docker-entrypoint.sh
 
 # 切换到非 root 用户
 USER nestjs
 
 EXPOSE 3333
 
-CMD ["node", "dist/main"]
+CMD ["/app/scripts/docker-entrypoint.sh"]
