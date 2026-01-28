@@ -41,9 +41,10 @@ RUN groupadd -g 1001 nodejs && \
 COPY server/package.json ./
 RUN npm install --omit=dev --legacy-peer-deps && npm cache clean --force
 
-# 从 builder 复制 Prisma Client（避免重复生成）
+# 从 builder 复制 Prisma Client 和 CLI（避免重复生成）
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 COPY server/prisma ./prisma/
 
 # 复制构建产物
