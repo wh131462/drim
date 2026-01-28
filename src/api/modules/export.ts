@@ -37,6 +37,13 @@ export const exportApi = {
     },
 
     /**
+     * 获取导出数据（JSON 格式）
+     */
+    getData(): Promise<string> {
+        return get<string>('/export/dreams', { format: 'json' });
+    },
+
+    /**
      * 获取导出文件下载地址
      */
     getDownloadUrl(): string {

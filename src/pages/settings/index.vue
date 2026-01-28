@@ -306,40 +306,48 @@ async function handleExportData() {
 
         uni.showModal({
             title: '确认导出',
-            content: `将导出以下数据：\n- 梦境记录：${statistics.totalDreams} 条\n- 解析结果：${statistics.totalAnalyses} 条\n- 完成任务：${statistics.completedTasks} 条\n\n数据将以 JSON 格式下载`,
-            confirmText: '开始导出',
-            success: (res) => {
+            content: `将导出以下数据：\n- 梦境记录：${statistics.totalDreams} 条\n- 解析结果：${statistics.totalAnalyses} 条\n- 完成任务：${statistics.completedTasks} 条`,
+            confirmText: '复制数据',
+            success: async (res) => {
                 if (res.confirm) {
                     // #ifdef MP-WEIXIN
-                    const downloadUrl = exportApi.getDownloadUrl();
-                    uni.showLoading({ title: '导出中...' });
+                    try {
+                        uni.showLoading({ title: '导出中...' });
+                        const token = uni.getStorageSync('token');
+                        const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3333/api/v1';
 
-                    uni.downloadFile({
-                        url: downloadUrl,
-                        success: (downloadRes) => {
-                            uni.hideLoading();
-                            if (downloadRes.statusCode === 200) {
-                                uni.saveFile({
-                                    tempFilePath: downloadRes.tempFilePath,
-                                    success: (saveRes) => {
-                                        uni.showToast({ title: '导出成功', icon: 'success' });
-                                        // 打开文件
-                                        uni.openDocument({
-                                            filePath: saveRes.savedFilePath,
-                                            showMenu: true
-                                        });
-                                    },
-                                    fail: () => {
-                                        uni.showToast({ title: '保存失败', icon: 'none' });
-                                    }
-                                });
+                        uni.request({
+                            url: `${baseUrl}/export/dreams`,
+                            method: 'GET',
+                            header: {
+                                Authorization: `Bearer ${token}`
+                            },
+                            success: (response) => {
+                                uni.hideLoading();
+                                if (response.statusCode === 200) {
+                                    const jsonData =
+                                        typeof response.data === 'string'
+                                            ? response.data
+                                            : JSON.stringify(response.data, null, 2);
+                                    uni.setClipboardData({
+                                        data: jsonData,
+                                        success: () => {
+                                            uni.showToast({ title: '已复制到剪贴板', icon: 'success' });
+                                        }
+                                    });
+                                } else {
+                                    uni.showToast({ title: '导出失败', icon: 'none' });
+                                }
+                            },
+                            fail: () => {
+                                uni.hideLoading();
+                                uni.showToast({ title: '导出失败', icon: 'none' });
                             }
-                        },
-                        fail: () => {
-                            uni.hideLoading();
-                            uni.showToast({ title: '下载失败', icon: 'none' });
-                        }
-                    });
+                        });
+                    } catch {
+                        uni.hideLoading();
+                        uni.showToast({ title: '导出失败', icon: 'none' });
+                    }
                     // #endif
 
                     // #ifdef H5
@@ -348,7 +356,7 @@ async function handleExportData() {
                 }
             }
         });
-    } catch (error) {
+    } catch {
         uni.hideLoading();
         uni.showToast({ title: '获取数据失败', icon: 'none' });
     }

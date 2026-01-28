@@ -123,9 +123,10 @@
 
                 <!-- 版权信息 -->
                 <view class="footer">
-                    <text class="footer-text">Drim v1.0.0</text>
-                    <text class="footer-text">Copyright &copy; 2026 EternalHeart</text>
-                    <text class="footer-text">All Rights Reserved</text>
+                    <text class="footer-version">Drim v1.0.0</text>
+                    <text class="footer-copyright">&copy; 2026 EternalHeart</text>
+                    <view class="footer-divider"></view>
+                    <text class="footer-icp">冀ICP备19005334号-4X</text>
                 </view>
             </view>
         </scroll-view>
@@ -243,8 +244,17 @@ onMounted(() => {
             color: $dark-text-secondary;
         }
 
-        .footer-text {
+        .footer-version {
+            color: $dark-text-secondary;
+        }
+
+        .footer-copyright,
+        .footer-icp {
             color: $dark-text-placeholder;
+        }
+
+        .footer-divider {
+            background: rgba(255, 255, 255, 0.1);
         }
     }
 }
@@ -445,14 +455,32 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8rpx;
+    gap: 16rpx;
     margin-top: 64rpx;
-    padding-top: 32rpx;
-    border-top: 1rpx solid #eee;
+    padding: 40rpx 0 20rpx;
 }
 
-.footer-text {
+.footer-version {
+    font-size: 26rpx;
+    font-weight: 500;
+    color: $text-secondary;
+}
+
+.footer-copyright {
     font-size: 24rpx;
     color: $text-placeholder;
+}
+
+.footer-divider {
+    width: 48rpx;
+    height: 2rpx;
+    background: #e5e5e5;
+    margin: 8rpx 0;
+}
+
+.footer-icp {
+    font-size: 22rpx;
+    color: $text-placeholder;
+    opacity: 0.8;
 }
 </style>

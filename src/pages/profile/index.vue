@@ -71,7 +71,35 @@
         <view class="card calendar-card">
             <view class="card-header">
                 <text class="card-title">梦境日历</text>
-                <view class="month-badge">{{ currentYear }}年{{ currentMonth }}月</view>
+                <view class="month-nav">
+                    <view
+                        class="nav-btn"
+                        @tap="prevMonth"
+                    >
+                        <image
+                            class="nav-icon prev"
+                            src="/static/icons/arrow-right.svg"
+                            mode="aspectFit"
+                        />
+                    </view>
+                    <view
+                        class="month-badge"
+                        @tap="goToCurrentMonth"
+                    >
+                        {{ currentYear }}年{{ currentMonth }}月
+                    </view>
+                    <view
+                        class="nav-btn"
+                        :class="{ disabled: isCurrentMonth }"
+                        @tap="nextMonth"
+                    >
+                        <image
+                            class="nav-icon"
+                            src="/static/icons/arrow-right.svg"
+                            mode="aspectFit"
+                        />
+                    </view>
+                </view>
             </view>
             <view class="calendar-grid">
                 <!-- 星期头 -->
@@ -96,6 +124,17 @@
                 >
                     <text v-if="day">{{ day }}</text>
                 </view>
+            </view>
+            <!-- 月度统计 -->
+            <view class="calendar-stats">
+                <text class="stats-text">本月记梦 {{ monthDreamCount }} 天</text>
+                <text
+                    v-if="!isCurrentMonth"
+                    class="back-today"
+                    @tap="goToCurrentMonth"
+                >
+                    回到今天
+                </text>
             </view>
         </view>
 
@@ -194,6 +233,18 @@ const showProfileModal = ref(false);
 // 数据
 const currentYear = ref(new Date().getFullYear());
 const currentMonth = ref(new Date().getMonth() + 1);
+const calendarLoading = ref(false);
+
+// 判断是否为当前月份
+const isCurrentMonth = computed(() => {
+    const now = new Date();
+    return currentYear.value === now.getFullYear() && currentMonth.value === now.getMonth() + 1;
+});
+
+// 当月记梦天数
+const monthDreamCount = computed(() => {
+    return dreamStore.calendar.filter((r) => r.hasDream).length;
+});
 
 // 计算日历数据
 const calendarDays = computed(() => {
@@ -257,7 +308,47 @@ function goToSettings() {
 }
 
 async function loadCalendar() {
-    await dreamStore.fetchCalendar(currentYear.value, currentMonth.value);
+    calendarLoading.value = true;
+    try {
+        await dreamStore.fetchCalendar(currentYear.value, currentMonth.value);
+    } finally {
+        calendarLoading.value = false;
+    }
+}
+
+// 上一月
+function prevMonth() {
+    if (currentMonth.value === 1) {
+        currentMonth.value = 12;
+        currentYear.value -= 1;
+    } else {
+        currentMonth.value -= 1;
+    }
+    loadCalendar();
+}
+
+// 下一月
+function nextMonth() {
+    if (isCurrentMonth.value) return;
+
+    if (currentMonth.value === 12) {
+        currentMonth.value = 1;
+        currentYear.value += 1;
+    } else {
+        currentMonth.value += 1;
+    }
+    loadCalendar();
+}
+
+// 回到当前月份
+function goToCurrentMonth() {
+    const now = new Date();
+    if (currentYear.value === now.getFullYear() && currentMonth.value === now.getMonth() + 1) {
+        return;
+    }
+    currentYear.value = now.getFullYear();
+    currentMonth.value = now.getMonth() + 1;
+    loadCalendar();
 }
 
 function handleAvatarClick() {
@@ -373,6 +464,31 @@ onShow(() => {
         .month-badge {
             color: $dark-primary-color;
             background: $dark-primary-light;
+        }
+
+        .nav-btn {
+            background: $dark-primary-light;
+
+            &:active {
+                background: rgba(107, 78, 255, 0.3);
+            }
+        }
+
+        .nav-icon {
+            filter: brightness(0) saturate(100%) invert(55%) sepia(98%) saturate(1352%) hue-rotate(235deg)
+                brightness(100%) contrast(93%);
+        }
+
+        .calendar-stats {
+            border-top-color: $dark-border-color;
+        }
+
+        .stats-text {
+            color: $dark-text-secondary;
+        }
+
+        .back-today {
+            color: $dark-primary-color;
         }
 
         .calendar-day {
@@ -648,13 +764,58 @@ onShow(() => {
     color: $text-primary;
 }
 
+.month-nav {
+    display: flex;
+    align-items: center;
+    gap: 16rpx;
+}
+
+.nav-btn {
+    width: 56rpx;
+    height: 56rpx;
+    border-radius: 50%;
+    background: rgba(107, 78, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+
+    &:active {
+        transform: scale(0.9);
+        background: rgba(107, 78, 255, 0.2);
+    }
+
+    &.disabled {
+        opacity: 0.3;
+        pointer-events: none;
+    }
+}
+
+.nav-icon {
+    width: 28rpx;
+    height: 28rpx;
+    filter: brightness(0) saturate(100%) invert(32%) sepia(98%) saturate(1352%) hue-rotate(235deg) brightness(87%)
+        contrast(93%);
+
+    &.prev {
+        transform: rotate(180deg);
+    }
+}
+
 .month-badge {
     font-size: 24rpx;
     font-weight: 700;
     color: $primary-color;
     background: rgba(107, 78, 255, 0.1);
-    padding: 8rpx 20rpx;
+    padding: 8rpx 24rpx;
     border-radius: 24rpx;
+    min-width: 160rpx;
+    text-align: center;
+    transition: all 0.2s;
+
+    &:active {
+        background: rgba(107, 78, 255, 0.2);
+    }
 }
 
 .calendar-grid {
@@ -707,6 +868,31 @@ onShow(() => {
         background: currentColor;
         border-radius: 50%;
         opacity: 0.6;
+    }
+}
+
+// 月度统计
+.calendar-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 32rpx;
+    padding-top: 24rpx;
+    border-top: 2rpx solid #f0f0f0;
+}
+
+.stats-text {
+    font-size: 24rpx;
+    color: $text-secondary;
+}
+
+.back-today {
+    font-size: 24rpx;
+    color: $primary-color;
+    font-weight: 500;
+
+    &:active {
+        opacity: 0.7;
     }
 }
 
