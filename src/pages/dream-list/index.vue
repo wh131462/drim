@@ -299,6 +299,7 @@ import { getFilterTags, getTagDisplayName, isPresetTag } from '@/constants/tags'
 import NavBar from '@/components/NavBar/index.vue';
 
 const userStore = useUserStore();
+const navBarHeight = ref(0);
 
 // 情绪选项
 const emotions = [
@@ -576,6 +577,10 @@ onLoad((options) => {
 });
 
 onMounted(() => {
+    const systemInfo = uni.getSystemInfoSync();
+    const statusBarHeight = systemInfo.statusBarHeight || 0;
+    navBarHeight.value = statusBarHeight + 44;
+
     loadDreams(true);
 });
 
@@ -595,7 +600,7 @@ onShow(() => {
 .dream-list-page {
     min-height: 100vh;
     background: $bg-page;
-    padding-top: 44px;
+    padding-top: calc(v-bind('navBarHeight') * 2rpx);
     display: flex;
     flex-direction: column;
 }
