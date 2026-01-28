@@ -32,8 +32,10 @@ WORKDIR /app
 # 安装 OpenSSL（Prisma 运行时需要）
 RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
-# 创建非 root 用户
-RUN groupadd -g 1001 nodejs && useradd -u 1001 -g nodejs nestjs
+# 创建非 root 用户并设置 home 目录
+RUN groupadd -g 1001 nodejs && \
+    useradd -u 1001 -g nodejs -m -d /home/nestjs nestjs && \
+    chown -R nestjs:nodejs /home/nestjs
 
 # 复制 package.json 并安装生产依赖
 COPY server/package.json ./
