@@ -214,7 +214,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { useUserStore } from '@/stores';
 import { versionApi } from '@/api';
@@ -227,6 +227,7 @@ const userStore = useUserStore();
 const versions = ref<DreamVersion[]>([]);
 const dreamId = ref('');
 const isReady = ref(false);
+const navBarHeight = ref(0);
 
 // 计算属性
 const totalVersions = computed(() => versions.value.length);
@@ -349,6 +350,12 @@ onLoad((options) => {
     isReady.value = true;
     loadVersions();
 });
+
+onMounted(() => {
+    const systemInfo = uni.getSystemInfoSync();
+    const statusBarHeight = systemInfo.statusBarHeight || 0;
+    navBarHeight.value = statusBarHeight + 44;
+});
 </script>
 
 <style lang="scss" scoped>
@@ -359,7 +366,7 @@ onLoad((options) => {
 .versions-page {
     min-height: 100vh;
     background: $bg-page;
-    padding-top: 44px;
+    padding-top: calc(v-bind('navBarHeight') * 2rpx);
     padding-bottom: 100rpx;
 }
 
