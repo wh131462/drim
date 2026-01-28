@@ -43,35 +43,118 @@
 
         <!-- 梦境回顾卡片 -->
         <view
-            class="card review-card"
-            v-if="latestDream"
-            @tap="goToDreamDetail(latestDream.id)"
+            class="dream-review-section"
+            v-if="displayDreams.length > 0"
         >
-            <view class="review-header">
-                <view class="review-title">
-                    <image
-                        class="review-icon"
-                        src="/static/icons/info.svg"
-                        mode="aspectFit"
-                    />
-                    <text>{{ reviewTitle }}</text>
-                </view>
-                <text class="review-date">{{ formatDreamDate(latestDream.createdAt) }}</text>
-            </view>
-            <view class="review-content">
-                <text>"{{ latestDream.content }}"</text>
-            </view>
-            <view class="review-footer">
-                <view class="review-tags">
-                    <text
-                        class="tag"
-                        v-for="(tag, index) in latestDreamTags"
-                        :key="index"
-                        >{{ tag }}</text
+            <swiper
+                v-if="displayDreams.length > 1"
+                class="dream-swiper"
+                :indicator-dots="true"
+                indicator-color="rgba(255,255,255,0.3)"
+                indicator-active-color="#ffffff"
+                :autoplay="false"
+                :current="currentDreamIndex"
+                @change="onSwiperChange"
+            >
+                <swiper-item
+                    v-for="dream in displayDreams"
+                    :key="dream.id"
+                >
+                    <view
+                        class="card review-card"
+                        @tap="goToDreamDetail(dream.id)"
                     >
+                        <view class="review-header">
+                            <view class="review-title">
+                                <image
+                                    class="review-icon"
+                                    src="/static/icons/info.svg"
+                                    mode="aspectFit"
+                                />
+                                <text>{{ getDreamTitle(dream) }}</text>
+                            </view>
+                            <view class="review-header-right">
+                                <view
+                                    v-if="dream.fortuneScore"
+                                    class="fortune-badge"
+                                    :style="{ background: getScoreGradient(dream.fortuneScore) }"
+                                >
+                                    <text class="fortune-score">{{ dream.fortuneScore }}</text>
+                                    <text class="fortune-label">运势</text>
+                                </view>
+                                <text
+                                    v-else
+                                    class="review-date"
+                                    >{{ formatDreamDate(dream.createdAt) }}</text
+                                >
+                            </view>
+                        </view>
+                        <view class="review-content">
+                            <text>&ldquo;{{ dream.content }}&rdquo;</text>
+                        </view>
+                        <view class="review-footer">
+                            <view class="review-tags">
+                                <text
+                                    class="tag"
+                                    v-for="(tag, index) in getDreamTags(dream)"
+                                    :key="index"
+                                    >{{ tag }}</text
+                                >
+                            </view>
+                            <view class="review-action">
+                                <text>查看详情</text>
+                            </view>
+                        </view>
+                    </view>
+                </swiper-item>
+            </swiper>
+
+            <!-- 只有一条梦境时，不使用 swiper -->
+            <view
+                v-else
+                class="card review-card"
+                @tap="goToDreamDetail(displayDreams[0].id)"
+            >
+                <view class="review-header">
+                    <view class="review-title">
+                        <image
+                            class="review-icon"
+                            src="/static/icons/info.svg"
+                            mode="aspectFit"
+                        />
+                        <text>{{ getDreamTitle(displayDreams[0]) }}</text>
+                    </view>
+                    <view class="review-header-right">
+                        <view
+                            v-if="displayDreams[0].fortuneScore"
+                            class="fortune-badge"
+                            :style="{ background: getScoreGradient(displayDreams[0].fortuneScore) }"
+                        >
+                            <text class="fortune-score">{{ displayDreams[0].fortuneScore }}</text>
+                            <text class="fortune-label">运势</text>
+                        </view>
+                        <text
+                            v-else
+                            class="review-date"
+                            >{{ formatDreamDate(displayDreams[0].createdAt) }}</text
+                        >
+                    </view>
                 </view>
-                <view class="review-action">
-                    <text>查看详情</text>
+                <view class="review-content">
+                    <text>&ldquo;{{ displayDreams[0].content }}&rdquo;</text>
+                </view>
+                <view class="review-footer">
+                    <view class="review-tags">
+                        <text
+                            class="tag"
+                            v-for="(tag, index) in getDreamTags(displayDreams[0])"
+                            :key="index"
+                            >{{ tag }}</text
+                        >
+                    </view>
+                    <view class="review-action">
+                        <text>查看详情</text>
+                    </view>
                 </view>
             </view>
         </view>
@@ -88,22 +171,42 @@
 
             <view class="task-header">
                 <view class="task-header-left">
-                    <text class="task-label">✨ 今日小任务</text>
+                    <image
+                        class="task-label-icon"
+                        src="/static/icons/sparkle.svg"
+                        mode="aspectFit"
+                    />
+                    <text class="task-label">今日小任务</text>
                 </view>
                 <view class="task-reward-badge">
-                    <text class="reward-icon">🍀</text>
+                    <image
+                        class="reward-icon-svg"
+                        src="/static/icons/clover.svg"
+                        mode="aspectFit"
+                    />
                     <text class="reward-value">+{{ currentTask.rewardPoints }}</text>
                 </view>
             </view>
 
             <view class="task-main">
                 <view class="task-icon-wrapper">
-                    <text class="task-emoji">{{ getTaskEmoji(currentTask.type) }}</text>
+                    <image
+                        class="task-type-icon"
+                        :src="getTaskIcon(currentTask.type)"
+                        mode="aspectFit"
+                    />
                     <view class="task-icon-ring"></view>
                 </view>
                 <view class="task-info">
                     <text class="task-name">{{ currentTask.content }}</text>
-                    <text class="task-hint">完成后好运+1 💫</text>
+                    <view class="task-hint-row">
+                        <text class="task-hint">完成后好运+1</text>
+                        <image
+                            class="task-hint-icon"
+                            src="/static/icons/star-magic.svg"
+                            mode="aspectFit"
+                        />
+                    </view>
                 </view>
             </view>
 
@@ -113,7 +216,13 @@
                     :class="{ completed: currentTask.status === 'completed' }"
                     @tap="currentTask.status === 'pending' && completeTask()"
                 >
-                    <text class="btn-text">{{ currentTask.status === 'completed' ? '🎉 已完成' : '打卡领取' }}</text>
+                    <image
+                        v-if="currentTask.status === 'completed'"
+                        class="btn-icon"
+                        src="/static/icons/celebrate.svg"
+                        mode="aspectFit"
+                    />
+                    <text class="btn-text">{{ currentTask.status === 'completed' ? '已完成' : '打卡领取' }}</text>
                     <view
                         class="btn-shine"
                         v-if="currentTask.status === 'pending'"
@@ -134,6 +243,13 @@
             @complete="onProfileComplete"
             @skip="onProfileSkip"
         />
+
+        <!-- 任务奖励弹窗 -->
+        <task-reward-modal
+            v-model:visible="showTaskRewardModal"
+            :base-points="currentTask?.rewardPoints || 10"
+            @complete="onTaskRewardComplete"
+        />
     </view>
 </template>
 
@@ -142,10 +258,13 @@ import { computed, onMounted, ref } from 'vue';
 import { onShow, onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app';
 import { useUserStore, useDreamStore } from '@/stores';
 import { getFriendlyDate, isToday, isYesterday } from '@/utils/date';
+import { getTagDisplayName } from '@/constants/tags';
 import { taskApi } from '@/api';
 import type { Task } from '@/api/modules/task';
+import type { Dream } from '@/types/dream';
 import CustomTabBar from '@/custom-tab-bar/index.vue';
 import UserProfileModal from '@/components/UserProfileModal/index.vue';
+import TaskRewardModal from '@/components/TaskRewardModal/index.vue';
 
 const userStore = useUserStore();
 const dreamStore = useDreamStore();
@@ -157,6 +276,9 @@ const taskCompleted = ref(false);
 
 // 资料填写弹窗
 const showProfileModal = ref(false);
+
+// 任务奖励弹窗
+const showTaskRewardModal = ref(false);
 
 // 欢迎语随机索引
 const welcomeIndex = ref(0);
@@ -204,24 +326,41 @@ function refreshWelcome() {
     welcomeIndex.value = Math.floor(Math.random() * messages.length);
 }
 
-const latestDream = computed(() => dreamStore.latestDream);
-const latestDreamTags = computed(() => {
-    if (!latestDream.value) return [];
-    return latestDream.value.tags?.slice(0, 2) || ['飞行', '自然'];
+// 今日多梦境展示
+const displayDreams = computed(() => {
+    const todayDreams = dreamStore.todayDreams;
+    if (todayDreams.length > 0) return todayDreams;
+    // 没有今日梦境时，展示最新一条
+    const latest = dreamStore.latestDream;
+    return latest ? [latest] : [];
 });
 
-// 根据梦境日期生成动态标题
-const reviewTitle = computed(() => {
-    if (!latestDream.value) return '';
-    const date = latestDream.value.createdAt;
+const currentDreamIndex = ref(0);
+
+function onSwiperChange(e: any) {
+    currentDreamIndex.value = e.detail.current;
+}
+
+function getDreamTitle(dream: Dream): string {
+    const date = dream.createdAt;
     if (isToday(date)) {
+        const todayDreams = dreamStore.todayDreams;
+        if (todayDreams.length > 1) {
+            const index = todayDreams.findIndex((d) => d.id === dream.id);
+            return `今日梦境 ${index + 1}/${todayDreams.length}`;
+        }
         return '今日梦境';
     }
     if (isYesterday(date)) {
         return '昨日解析回顾';
     }
     return `${getFriendlyDate(date)} 解析回顾`;
-});
+}
+
+function getDreamTags(dream: Dream): string[] {
+    if (!dream.tags) return [];
+    return dream.tags.slice(0, 2).map((tagId) => getTagDisplayName(tagId));
+}
 
 // 方法
 function formatDreamDate(date: string) {
@@ -236,18 +375,26 @@ function goToDreamDetail(dreamId: string) {
     uni.navigateTo({ url: `/pages/dream-detail/index?id=${dreamId}` });
 }
 
-function getTaskEmoji(taskType: string): string {
-    const emojiMap: Record<string, string> = {
-        meditation: '🧘',
-        exercise: '🏃',
-        reading: '📚',
-        gratitude: '🙏',
-        nature: '🌳',
-        music: '🎵',
-        art: '🎨',
-        social: '👥'
+function getTaskIcon(taskType: string): string {
+    const iconMap: Record<string, string> = {
+        meditation: '/static/icons/meditation.svg',
+        exercise: '/static/icons/running.svg',
+        reading: '/static/icons/book.svg',
+        gratitude: '/static/icons/gratitude.svg',
+        nature: '/static/icons/nature.svg',
+        music: '/static/icons/music.svg',
+        art: '/static/icons/art.svg',
+        social: '/static/icons/social.svg'
     };
-    return emojiMap[taskType] || '✨';
+    return iconMap[taskType] || '/static/icons/sparkle.svg';
+}
+
+// 运势评分渐变色
+function getScoreGradient(score: number): string {
+    if (score >= 85) return 'linear-gradient(135deg, #10b981 0%, #34d399 100%)'; // 绿色
+    if (score >= 75) return 'linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%)'; // 紫色
+    if (score >= 65) return 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)'; // 橙色
+    return 'linear-gradient(135deg, #ef4444 0%, #f87171 100%)'; // 红色
 }
 
 async function loadTodayTask() {
@@ -256,9 +403,16 @@ async function loadTodayTask() {
         if (response.task && response.task.status !== 'expired') {
             currentTask.value = response.task;
             taskCompleted.value = response.completed;
+        } else {
+            // 任务不存在或已过期时，重置状态
+            currentTask.value = null;
+            taskCompleted.value = false;
         }
     } catch (error: any) {
         console.error('加载今日任务失败:', error);
+        // 请求失败时也重置状态，避免显示旧数据
+        currentTask.value = null;
+        taskCompleted.value = false;
     }
 }
 
@@ -274,14 +428,11 @@ async function completeTask() {
             taskCompleted.value = true;
             currentTask.value.status = 'completed';
 
-            // 更新用户积分
+            // 更新用户积分（基础奖励）
             userStore.userInfo!.luckyPoints = response.totalPoints;
 
-            uni.showToast({
-                title: `打卡成功！获得${response.points}幸运值`,
-                icon: 'success',
-                duration: 2000
-            });
+            // 显示奖励弹窗，让用户选择是否看广告获得双倍
+            showTaskRewardModal.value = true;
         }
     } catch (error: any) {
         uni.hideLoading();
@@ -291,6 +442,13 @@ async function completeTask() {
             icon: 'none'
         });
     }
+}
+
+/**
+ * 任务奖励领取完成
+ */
+function onTaskRewardComplete(_data: { points: number; isDouble: boolean }) {
+    // 弹窗组件已展示完成状态，无需额外 toast
 }
 
 // 加载页面数据
@@ -363,7 +521,7 @@ onShow(async () => {
 .home-page {
     min-height: 100vh;
     background: #ffffff;
-    padding-bottom: 140rpx;
+    padding-bottom: 160rpx;
     transition: background-color 0.3s ease;
 
     &.dark-mode {
@@ -634,6 +792,23 @@ onShow(async () => {
     }
 }
 
+// 梦境回顾区域
+.dream-review-section {
+    margin: 32rpx;
+
+    > .review-card {
+        margin: 0;
+    }
+}
+
+.dream-swiper {
+    height: 380rpx;
+
+    .review-card {
+        margin: 0;
+    }
+}
+
 // 梦境回顾卡片
 .review-card {
     background: $primary-gradient;
@@ -676,9 +851,39 @@ onShow(async () => {
     filter: brightness(0) invert(1);
 }
 
+.review-header-right {
+    display: flex;
+    align-items: center;
+}
+
 .review-date {
     font-size: $font-size-xs;
     opacity: 0.8;
+}
+
+// 运势评分徽章
+.fortune-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 80rpx;
+    height: 80rpx;
+    border-radius: 50%;
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
+}
+
+.fortune-score {
+    font-size: 28rpx;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+}
+
+.fortune-label {
+    font-size: 18rpx;
+    color: rgba(255, 255, 255, 0.9);
+    margin-top: 2rpx;
 }
 
 .review-content {
@@ -687,6 +892,12 @@ onShow(async () => {
     opacity: 0.95;
     line-height: 1.6;
     font-weight: 500;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .review-footer {
@@ -787,6 +998,12 @@ onShow(async () => {
     align-items: center;
 }
 
+.task-label-icon {
+    width: 32rpx;
+    height: 32rpx;
+    margin-right: 8rpx;
+}
+
 .task-label {
     font-size: $font-size-base;
     font-weight: 600;
@@ -803,8 +1020,9 @@ onShow(async () => {
     box-shadow: 0 4rpx 12rpx rgba(102, 187, 106, 0.3);
 }
 
-.reward-icon {
-    font-size: 28rpx;
+.reward-icon-svg {
+    width: 28rpx;
+    height: 28rpx;
     margin-right: 6rpx;
 }
 
@@ -854,8 +1072,9 @@ onShow(async () => {
     }
 }
 
-.task-emoji {
-    font-size: 52rpx;
+.task-type-icon {
+    width: 56rpx;
+    height: 56rpx;
 }
 
 .task-info {
@@ -872,9 +1091,20 @@ onShow(async () => {
     line-height: 1.4;
 }
 
+.task-hint-row {
+    display: flex;
+    align-items: center;
+}
+
 .task-hint {
     font-size: $font-size-xs;
     color: #8d6e63;
+}
+
+.task-hint-icon {
+    width: 24rpx;
+    height: 24rpx;
+    margin-left: 6rpx;
 }
 
 .task-action {
@@ -904,6 +1134,12 @@ onShow(async () => {
         background: linear-gradient(135deg, #a5d6a7 0%, #81c784 100%);
         box-shadow: 0 8rpx 24rpx rgba(129, 199, 132, 0.35);
     }
+}
+
+.btn-icon {
+    width: 32rpx;
+    height: 32rpx;
+    margin-right: 8rpx;
 }
 
 .btn-text {

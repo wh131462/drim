@@ -211,7 +211,7 @@ function handleConfirm() {
     color: $primary-color;
 }
 
-// 深色模式
+// 暗黑模式
 .dark-mode {
     .time-picker-panel {
         background: $dark-bg-card;

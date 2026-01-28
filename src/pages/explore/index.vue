@@ -71,76 +71,104 @@
 
             <!-- 梦境信息流 -->
             <view class="dream-feed">
-                <view
-                    v-for="dream in publicDreams"
-                    :key="dream.id"
-                    class="public-dream-card"
-                    @tap="viewDream(dream.id)"
+                <template
+                    v-for="(item, index) in mixedList"
+                    :key="item.type === 'ad' ? `ad-${index}` : item.data.id"
                 >
-                    <!-- 作者信息 -->
-                    <view class="dream-author">
-                        <view class="author-avatar">
-                            <image
-                                v-if="dream.author.avatar && !dream.author.avatarError"
-                                class="avatar-image"
-                                :src="dream.author.avatar"
-                                mode="aspectFill"
-                                @error="handleAvatarError(dream)"
-                            />
+                    <!-- 原生广告卡片 -->
+                    <view
+                        v-if="item.type === 'ad'"
+                        class="ad-card"
+                    >
+                        <view class="ad-label">
+                            <text>广告</text>
+                        </view>
+                        <!-- #ifdef MP-WEIXIN -->
+                        <ad
+                            unit-id="adunit-xxxxxxxx"
+                            ad-type="feeds"
+                            ad-theme="white"
+                            @error="handleAdError"
+                        />
+                        <!-- #endif -->
+                        <!-- #ifndef MP-WEIXIN -->
+                        <view class="ad-placeholder">
+                            <text class="ad-placeholder-text">广告位</text>
+                        </view>
+                        <!-- #endif -->
+                    </view>
+
+                    <!-- 梦境卡片 -->
+                    <view
+                        v-else
+                        class="public-dream-card"
+                        @tap="viewDream(item.data.id)"
+                    >
+                        <!-- 作者信息 -->
+                        <view class="dream-author">
+                            <view class="author-avatar">
+                                <image
+                                    v-if="item.data.author.avatar && !item.data.author.avatarError"
+                                    class="avatar-image"
+                                    :src="item.data.author.avatar"
+                                    mode="aspectFill"
+                                    @error="handleAvatarError(item.data)"
+                                />
+                                <text
+                                    v-else
+                                    class="avatar-text"
+                                >
+                                    {{ getAvatarText(item.data.author.nickname) }}
+                                </text>
+                            </view>
+                            <view class="author-info">
+                                <text class="author-name">{{ item.data.author.nickname }}</text>
+                                <text class="author-time">{{ formatTime(item.data.createdAt) }}</text>
+                            </view>
+                        </view>
+
+                        <!-- 梦境内容 -->
+                        <text class="dream-content">{{ item.data.content }}</text>
+
+                        <!-- 标签 -->
+                        <view
+                            v-if="item.data.tags && item.data.tags.length > 0"
+                            class="dream-tags"
+                        >
                             <text
-                                v-else
-                                class="avatar-text"
+                                v-for="tag in item.data.tags.slice(0, 3)"
+                                :key="tag"
+                                class="tag-chip"
                             >
-                                {{ getAvatarText(dream.author.nickname) }}
+                                {{ getTagLabel(tag) }}
                             </text>
                         </view>
-                        <view class="author-info">
-                            <text class="author-name">{{ dream.author.nickname }}</text>
-                            <text class="author-time">{{ formatTime(dream.createdAt) }}</text>
+
+                        <!-- 统计信息 -->
+                        <view class="dream-stats">
+                            <view
+                                class="stat-item like-btn"
+                                :class="{ liked: item.data.isLiked }"
+                                @tap.stop="toggleLike(item.data)"
+                            >
+                                <image
+                                    class="stat-icon"
+                                    src="/static/icons/heart.svg"
+                                    mode="aspectFit"
+                                />
+                                <text>{{ item.data.likeCount || 0 }}</text>
+                            </view>
+                            <view class="stat-item">
+                                <image
+                                    class="stat-icon"
+                                    src="/static/icons/eye.svg"
+                                    mode="aspectFit"
+                                />
+                                <text>{{ item.data.viewCount || 0 }}</text>
+                            </view>
                         </view>
                     </view>
-
-                    <!-- 梦境内容 -->
-                    <text class="dream-content">{{ dream.content }}</text>
-
-                    <!-- 标签 -->
-                    <view
-                        v-if="dream.tags && dream.tags.length > 0"
-                        class="dream-tags"
-                    >
-                        <text
-                            v-for="tag in dream.tags.slice(0, 3)"
-                            :key="tag"
-                            class="tag-chip"
-                        >
-                            {{ getTagLabel(tag) }}
-                        </text>
-                    </view>
-
-                    <!-- 统计信息 -->
-                    <view class="dream-stats">
-                        <view
-                            class="stat-item like-btn"
-                            :class="{ liked: dream.isLiked }"
-                            @tap.stop="toggleLike(dream)"
-                        >
-                            <image
-                                class="stat-icon"
-                                src="/static/icons/heart.svg"
-                                mode="aspectFit"
-                            />
-                            <text>{{ dream.likeCount || 0 }}</text>
-                        </view>
-                        <view class="stat-item">
-                            <image
-                                class="stat-icon"
-                                src="/static/icons/eye.svg"
-                                mode="aspectFit"
-                            />
-                            <text>{{ dream.viewCount || 0 }}</text>
-                        </view>
-                    </view>
-                </view>
+                </template>
 
                 <!-- 空状态 -->
                 <view
@@ -175,7 +203,7 @@
         >
             <image
                 class="random-icon"
-                src="/static/icons/refresh.svg"
+                src="/static/icons/portal-door.svg"
                 mode="aspectFit"
             />
         </view>
@@ -186,11 +214,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useUserStore } from '@/stores';
 import { exploreApi } from '@/api';
 import type { PublicDream, TagItem } from '@/api/modules/explore';
 import CustomTabBar from '@/custom-tab-bar/index.vue';
+import { insertAdsIntoList, getExploreFeedAdUnitId, isNativeAdAvailable } from '@/utils/ad';
+import { getTagDisplayName, getTagName } from '@/constants/tags';
 
 const userStore = useUserStore();
 
@@ -204,6 +234,20 @@ const refreshing = ref(false);
 const noMore = ref(false);
 const page = ref(1);
 const pageSize = 10;
+
+// 广告配置
+const adUnitId = getExploreFeedAdUnitId();
+const showAd = computed(() => isNativeAdAvailable() && !userStore.isVip);
+
+// 混合列表（包含梦境和广告）
+const mixedList = computed(() => {
+    return insertAdsIntoList(publicDreams.value, {
+        showAd: showAd.value,
+        firstPosition: 3,
+        interval: 5,
+        maxCount: 3
+    });
+});
 
 // 标签映射（包含图标）
 const tagLabels: Record<string, string> = {
@@ -253,10 +297,17 @@ const tagLabels: Record<string, string> = {
     梦幻: '🌙'
 };
 
-// 获取标签显示文本
+// 获取标签显示文本（用于筛选区域）
 function getTagDisplay(tag: string): string {
-    const icon = tagLabels[tag] || '';
-    return icon ? `${icon} ${tag}` : tag;
+    // 优先使用统一的标签工具函数
+    const displayName = getTagDisplayName(tag);
+    // 如果统一函数返回的是 "✨ xxx" 格式，说明是自定义标签
+    // 尝试从本地映射获取图标
+    if (displayName.startsWith('✨')) {
+        const icon = tagLabels[tag] || tagLabels[getTagName(tag)] || '';
+        return icon ? `${icon} ${getTagName(tag)}` : displayName;
+    }
+    return displayName;
 }
 
 // 加载可用标签
@@ -386,7 +437,11 @@ async function toggleLike(dream: PublicDream) {
 }
 
 function getTagLabel(tagId: string): string {
-    return tagLabels[tagId] || tagId;
+    // 优先使用统一的标签工具函数获取名称
+    const name = getTagName(tagId);
+    // 尝试获取图标
+    const icon = tagLabels[tagId] || tagLabels[name] || '';
+    return icon ? `${icon} ${name}` : name;
 }
 
 function formatTime(dateStr: string): string {
@@ -416,6 +471,11 @@ function getAvatarText(nickname: string): string {
     if (!nickname) return '梦';
     // 返回第一个字符
     return nickname.charAt(0);
+}
+
+// 处理广告加载错误
+function handleAdError(e: any) {
+    console.warn('广告加载失败:', e.detail);
 }
 
 onMounted(() => {
@@ -568,6 +628,42 @@ onMounted(() => {
     padding: 0 32rpx;
     padding-bottom: calc(200rpx + env(safe-area-inset-bottom));
     min-height: 100vh;
+}
+
+// 广告卡片
+.ad-card {
+    background: #fff;
+    border-radius: 32rpx;
+    padding: 24rpx 32rpx;
+    margin-bottom: 32rpx;
+    box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+}
+
+.ad-label {
+    margin-bottom: 16rpx;
+
+    text {
+        font-size: 22rpx;
+        color: $text-placeholder;
+        background: #f5f5f5;
+        padding: 4rpx 12rpx;
+        border-radius: 8rpx;
+    }
+}
+
+.ad-placeholder {
+    height: 200rpx;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 16rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ad-placeholder-text {
+    font-size: 28rpx;
+    color: $text-placeholder;
 }
 
 .public-dream-card {
@@ -773,6 +869,24 @@ onMounted(() => {
 
     .filter-tabs-container {
         background: $dark-bg-page;
+    }
+
+    .ad-card {
+        background: $dark-bg-card;
+        box-shadow: $dark-shadow-sm;
+    }
+
+    .ad-label text {
+        background: rgba(255, 255, 255, 0.1);
+        color: $dark-text-placeholder;
+    }
+
+    .ad-placeholder {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+    }
+
+    .ad-placeholder-text {
+        color: $dark-text-placeholder;
     }
 
     .filter-chip {

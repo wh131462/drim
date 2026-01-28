@@ -118,16 +118,26 @@
                     :class="{
                         empty: !day,
                         active: day && isToday(day),
-                        'has-dream': day && hasDream(day)
+                        'has-dream': day && hasDream(day),
+                        'multi-dream': day && getDreamCount(day) > 1
                     }"
                     @tap="day && handleDayClick(day)"
                 >
                     <text v-if="day">{{ day }}</text>
+                    <view
+                        v-if="day && getDreamCount(day) > 1"
+                        class="dream-count-badge"
+                        >{{ getDreamCount(day) }}</view
+                    >
                 </view>
             </view>
             <!-- 月度统计 -->
             <view class="calendar-stats">
-                <text class="stats-text">本月记梦 {{ monthDreamCount }} 天</text>
+                <text class="stats-text"
+                    >本月记梦 {{ monthDreamCount }} 天<text v-if="monthDreamTotal > monthDreamCount"
+                        >，共 {{ monthDreamTotal }} 个梦</text
+                    ></text
+                >
                 <text
                     v-if="!isCurrentMonth"
                     class="back-today"
@@ -246,6 +256,11 @@ const monthDreamCount = computed(() => {
     return dreamStore.calendar.filter((r) => r.hasDream).length;
 });
 
+// 当月梦境总数
+const monthDreamTotal = computed(() => {
+    return dreamStore.calendar.reduce((sum, r) => sum + (r.dreamCount || 0), 0);
+});
+
 // 计算日历数据
 const calendarDays = computed(() => {
     const days: (number | null)[] = [];
@@ -280,11 +295,24 @@ function hasDream(day: number): boolean {
     return dreamStore.calendar.some((r) => r.date === dateStr && r.hasDream);
 }
 
+function getDreamCount(day: number): number {
+    const dateStr = `${currentYear.value}-${String(currentMonth.value).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const record = dreamStore.calendar.find((r) => r.date === dateStr);
+    return record?.dreamCount || 0;
+}
+
 function handleDayClick(day: number) {
     const dateStr = `${currentYear.value}-${String(currentMonth.value).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const record = dreamStore.calendar.find((r) => r.date === dateStr);
 
-    if (record?.dreamId) {
+    if (!record?.hasDream) return;
+
+    // 多个梦境时跳转到列表页，按日期筛选
+    if (record.dreamCount > 1) {
+        uni.navigateTo({
+            url: `/pages/dream-list/index?date=${dateStr}`
+        });
+    } else if (record.dreamId) {
         uni.navigateTo({
             url: `/pages/dream-detail/index?id=${record.dreamId}`
         });
@@ -869,6 +897,26 @@ onShow(() => {
         border-radius: 50%;
         opacity: 0.6;
     }
+
+    &.multi-dream::after {
+        display: none;
+    }
+}
+
+.dream-count-badge {
+    position: absolute;
+    top: -4rpx;
+    right: -4rpx;
+    min-width: 28rpx;
+    height: 28rpx;
+    line-height: 28rpx;
+    font-size: 18rpx;
+    font-weight: 600;
+    color: #fff;
+    background: $primary-color;
+    border-radius: 14rpx;
+    text-align: center;
+    padding: 0 6rpx;
 }
 
 // 月度统计

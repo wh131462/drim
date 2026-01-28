@@ -5,7 +5,7 @@
     >
         <!-- 导航栏 -->
         <NavBar
-            title="梦境管理"
+            :title="pageTitle"
             show-back
         >
             <template #right>
@@ -158,6 +158,14 @@
                             <text>{{ formatDate(dream.createdAt) }}</text>
                         </view>
                         <view class="dream-badges">
+                            <!-- 运势评分徽章 -->
+                            <view
+                                v-if="dream.fortuneScore"
+                                class="score-badge"
+                                :style="{ background: getScoreColor(dream.fortuneScore) }"
+                            >
+                                <text class="score-text">{{ dream.fortuneScore }}</text>
+                            </view>
                             <view
                                 v-if="dream.emotion"
                                 class="emotion-badge"
@@ -175,7 +183,7 @@
                                 />
                             </view>
                             <view
-                                v-if="dream.hasAnalysis"
+                                v-if="dream.hasAnalysis && !dream.fortuneScore"
                                 class="analysis-badge"
                             >
                                 <image
@@ -283,10 +291,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { onShow } from '@dcloudio/uni-app';
+import { onLoad, onShow } from '@dcloudio/uni-app';
 import { useUserStore } from '@/stores';
 import { dreamApi } from '@/api';
 import type { Dream, DreamListParams } from '@/types/dream';
+import { getFilterTags, getTagDisplayName, isPresetTag } from '@/constants/tags';
 import NavBar from '@/components/NavBar/index.vue';
 
 const userStore = useUserStore();
@@ -303,17 +312,38 @@ const emotions = [
     { id: 'love', name: '温暖', icon: '🥰' }
 ];
 
-// 标签选项
-const tags = [
-    { id: 'flying', name: '飞行', icon: '🕊️' },
-    { id: 'falling', name: '坠落', icon: '🌀' },
-    { id: 'chased', name: '被追', icon: '🏃' },
-    { id: 'water', name: '水', icon: '💧' },
-    { id: 'family', name: '家人', icon: '👨‍👩‍👧' },
-    { id: 'work', name: '工作', icon: '💼' },
-    { id: 'love', name: '爱情', icon: '❤️' },
-    { id: 'death', name: '死亡', icon: '💀' }
-];
+// 预设标签选项
+const presetTags = getFilterTags();
+
+// 用户使用过的自定义标签（从后端获取）
+const customTagList = ref<Array<{ id: string; name: string; icon: string }>>([]);
+
+// 合并后的标签列表（预设 + 自定义）
+const tags = computed(() => {
+    return [...presetTags, ...customTagList.value];
+});
+
+/**
+ * 从梦境列表中提取自定义标签
+ */
+function extractCustomTags(dreamList: Dream[]) {
+    const existingIds = new Set(customTagList.value.map((t) => t.id));
+
+    for (const dream of dreamList) {
+        if (!dream.tags) continue;
+        for (const tagId of dream.tags) {
+            // 跳过预设标签和已存在的自定义标签
+            if (isPresetTag(tagId) || existingIds.has(tagId)) continue;
+            // 添加自定义标签（ID 就是名称）
+            customTagList.value.push({
+                id: tagId,
+                name: tagId,
+                icon: '✨'
+            });
+            existingIds.add(tagId);
+        }
+    }
+}
 
 // 数据状态
 const dreams = ref<(Dream & { isPublic?: boolean })[]>([]);
@@ -322,6 +352,17 @@ const page = ref(1);
 const pageSize = 20;
 const hasMore = ref(true);
 const isLoading = ref(false);
+
+// 日期筛选（从日历页传入）
+const filterDate = ref('');
+
+const pageTitle = computed(() => {
+    if (filterDate.value) {
+        const [, m, d] = filterDate.value.split('-');
+        return `${parseInt(m)}月${parseInt(d)}日的梦境`;
+    }
+    return '梦境管理';
+});
 
 // 筛选状态
 const keyword = ref('');
@@ -364,13 +405,21 @@ async function loadDreams(reset = false) {
         if (selectedTag.value) {
             params.tag = selectedTag.value;
         }
+        if (filterDate.value) {
+            params.startDate = `${filterDate.value}T00:00:00`;
+            params.endDate = `${filterDate.value}T23:59:59`;
+        }
 
         const response = await dreamApi.getList(params);
 
         if (reset) {
             dreams.value = response.list;
+            // 首次加载时提取自定义标签
+            extractCustomTags(response.list);
         } else {
             dreams.value = [...dreams.value, ...response.list];
+            // 加载更多时也提取自定义标签
+            extractCustomTags(response.list);
         }
 
         total.value = response.total;
@@ -508,11 +557,24 @@ function getEmotionIcon(emotion: string): string {
 }
 
 function getTagName(tagId: string): string {
-    const found = tags.find((t) => t.id === tagId);
-    return found ? `${found.icon} ${found.name}` : tagId;
+    return getTagDisplayName(tagId);
+}
+
+// 运势评分颜色
+function getScoreColor(score: number): string {
+    if (score >= 85) return '#10b981'; // 绿色 - 大吉
+    if (score >= 75) return '#8b5cf6'; // 紫色 - 吉
+    if (score >= 65) return '#f59e0b'; // 橙色 - 中
+    return '#ef4444'; // 红色 - 需注意
 }
 
 // 生命周期
+onLoad((options) => {
+    if (options?.date) {
+        filterDate.value = options.date;
+    }
+});
+
 onMounted(() => {
     loadDreams(true);
 });
@@ -724,6 +786,24 @@ onShow(() => {
     display: flex;
     align-items: center;
     gap: 12rpx;
+}
+
+// 运势评分徽章
+.score-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 48rpx;
+    height: 36rpx;
+    padding: 0 12rpx;
+    border-radius: 18rpx;
+    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
+}
+
+.score-text {
+    font-size: 22rpx;
+    font-weight: 700;
+    color: #fff;
 }
 
 .emotion-badge {

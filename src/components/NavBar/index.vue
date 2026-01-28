@@ -36,18 +36,24 @@ interface Props {
     showBack?: boolean;
     background?: string;
     color?: string;
+    customBack?: boolean; // 是否使用自定义返回行为
 }
 
 const props = withDefaults(defineProps<Props>(), {
     title: '',
     showBack: true,
     background: '#FFFFFF',
-    color: '#1A1A1A'
+    color: '#1A1A1A',
+    customBack: false
 });
+
+const emit = defineEmits<{
+    (e: 'back'): void;
+}>();
 
 const userStore = useUserStore();
 
-// 根据深色模式动态计算背景色和文字色
+// 根据暗黑模式动态计算背景色和文字色
 const navBackground = computed(() => {
     if (props.background === 'transparent') return 'transparent';
     if (props.background.includes('gradient')) return props.background;
@@ -58,7 +64,7 @@ const navColor = computed(() => {
     return userStore.isDarkMode ? '#E8E8E8' : props.color;
 });
 
-// 根据深色模式动态计算图标颜色过滤器
+// 根据暗黑模式动态计算图标颜色过滤器
 const iconFilter = computed(() => {
     return userStore.isDarkMode
         ? 'brightness(0) saturate(100%) invert(100%)'
@@ -78,6 +84,12 @@ const statusBarHeight = ref(0);
 const menuButtonLeft = ref(0); // 胶囊按钮左边距
 
 function handleBack() {
+    // 如果使用自定义返回行为，触发事件
+    if (props.customBack) {
+        emit('back');
+        return;
+    }
+
     // 检查页面栈，如果只有一个页面则跳转到首页
     const pages = getCurrentPages();
     if (pages.length <= 1) {
@@ -173,7 +185,7 @@ onMounted(() => {
     top: 50%;
     transform: translateY(-50%);
 
-    // 深色模式下右侧图标颜色
+    // 暗黑模式下右侧图标颜色
     :deep(image),
     :deep(.delete-icon),
     :deep(.menu-icon) {

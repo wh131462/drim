@@ -208,6 +208,7 @@ import { useDreamStore, useUserStore } from '@/stores';
 import { polishApi, dreamApi } from '@/api';
 import type { Emotion } from '@/types/dream';
 import type { PolishQuota } from '@/api/modules/polish';
+import { confirmPointsConsume, showPointsConsumed } from '@/utils/feedback';
 import NavBar from '@/components/NavBar/index.vue';
 import CustomTabBar from '@/custom-tab-bar/index.vue';
 
@@ -319,17 +320,20 @@ function showAddTagDialog() {
 
 // 添加自定义标签
 function addCustomTag(name: string) {
-    // 检查是否已存在
-    const exists = allDreamTags.value.some((tag) => tag.name === name);
+    const trimmedName = name.trim();
+    if (!trimmedName) return;
+
+    // 检查是否已存在（包括预设标签和自定义标签）
+    const exists = allDreamTags.value.some((tag) => tag.name === trimmedName || tag.id === trimmedName);
     if (exists) {
         uni.showToast({ title: '该元素已存在', icon: 'none' });
         return;
     }
 
-    // 添加到自定义标签列表
+    // 添加到自定义标签列表（直接使用名称作为 ID，方便展示）
     const newTag = {
-        id: `custom_${Date.now()}`,
-        name,
+        id: trimmedName,
+        name: trimmedName,
         emoji: '✨',
         custom: true
     };
@@ -480,19 +484,26 @@ async function handleSubmit() {
     try {
         uni.showLoading({ title: '提交中...' });
 
-        const dream = await dreamStore.submitDream({
+        const response = await dreamStore.submitDream({
             content: dreamContent.value.trim(),
-            tags: selectedTags.value,
-            emotion: selectedEmotion.value as Emotion | undefined,
+            tags: selectedTags.value.length > 0 ? selectedTags.value : undefined,
+            emotion: (selectedEmotion.value || undefined) as Emotion | undefined,
             isPublic: isPublic.value
         });
 
         uni.hideLoading();
 
-        // 跳转到解析结果页
-        uni.navigateTo({
-            url: `/pages/result/index?dreamId=${dream.id}`
-        });
+        // 构建跳转 URL，传递奖励数据
+        let url = `/pages/result/index?dreamId=${response.id}`;
+        if (response.rewards) {
+            const { dreamReward, streakReward, streakDays } = response.rewards;
+            if (dreamReward) url += `&dreamReward=${dreamReward}`;
+            if (streakReward) url += `&streakReward=${streakReward}`;
+            if (streakDays) url += `&streakDays=${streakDays}`;
+        }
+
+        // 跳转到解析结果页（使用 redirectTo 替换当前页面，避免返回时出现空的记录页）
+        uni.redirectTo({ url });
     } catch (error) {
         uni.hideLoading();
         uni.showToast({ title: '提交失败，请重试', icon: 'none' });
@@ -527,8 +538,18 @@ async function handleSaveOnly() {
 }
 
 // 编辑模式：保存并重新解析
+const REANALYZE_COST = 50;
+
 async function handleSaveAndReanalyze() {
     if (!canSubmit.value || !editingDreamId.value) return;
+
+    // 刷新用户积分信息
+    await userStore.fetchUserInfo();
+
+    // 确认消耗积分
+    const confirmed = await confirmPointsConsume(REANALYZE_COST, userStore.luckyPoints, '重新解析');
+
+    if (!confirmed) return;
 
     try {
         uni.showLoading({ title: '保存中...' });
@@ -540,13 +561,39 @@ async function handleSaveAndReanalyze() {
 
         uni.hideLoading();
 
+        // 显示积分消耗提示
+        if (result.pointsConsumed) {
+            showPointsConsumed(result.pointsConsumed, '重新解析');
+        }
+
+        // 更新用户积分
+        userStore.fetchUserInfo();
+
         // 跳转到解析结果页
-        uni.redirectTo({
-            url: `/pages/result/index?dreamId=${result.id}`
-        });
+        setTimeout(() => {
+            uni.redirectTo({
+                url: `/pages/result/index?dreamId=${result.id}`
+            });
+        }, 500);
     } catch (error: any) {
         uni.hideLoading();
-        uni.showToast({ title: error.message || '保存失败', icon: 'none' });
+
+        // 处理积分不足错误
+        if (error?.code === 30001) {
+            uni.showModal({
+                title: '幸运值不足',
+                content: error.message || `重新解析需要 ${REANALYZE_COST} 幸运值`,
+                confirmText: '去赚取',
+                cancelText: '取消',
+                success: (res) => {
+                    if (res.confirm) {
+                        uni.navigateTo({ url: '/pages/privilege/index' });
+                    }
+                }
+            });
+        } else {
+            uni.showToast({ title: error.message || '保存失败', icon: 'none' });
+        }
     }
 }
 

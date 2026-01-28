@@ -150,6 +150,56 @@
                     <view class="card-header">
                         <text class="card-title">✨ 梦境解析</text>
                     </view>
+
+                    <!-- 运势评分展示 -->
+                    <view
+                        v-if="dream.analysis.fortuneScore"
+                        class="fortune-score-section"
+                    >
+                        <view class="score-ring-container">
+                            <view class="score-ring">
+                                <svg
+                                    class="score-svg"
+                                    viewBox="0 0 100 100"
+                                >
+                                    <!-- 背景圆环 -->
+                                    <circle
+                                        cx="50"
+                                        cy="50"
+                                        r="42"
+                                        fill="none"
+                                        stroke="#f0f0f0"
+                                        stroke-width="8"
+                                    />
+                                    <!-- 进度圆环 -->
+                                    <circle
+                                        cx="50"
+                                        cy="50"
+                                        r="42"
+                                        fill="none"
+                                        :stroke="getScoreColor(dream.analysis.fortuneScore)"
+                                        stroke-width="8"
+                                        stroke-linecap="round"
+                                        :stroke-dasharray="getScoreDasharray(dream.analysis.fortuneScore)"
+                                        transform="rotate(-90 50 50)"
+                                    />
+                                </svg>
+                                <view class="score-value">
+                                    <text class="score-number">{{ dream.analysis.fortuneScore }}</text>
+                                    <text class="score-label">运势</text>
+                                </view>
+                            </view>
+                        </view>
+                        <view class="score-info">
+                            <text class="score-level">{{ getScoreLevel(dream.analysis.fortuneScore) }}</text>
+                            <text
+                                v-if="dream.analysis.fortuneTips?.scoreReason"
+                                class="score-reason"
+                                >{{ dream.analysis.fortuneTips.scoreReason }}</text
+                            >
+                        </view>
+                    </view>
+
                     <text class="analysis-text">{{ dream.analysis.interpretation }}</text>
                 </view>
             </view>
@@ -303,6 +353,7 @@ import { ref, onMounted } from 'vue';
 import { onLoad, onShareAppMessage } from '@dcloudio/uni-app';
 import { useDreamStore, useUserStore } from '@/stores';
 import { dreamApi, exploreApi } from '@/api';
+import { showSimplePointsReward } from '@/utils/feedback';
 import NavBar from '@/components/NavBar/index.vue';
 
 const dreamStore = useDreamStore();
@@ -322,6 +373,27 @@ const shareImagePath = ref(''); // 动态生成的分享图片路径
 
 function formatDate(date: string) {
     return new Date(date).toLocaleDateString('zh-CN');
+}
+
+// 运势评分相关函数
+function getScoreColor(score: number): string {
+    if (score >= 85) return '#10b981'; // 绿色 - 大吉
+    if (score >= 75) return '#6b4eff'; // 紫色 - 吉
+    if (score >= 65) return '#f59e0b'; // 橙色 - 中
+    return '#ef4444'; // 红色 - 需注意
+}
+
+function getScoreDasharray(score: number): string {
+    const circumference = 2 * Math.PI * 42; // 圆周长
+    const progress = (score / 100) * circumference;
+    return `${progress} ${circumference}`;
+}
+
+function getScoreLevel(score: number): string {
+    if (score >= 85) return '🌟 大吉大利';
+    if (score >= 75) return '✨ 运势不错';
+    if (score >= 65) return '🌙 平稳安定';
+    return '💫 宜静待时';
 }
 
 function getAvatarText(nickname: string) {
@@ -392,7 +464,13 @@ async function loadDreamDetail() {
         // 根据来源选择不同的API
         if (source.value === 'random' || source.value === 'filter') {
             // 从探索页面进入，使用explore API
-            dream.value = await exploreApi.viewDream(dreamId.value, source.value);
+            const response = await exploreApi.viewDream(dreamId.value, source.value);
+            dream.value = response;
+
+            // 显示浏览积分奖励
+            if (response.rewards?.viewReward) {
+                showSimplePointsReward(response.rewards.viewReward, '浏览');
+            }
         } else {
             // 从自己的梦境列表进入，使用dream API
             dream.value = await dreamApi.getById(dreamId.value);
@@ -742,6 +820,31 @@ onMounted(async () => {
 
         .analysis-text {
             color: $dark-text-primary;
+        }
+
+        // 运势评分区域
+        .fortune-score-section {
+            background: linear-gradient(135deg, rgba(139, 110, 255, 0.1) 0%, rgba(255, 107, 158, 0.08) 100%);
+        }
+
+        .score-number {
+            color: $dark-text-primary;
+        }
+
+        .score-label {
+            color: $dark-text-secondary;
+        }
+
+        .score-level {
+            color: $dark-text-primary;
+        }
+
+        .score-reason {
+            color: $dark-text-secondary;
+        }
+
+        .score-svg circle:first-child {
+            stroke: rgba(255, 255, 255, 0.1);
         }
 
         // 图标
@@ -1187,6 +1290,74 @@ onMounted(async () => {
     font-size: 32rpx;
     font-weight: 600;
     color: $text-primary;
+}
+
+// 运势评分区域
+.fortune-score-section {
+    display: flex;
+    align-items: center;
+    gap: 32rpx;
+    padding: 32rpx;
+    margin-bottom: 32rpx;
+    background: linear-gradient(135deg, #f8f7ff 0%, #fff5f7 100%);
+    border-radius: 24rpx;
+}
+
+.score-ring-container {
+    flex-shrink: 0;
+}
+
+.score-ring {
+    position: relative;
+    width: 140rpx;
+    height: 140rpx;
+}
+
+.score-svg {
+    width: 100%;
+    height: 100%;
+}
+
+.score-value {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.score-number {
+    font-size: 40rpx;
+    font-weight: 700;
+    color: $text-primary;
+    line-height: 1;
+}
+
+.score-label {
+    font-size: 20rpx;
+    color: $text-secondary;
+    margin-top: 4rpx;
+}
+
+.score-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12rpx;
+}
+
+.score-level {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: $text-primary;
+}
+
+.score-reason {
+    font-size: 26rpx;
+    color: $text-secondary;
+    line-height: 1.5;
 }
 
 .analysis-text {

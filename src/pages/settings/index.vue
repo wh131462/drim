@@ -34,7 +34,7 @@
                     </view>
                 </view>
                 <view class="settings-item">
-                    <text class="settings-label">深色模式</text>
+                    <text class="settings-label">暗黑模式</text>
                     <switch
                         class="toggle-switch"
                         :checked="settings.darkMode"
@@ -281,11 +281,11 @@ function handleDarkModeChange(e: any) {
     settings.darkMode = e.detail.value;
     saveLocalSettings();
 
-    // 通知 userStore 切换深色模式
+    // 通知 userStore 切换暗黑模式
     userStore.toggleDarkMode(settings.darkMode);
 
     uni.showToast({
-        title: settings.darkMode ? '已开启深色模式' : '已关闭深色模式',
+        title: settings.darkMode ? '已开启暗黑模式' : '已关闭暗黑模式',
         icon: 'success'
     });
 }
