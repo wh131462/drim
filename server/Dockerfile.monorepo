@@ -1,45 +1,58 @@
 # 从 monorepo 根目录构建的 Dockerfile
-# 构建命令: docker build -f server/Dockerfile.monorepo -t drim-server .
-FROM node:18-alpine AS builder
+# 构建命令: docker build -f server/Dockerfile.monorepo -t drim-api .
+FROM node:20-slim AS builder
 
 WORKDIR /app
 
-# 安装 pnpm
-RUN npm install -g pnpm
+# 安装 OpenSSL（Prisma 需要）
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
-# 复制 workspace 配置和 lock 文件
-COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
-COPY server/package.json ./server/
-COPY server/prisma ./server/prisma/
+# 复制依赖配置（利用层缓存）
+COPY server/package.json ./
 
-# 安装依赖（使用根目录 lock 文件确保版本一致）
-RUN pnpm install --frozen-lockfile --filter drim-server
+# 安装所有依赖（包含 devDependencies 用于构建）
+RUN npm install --legacy-peer-deps
 
-# 复制 server 源码
-COPY server ./server/
+# 复制 prisma schema 并生成 Client
+COPY server/prisma ./prisma/
+RUN npx prisma generate
 
-# 生成 Prisma Client
-RUN cd server && pnpm prisma:generate
+# 复制源码和配置文件
+COPY server/src ./src/
+COPY server/tsconfig.json server/tsconfig.build.json server/nest-cli.json ./
 
 # 构建
-RUN cd server && pnpm build
+RUN npm run build
 
 # 生产阶段
-FROM node:18-alpine AS production
+FROM node:20-slim
 
 WORKDIR /app
 
-# 复制 package.json（运行时可能需要）
-COPY --from=builder /app/server/package.json ./
+# 安装 OpenSSL（Prisma 运行时需要）
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
-# 从构建阶段复制 node_modules（包含 Prisma Client）
-COPY --from=builder /app/server/node_modules ./node_modules
+# 创建非 root 用户
+RUN groupadd -g 1001 nodejs && useradd -u 1001 -g nodejs nestjs
 
-# 从构建阶段复制编译后的代码
-COPY --from=builder /app/server/dist ./dist
+# 复制 package.json 并安装生产依赖
+COPY server/package.json ./
+RUN npm install --omit=dev --legacy-peer-deps && npm cache clean --force
 
-# 暴露端口
+# 从 builder 复制 Prisma Client（避免重复生成）
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY server/prisma ./prisma/
+
+# 复制构建产物
+COPY --from=builder /app/dist ./dist
+
+# 创建 uploads 目录并设置权限
+RUN mkdir -p /app/uploads/avatars && chown -R nestjs:nodejs /app/uploads
+
+# 切换到非 root 用户
+USER nestjs
+
 EXPOSE 3333
 
-# 启动命令
 CMD ["node", "dist/main"]
