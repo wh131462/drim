@@ -294,14 +294,26 @@ export class UserService {
     }
 
     /**
+     * 连续打卡奖励配置
+     */
+    private readonly STREAK_REWARDS = [
+        { days: 100, bonus: 200 },
+        { days: 60, bonus: 100 },
+        { days: 30, bonus: 50 },
+        { days: 14, bonus: 20 },
+        { days: 7, bonus: 10 },
+        { days: 3, bonus: 5 }
+    ];
+
+    /**
      * 更新连续记梦天数
      */
-    async updateConsecutiveDays(userId: string) {
+    async updateConsecutiveDays(userId: string): Promise<{ consecutiveDays: number; bonus: number } | null> {
         const user = await this.prisma.user.findUnique({
             where: { id: userId }
         });
 
-        if (!user) return;
+        if (!user) return null;
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -316,7 +328,7 @@ export class UserService {
 
             if (diffDays === 0) {
                 // 今天已经记录过
-                return;
+                return { consecutiveDays: user.consecutiveDays, bonus: 0 };
             } else if (diffDays === 1) {
                 // 连续记录
                 newConsecutiveDays = user.consecutiveDays + 1;
@@ -333,8 +345,38 @@ export class UserService {
             }
         });
 
+        // 检查是否达到连续打卡奖励节点
+        let streakBonus = 0;
+        const matchedReward = this.STREAK_REWARDS.find((r) => newConsecutiveDays === r.days);
+        if (matchedReward) {
+            streakBonus = matchedReward.bonus;
+            // 发放连续打卡奖励
+            const updatedUser = await this.prisma.user.findUnique({ where: { id: userId } });
+            if (updatedUser) {
+                const newBalance = updatedUser.luckyPoints + streakBonus;
+                await this.prisma.$transaction([
+                    this.prisma.user.update({
+                        where: { id: userId },
+                        data: { luckyPoints: newBalance }
+                    }),
+                    this.prisma.pointRecord.create({
+                        data: {
+                            userId,
+                            type: 'earn',
+                            amount: streakBonus,
+                            balance: newBalance,
+                            source: 'streak_bonus',
+                            description: `连续打卡${newConsecutiveDays}天奖励 +${streakBonus}`
+                        }
+                    })
+                ]);
+            }
+        }
+
         // 更新缓存
         await this.redisService.del(`user:info:${userId}`);
+
+        return { consecutiveDays: newConsecutiveDays, bonus: streakBonus };
     }
 
     /**

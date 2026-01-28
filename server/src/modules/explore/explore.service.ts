@@ -1,10 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { AchievementService, AchievementConditionType } from '../achievement/achievement.service';
 import { GetPublicDreamsDto, ViewDreamDto } from './dto';
 
 @Injectable()
 export class ExploreService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        @Inject(forwardRef(() => AchievementService))
+        private readonly achievementService: AchievementService
+    ) {}
 
     /**
      * 获取所有可用标签
@@ -224,6 +229,10 @@ export class ExploreService {
         };
     }
 
+    // 浏览奖励配置
+    private readonly EXPLORE_VIEW_REWARD = 1; // 每次浏览奖励1积分
+    private readonly EXPLORE_VIEW_DAILY_LIMIT = 10; // 每日最多奖励10次
+
     /**
      * 查看梦境详情（记录浏览）
      */
@@ -273,6 +282,8 @@ export class ExploreService {
             throw new NotFoundException('梦境不存在或未公开');
         }
 
+        let viewReward = 0;
+
         // 记录浏览（如果不是作者本人）
         if (dream.userId !== userId) {
             await Promise.all([
@@ -296,6 +307,58 @@ export class ExploreService {
                     }
                 })
             ]);
+
+            // 检查今日浏览奖励次数
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            const todayViewRewardCount = await this.prisma.pointRecord.count({
+                where: {
+                    userId,
+                    source: 'explore_view',
+                    createdAt: {
+                        gte: today,
+                        lt: tomorrow
+                    }
+                }
+            });
+
+            // 如果未达到每日上限，发放浏览奖励
+            if (todayViewRewardCount < this.EXPLORE_VIEW_DAILY_LIMIT) {
+                const user = await this.prisma.user.findUnique({
+                    where: { id: userId },
+                    select: { luckyPoints: true }
+                });
+
+                if (user) {
+                    const newBalance = user.luckyPoints + this.EXPLORE_VIEW_REWARD;
+                    await this.prisma.$transaction([
+                        this.prisma.user.update({
+                            where: { id: userId },
+                            data: { luckyPoints: newBalance }
+                        }),
+                        this.prisma.pointRecord.create({
+                            data: {
+                                userId,
+                                type: 'earn',
+                                amount: this.EXPLORE_VIEW_REWARD,
+                                balance: newBalance,
+                                source: 'explore_view',
+                                sourceId: dreamId,
+                                description: `浏览梦境 +${this.EXPLORE_VIEW_REWARD}`
+                            }
+                        })
+                    ]);
+                    viewReward = this.EXPLORE_VIEW_REWARD;
+                }
+            }
+
+            // 异步检查探索浏览相关成就
+            this.achievementService
+                .checkAndUnlockAchievements(userId, [AchievementConditionType.EXPLORE_VIEW_COUNT])
+                .catch((err) => console.error('检查探索成就失败:', err));
         }
 
         return {
@@ -319,7 +382,8 @@ export class ExploreService {
                       fortuneScore: dream.analysis.fortuneScore,
                       fortuneTips: dream.analysis.fortuneTips ? JSON.parse(dream.analysis.fortuneTips) : null
                   }
-                : null
+                : null,
+            rewards: viewReward > 0 ? { viewReward } : null
         };
     }
 

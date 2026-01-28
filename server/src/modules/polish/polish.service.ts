@@ -1,13 +1,23 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+    Injectable,
+    NotFoundException,
+    ForbiddenException,
+    BadRequestException,
+    Inject,
+    forwardRef
+} from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { AiService } from '@/shared/ai/ai.service';
+import { AchievementService, AchievementConditionType } from '../achievement/achievement.service';
 import { PolishDreamDto } from './dto';
 
 @Injectable()
 export class PolishService {
     constructor(
         private readonly prisma: PrismaService,
-        private readonly aiService: AiService
+        private readonly aiService: AiService,
+        @Inject(forwardRef(() => AchievementService))
+        private readonly achievementService: AchievementService
     ) {}
 
     /**
@@ -132,6 +142,11 @@ export class PolishService {
                 }
             });
         }
+
+        // 异步检查润色相关成就
+        this.achievementService
+            .checkAndUnlockAchievements(userId, [AchievementConditionType.POLISH_COUNT])
+            .catch((err) => console.error('检查润色成就失败:', err));
 
         return {
             versionId: newVersion.id,

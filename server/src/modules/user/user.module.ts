@@ -6,19 +6,19 @@ import { UserService } from './user.service';
 import { WechatService } from '@/shared/wechat/wechat.service';
 
 @Module({
-  imports: [
-    JwtModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get('JWT_SECRET'),
-        signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '7d'),
-        },
-      }),
-    }),
-  ],
-  controllers: [UserController],
-  providers: [UserService, WechatService],
-  exports: [UserService, JwtModule],
+    imports: [
+        JwtModule.registerAsync({
+            inject: [ConfigService],
+            useFactory: (configService: ConfigService) => ({
+                secret: configService.get('JWT_SECRET'),
+                signOptions: {
+                    expiresIn: configService.get('JWT_EXPIRES_IN', '7d')
+                }
+            })
+        })
+    ],
+    controllers: [UserController],
+    providers: [UserService, WechatService],
+    exports: [UserService, JwtModule, WechatService]
 })
 export class UserModule {}

@@ -1,6 +1,14 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+    Injectable,
+    NotFoundException,
+    BadRequestException,
+    ForbiddenException,
+    Inject,
+    forwardRef
+} from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UserService } from '../user/user.service';
+import { AchievementService, AchievementConditionType } from '../achievement/achievement.service';
 import { CompleteTaskDto } from './dto/complete-task.dto';
 import { TaskHistoryQueryDto } from './dto/task-history-query.dto';
 
@@ -8,7 +16,9 @@ import { TaskHistoryQueryDto } from './dto/task-history-query.dto';
 export class TaskService {
     constructor(
         private readonly prisma: PrismaService,
-        private readonly userService: UserService
+        private readonly userService: UserService,
+        @Inject(forwardRef(() => AchievementService))
+        private readonly achievementService: AchievementService
     ) {}
 
     /**
@@ -100,43 +110,132 @@ export class TaskService {
         const isDoubleReward = dto.watchedAd === true;
         const rewardPoints = isDoubleReward ? task.rewardPoints * 2 : task.rewardPoints;
 
-        // 更新任务状态
-        await this.prisma.task.update({
-            where: { id: taskId },
-            data: {
-                status: 'completed',
-                isDoubleReward,
-                completedAt: new Date()
-            }
-        });
-
-        // 更新用户积分和任务数
-        await this.prisma.user.update({
-            where: { id: userId },
-            data: {
-                luckyPoints: { increment: rewardPoints },
-                totalTasks: { increment: 1 }
-            }
-        });
-
-        // 记录积分获取
+        // 获取用户当前积分
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
-        await this.prisma.pointRecord.create({
-            data: {
-                userId,
-                type: 'earn',
-                amount: rewardPoints,
-                balance: user!.luckyPoints,
-                source: 'task_complete',
-                sourceId: taskId,
-                description: `完成任务 +${rewardPoints}`
-            }
-        });
+        if (!user) {
+            throw new NotFoundException('用户不存在');
+        }
+
+        const newBalance = user.luckyPoints + rewardPoints;
+
+        // 使用事务确保数据一致性
+        await this.prisma.$transaction([
+            // 更新任务状态
+            this.prisma.task.update({
+                where: { id: taskId },
+                data: {
+                    status: 'completed',
+                    isDoubleReward,
+                    completedAt: new Date()
+                }
+            }),
+            // 更新用户积分和任务数
+            this.prisma.user.update({
+                where: { id: userId },
+                data: {
+                    luckyPoints: newBalance,
+                    totalTasks: { increment: 1 }
+                }
+            }),
+            // 记录积分获取
+            this.prisma.pointRecord.create({
+                data: {
+                    userId,
+                    type: 'earn',
+                    amount: rewardPoints,
+                    balance: newBalance,
+                    source: 'task_complete',
+                    sourceId: taskId,
+                    description: `完成任务 +${rewardPoints}`
+                }
+            })
+        ]);
+
+        // 异步检查任务相关成就
+        this.achievementService
+            .checkAndUnlockAchievements(userId, [AchievementConditionType.TASK_COUNT])
+            .catch((err) => console.error('检查任务成就失败:', err));
 
         return {
-            rewardPoints,
-            totalPoints: user!.luckyPoints,
+            success: true,
+            points: rewardPoints,
+            totalPoints: newBalance,
             isDoubleReward
+        };
+    }
+
+    /**
+     * 广告翻倍奖励（任务完成后通过看广告获得额外奖励）
+     */
+    async doubleReward(userId: string, taskId: string, adToken: string) {
+        const task = await this.prisma.task.findUnique({
+            where: { id: taskId }
+        });
+
+        if (!task) {
+            throw new NotFoundException('任务不存在');
+        }
+
+        if (task.userId !== userId) {
+            throw new ForbiddenException('无权操作该任务');
+        }
+
+        if (task.status !== 'completed') {
+            throw new BadRequestException('任务尚未完成');
+        }
+
+        if (task.isDoubleReward) {
+            throw new BadRequestException('已获得翻倍奖励');
+        }
+
+        // TODO: 验证 adToken 的有效性（需要对接广告服务）
+        // 目前仅检查 token 是否存在
+        if (!adToken) {
+            throw new BadRequestException('广告凭证无效');
+        }
+
+        // 计算额外奖励（与基础奖励相同）
+        const extraPoints = task.rewardPoints;
+
+        // 获取用户当前积分
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user) {
+            throw new NotFoundException('用户不存在');
+        }
+
+        const newBalance = user.luckyPoints + extraPoints;
+
+        // 使用事务确保数据一致性
+        await this.prisma.$transaction([
+            // 标记任务已获得翻倍奖励
+            this.prisma.task.update({
+                where: { id: taskId },
+                data: { isDoubleReward: true }
+            }),
+            // 更新用户积分
+            this.prisma.user.update({
+                where: { id: userId },
+                data: { luckyPoints: newBalance }
+            }),
+            // 记录积分获取
+            this.prisma.pointRecord.create({
+                data: {
+                    userId,
+                    type: 'earn',
+                    amount: extraPoints,
+                    balance: newBalance,
+                    source: 'task_ad_double',
+                    sourceId: taskId,
+                    description: `看广告翻倍 +${extraPoints}`
+                }
+            })
+        ]);
+
+        return {
+            success: true,
+            points: extraPoints,
+            totalPoints: newBalance,
+            isDoubleReward: true
         };
     }
 

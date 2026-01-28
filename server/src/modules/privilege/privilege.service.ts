@@ -105,12 +105,12 @@ export class PrivilegeService {
                 originalPoints: plan.originalPrice !== plan.price ? plan.originalPrice : null
             })),
             earnWays: [
-                { name: '每日记梦', points: 10 },
-                { name: '完成任务', points: 10 },
+                { name: '记录梦境', points: 5 },
+                { name: '连续打卡奖励', points: '5-200', desc: '3/7/14/30/60/100天里程碑' },
+                { name: '浏览他人梦境', points: 1, desc: '每日最多10次' },
+                { name: '完成改运任务', points: 10 },
                 { name: '看广告翻倍', points: 10 },
-                { name: '连续打卡奖励', points: '20-200' },
-                { name: '解锁成就', points: '10-100' },
-                { name: '分享梦境', points: 5 }
+                { name: '解锁成就', points: '10-100' }
             ]
         };
     }
