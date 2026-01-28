@@ -76,11 +76,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### 前端开发
 
 ```bash
+# H5 开发 (推荐联调)
+pnpm dev:h5
+
 # 微信小程序开发
 pnpm dev:mp-weixin
 
-# H5 开发 (推荐联调)
-pnpm dev:h5
+# 构建 H5
+pnpm build:h5
 
 # 构建微信小程序
 pnpm build:mp-weixin
@@ -97,12 +100,6 @@ pnpm server:dev
 
 # 构建生产版本
 pnpm server:build
-
-# 启动生产服务器
-pnpm server:start
-
-# 代码检查和格式化
-pnpm server:lint
 ```
 
 ### 数据库操作
@@ -127,13 +124,10 @@ pnpm db:studio
 # 启动 MySQL + Redis 容器
 pnpm docker:up
 
-# 停止容器
+# 停止并删除容器
 pnpm docker:down
 
-# 查看日志
-pnpm docker:logs
-
-# 快速启动已存在的容器
+# 启动已存在的 MySQL 容器 (不存在则自动创建)
 pnpm docker:start
 
 # 停止容器但不删除
