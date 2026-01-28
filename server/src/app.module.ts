@@ -18,10 +18,12 @@ import { AchievementModule } from './modules/achievement/achievement.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { ExportModule } from './modules/export/export.module';
 import { SchedulerModule } from './modules/scheduler/scheduler.module';
+import { HealthModule } from './modules/health/health.module';
 
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { AuthGuard } from './common/guards/auth.guard';
+import { AppController } from './app.controller';
 
 @Module({
     imports: [
@@ -49,8 +51,10 @@ import { AuthGuard } from './common/guards/auth.guard';
         AchievementModule,
         SettingsModule,
         ExportModule,
-        SchedulerModule
+        SchedulerModule,
+        HealthModule
     ],
+    controllers: [AppController],
     providers: [
         // 全局认证守卫
         {
