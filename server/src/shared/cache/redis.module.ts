@@ -1,24 +1,11 @@
 import { Global, Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { RedisService } from './redis.service';
+import { MemoryCacheService } from './memory-cache.service';
 
+// 使用内存缓存替代 Redis，节省服务器资源
+// RedisService 是 MemoryCacheService 的别名，保持向后兼容
 @Global()
 @Module({
-  providers: [
-    {
-      provide: 'REDIS_CLIENT',
-      useFactory: (configService: ConfigService) => {
-        const Redis = require('ioredis');
-        return new Redis({
-          host: configService.get('REDIS_HOST', 'localhost'),
-          port: configService.get('REDIS_PORT', 6379),
-          password: configService.get('REDIS_PASSWORD', ''),
-        });
-      },
-      inject: [ConfigService],
-    },
-    RedisService,
-  ],
-  exports: ['REDIS_CLIENT', RedisService],
+    providers: [MemoryCacheService],
+    exports: [MemoryCacheService]
 })
 export class RedisModule {}

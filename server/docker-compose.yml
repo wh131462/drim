@@ -4,7 +4,7 @@ services:
         container_name: drim-mysql
         restart: unless-stopped
         environment:
-            MYSQL_ROOT_PASSWORD: password
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-password}
             MYSQL_DATABASE: drim
             TZ: Asia/Shanghai
         ports:
@@ -13,26 +13,40 @@ services:
             - mysql_data:/var/lib/mysql
         command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
         healthcheck:
-            test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'root', '-ppassword']
+            test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'root', '-p${MYSQL_ROOT_PASSWORD:-password}']
             interval: 10s
             timeout: 5s
             retries: 10
             start_period: 30s
+        deploy:
+            resources:
+                limits:
+                    memory: 512M
 
-    redis:
-        image: redis:7-alpine
-        container_name: drim-redis
+    api:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: drim-api
         restart: unless-stopped
+        environment:
+            NODE_ENV: production
+            PORT: 3333
+            DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD:-password}@mysql:3306/drim
+            JWT_SECRET: ${JWT_SECRET}
+            WECHAT_APPID: ${WECHAT_APPID}
+            WECHAT_SECRET: ${WECHAT_SECRET}
+            AI_API_KEY: ${AI_API_KEY}
+            AI_BASE_URL: ${AI_BASE_URL}
         ports:
-            - '6379:6379'
-        volumes:
-            - redis_data:/data
-        healthcheck:
-            test: ['CMD', 'redis-cli', 'ping']
-            interval: 10s
-            timeout: 5s
-            retries: 5
+            - '3333:3333'
+        depends_on:
+            mysql:
+                condition: service_healthy
+        deploy:
+            resources:
+                limits:
+                    memory: 384M
 
 volumes:
     mysql_data:
-    redis_data:

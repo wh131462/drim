@@ -30,11 +30,11 @@
         "docker:up": "docker compose up -d",
         "docker:down": "docker compose down",
         "docker:logs": "docker compose logs -f",
+        "docker:build": "docker compose build",
         "docker:mysql": "docker run -d --name drim-mysql -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=drim -p 3306:3306 mysql:8",
-        "docker:redis": "docker run -d --name drim-redis -p 6379:6379 redis:7-alpine",
-        "docker:start": "docker start drim-mysql drim-redis 2>/dev/null || (pnpm docker:mysql && pnpm docker:redis)",
-        "docker:stop": "docker stop drim-mysql drim-redis",
-        "docker:rm": "docker rm -f drim-mysql drim-redis"
+        "docker:start": "docker start drim-mysql 2>/dev/null || pnpm docker:mysql",
+        "docker:stop": "docker stop drim-mysql",
+        "docker:rm": "docker rm -f drim-mysql"
     },
     "prisma": {
         "seed": "ts-node -r tsconfig-paths/register prisma/seed.ts"
@@ -51,7 +51,6 @@
         "axios": "^1.6.2",
         "class-transformer": "^0.5.1",
         "class-validator": "^0.14.0",
-        "ioredis": "^5.3.2",
         "reflect-metadata": "^0.1.13",
         "rxjs": "^7.8.1",
         "uuid": "^9.0.1"
