@@ -73,7 +73,9 @@ init_ssl() {
     echo "请输入接收证书通知的邮箱:"
     read CERTBOT_EMAIL
 
-    docker compose -f "$COMPOSE_FILE" run --rm certbot certonly \
+    # 使用 --entrypoint "" 覆盖 docker-compose 中的 entrypoint
+    docker compose -f "$COMPOSE_FILE" run --rm --entrypoint "" certbot \
+        certbot certonly \
         --webroot \
         --webroot-path=/var/www/certbot \
         --email "$CERTBOT_EMAIL" \
@@ -272,7 +274,7 @@ case "${1:-update}" in
 
     ssl-renew)
         log_info "续期 SSL 证书..."
-        docker compose -f "$COMPOSE_FILE" run --rm certbot renew
+        docker compose -f "$COMPOSE_FILE" run --rm --entrypoint "" certbot certbot renew
         docker compose -f "$COMPOSE_FILE" restart nginx
         log_info "证书续期完成!"
         ;;
