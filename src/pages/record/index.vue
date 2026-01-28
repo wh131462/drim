@@ -206,6 +206,7 @@ import { ref, computed, onMounted } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { useDreamStore, useUserStore } from '@/stores';
 import { polishApi, dreamApi } from '@/api';
+import { settingsApi } from '@/api/modules/settings';
 import type { Emotion } from '@/types/dream';
 import type { PolishQuota } from '@/api/modules/polish';
 import { confirmPointsConsume, showPointsConsumed } from '@/utils/feedback';
@@ -597,10 +598,25 @@ async function handleSaveAndReanalyze() {
     }
 }
 
+// 加载默认公开设置
+async function loadDefaultPublicSetting() {
+    try {
+        const settings = await settingsApi.getSettings();
+        if (settings?.privacy?.defaultDreamPublic !== undefined) {
+            isPublic.value = settings.privacy.defaultDreamPublic;
+        }
+    } catch (error) {
+        console.error('读取默认公开设置失败:', error);
+    }
+}
+
 onMounted(() => {
     const systemInfo = uni.getSystemInfoSync();
     const statusBarHeight = systemInfo.statusBarHeight || 0;
     navBarHeight.value = statusBarHeight + 44;
+
+    // 从服务端读取默认公开状态
+    loadDefaultPublicSetting();
 
     // 加载配额
     loadQuota();
@@ -652,6 +668,12 @@ onShow(() => {
             uni.removeStorageSync('editingVersion');
 
             console.log('已加载版本进行编辑:', editingVersion);
+            return;
+        }
+
+        // 非编辑模式：重置为新建状态，从服务端读取默认公开状态
+        if (!isEditMode.value) {
+            loadDefaultPublicSetting();
         }
     } catch (error) {
         console.error('加载编辑版本失败:', error);
