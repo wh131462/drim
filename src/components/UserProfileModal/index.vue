@@ -318,7 +318,7 @@ function handleOverlayClick() {
 .avatar-btn {
     width: 180rpx;
     height: 180rpx;
-    padding: 0;
+    padding: 6rpx;
     margin: 0;
     background: transparent;
     border: none;
@@ -333,7 +333,7 @@ function handleOverlayClick() {
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    border: 6rpx solid #fff;
+    border: 1rpx solid #fff;
     box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.12);
 }
 
@@ -380,6 +380,7 @@ function handleOverlayClick() {
     font-size: 24rpx;
     color: $text-placeholder;
     margin-top: 20rpx;
+    pointer-events: none;
 }
 
 // 昵称输入

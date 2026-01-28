@@ -175,8 +175,16 @@
                     v-if="publicDreams.length === 0 && !loading"
                     class="empty-state"
                 >
-                    <text class="empty-icon">🌙</text>
-                    <text class="empty-text">暂无公开梦境</text>
+                    <view class="empty-illustration">
+                        <view class="void-circle"></view>
+                        <view class="orbit orbit-1"></view>
+                        <view class="orbit orbit-2"></view>
+                        <view class="floating-particle p-1"></view>
+                        <view class="floating-particle p-2"></view>
+                        <view class="floating-particle p-3"></view>
+                    </view>
+                    <text class="empty-title">梦境之海静悄悄</text>
+                    <text class="empty-desc">这里暂时没有公开的梦境\n也许你可以成为第一个分享者？</text>
                 </view>
 
                 <!-- 加载更多 -->
@@ -198,14 +206,18 @@
 
         <!-- 随机探索按钮 -->
         <view
-            class="random-btn"
+            class="random-portal-container"
             @tap="randomExplore"
         >
-            <image
-                class="random-icon"
-                src="/static/icons/portal-door.svg"
-                mode="aspectFit"
-            />
+            <view class="portal-effect"></view>
+            <view class="random-btn">
+                <image
+                    class="random-icon"
+                    src="/static/icons/portal-door.svg"
+                    mode="aspectFit"
+                />
+            </view>
+            <view class="portal-label">随机梦境</view>
         </view>
 
         <!-- 自定义 TabBar -->
@@ -804,50 +816,243 @@ onMounted(() => {
     transition: filter 0.2s;
 }
 
-// 随机按钮
-.random-btn {
+// 随机按钮容器
+.random-portal-container {
     position: fixed;
-    bottom: 180rpx;
+    bottom: 200rpx;
     right: 40rpx;
-    width: 112rpx;
-    height: 112rpx;
-    background: linear-gradient(135deg, $primary-color 0%, #9f7aea 100%);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 16rpx 40rpx rgba(107, 78, 255, 0.4);
     z-index: 10;
-    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: float-portal 6s ease-in-out infinite;
 
     &:active {
-        transform: scale(0.9) rotate(180deg);
+        transform: scale(0.95);
+
+        .random-btn {
+            transform: scale(0.9);
+            box-shadow: 0 0 20rpx rgba(139, 110, 255, 0.6);
+        }
     }
 }
 
+.portal-effect {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 140rpx;
+    height: 140rpx;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(139, 110, 255, 0.2) 0%, rgba(139, 110, 255, 0) 70%);
+    animation: pulse-portal 3s ease-in-out infinite;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.random-btn {
+    width: 100rpx;
+    height: 100rpx;
+    background: linear-gradient(135deg, #8b6eff 0%, #7c3aed 100%);
+    border-radius: 40rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+        0 10rpx 30rpx rgba(107, 78, 255, 0.4),
+        inset 0 2rpx 6rpx rgba(255, 255, 255, 0.3),
+        inset 0 -2rpx 6rpx rgba(0, 0, 0, 0.1);
+    position: relative;
+    border: 2rpx solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    backdrop-filter: blur(10px);
+}
+
 .random-icon {
-    width: 56rpx;
-    height: 56rpx;
-    // 将黑色 SVG 转换为白色
+    width: 52rpx;
+    height: 52rpx;
     filter: brightness(0) invert(1);
+}
+
+.portal-label {
+    margin-top: 12rpx;
+    font-size: 20rpx;
+    font-weight: 600;
+    color: #8b6eff;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 6rpx 16rpx;
+    border-radius: 20rpx;
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+    opacity: 0;
+    transform: translateY(10rpx);
+    transition: all 0.3s;
+    pointer-events: none;
+}
+
+.random-portal-container:active .portal-label {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+@keyframes float-portal {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-16rpx);
+    }
+}
+
+@keyframes pulse-portal {
+    0%,
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.5;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 0.8;
+    }
 }
 
 // 空状态
 .empty-state {
-    text-align: center;
-    padding: 120rpx 80rpx;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 160rpx 60rpx;
 }
 
-.empty-icon {
-    font-size: 128rpx;
-    margin-bottom: 32rpx;
-    opacity: 0.3;
-    display: block;
+.empty-illustration {
+    width: 240rpx;
+    height: 240rpx;
+    position: relative;
+    margin-bottom: 48rpx;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.empty-text {
+.void-circle {
+    width: 100rpx;
+    height: 100rpx;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e0d4ff 0%, #ffffff 100%);
+    box-shadow: 0 0 60rpx rgba(139, 110, 255, 0.2);
+    position: relative;
+    z-index: 2;
+}
+
+.orbit {
+    position: absolute;
+    border-radius: 50%;
+    border: 2rpx solid rgba(139, 110, 255, 0.1);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.orbit-1 {
+    width: 160rpx;
+    height: 160rpx;
+    border-color: rgba(139, 110, 255, 0.15);
+    animation: spin 10s linear infinite;
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: -6rpx;
+        left: 50%;
+        width: 12rpx;
+        height: 12rpx;
+        background: #b794f4;
+        border-radius: 50%;
+        box-shadow: 0 0 10rpx rgba(183, 148, 244, 0.5);
+    }
+}
+
+.orbit-2 {
+    width: 220rpx;
+    height: 220rpx;
+    animation: spin 15s linear infinite reverse;
+
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: 20%;
+        right: 10%;
+        width: 8rpx;
+        height: 8rpx;
+        background: #d6bcfa;
+        border-radius: 50%;
+    }
+}
+
+.floating-particle {
+    position: absolute;
+    background: #9f7aea;
+    border-radius: 50%;
+    opacity: 0.6;
+    animation: float-particle 4s ease-in-out infinite;
+}
+
+.p-1 {
+    width: 10rpx;
+    height: 10rpx;
+    top: 20%;
+    right: 20%;
+    animation-delay: 0s;
+}
+.p-2 {
+    width: 6rpx;
+    height: 6rpx;
+    bottom: 30%;
+    left: 15%;
+    animation-delay: 1.5s;
+}
+.p-3 {
+    width: 8rpx;
+    height: 8rpx;
+    top: 10%;
+    left: 40%;
+    animation-delay: 2.5s;
+}
+
+@keyframes spin {
+    from {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+@keyframes float-particle {
+    0%,
+    100% {
+        transform: translateY(0);
+        opacity: 0.4;
+    }
+    50% {
+        transform: translateY(-15rpx);
+        opacity: 0.8;
+    }
+}
+
+.empty-title {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: $text-secondary;
+    margin-bottom: 16rpx;
+}
+
+.empty-desc {
+    font-size: 26rpx;
     color: $text-placeholder;
-    font-size: 28rpx;
+    text-align: center;
+    line-height: 1.6;
 }
 
 // 加载状态
@@ -960,11 +1165,46 @@ onMounted(() => {
     }
 
     .random-btn {
-        background: linear-gradient(135deg, $dark-primary-color 0%, #9f7aea 100%);
-        box-shadow: 0 16rpx 40rpx rgba(139, 110, 255, 0.4);
+        background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+        box-shadow:
+            0 10rpx 30rpx rgba(0, 0, 0, 0.4),
+            inset 0 2rpx 4rpx rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.1);
     }
 
-    .empty-text {
+    .portal-effect {
+        background: radial-gradient(circle, rgba(139, 110, 255, 0.15) 0%, rgba(139, 110, 255, 0) 70%);
+    }
+
+    .portal-label {
+        background: rgba(45, 45, 69, 0.9);
+        color: #a78bfa;
+        box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.3);
+    }
+
+    .void-circle {
+        background: linear-gradient(135deg, #4b3b80 0%, #2d2d45 100%);
+        box-shadow: 0 0 60rpx rgba(107, 78, 255, 0.15);
+    }
+
+    .orbit {
+        border-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .orbit-1::after {
+        background: #8b6eff;
+        box-shadow: 0 0 10rpx rgba(139, 110, 255, 0.4);
+    }
+
+    .orbit-2::after {
+        background: #6b4eff;
+    }
+
+    .empty-title {
+        color: $dark-text-secondary;
+    }
+
+    .empty-desc {
         color: $dark-text-placeholder;
     }
 

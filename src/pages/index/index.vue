@@ -159,6 +159,24 @@
             </view>
         </view>
 
+        <!-- 新用户空状态 -->
+        <view
+            v-else
+            class="empty-state"
+        >
+            <view class="empty-illustration">
+                <view class="moon-orb"></view>
+                <view class="star star-1"></view>
+                <view class="star star-2"></view>
+                <view class="star star-3"></view>
+            </view>
+            <text class="empty-title">开启您的梦境探索之旅</text>
+            <text class="empty-desc">每晚的梦境都是潜意识的信笺\n记录下来，解读其中深意</text>
+            <view class="empty-arrow">
+                <text>点击上方“记梦”开始</text>
+            </view>
+        </view>
+
         <!-- 今日改运任务 -->
         <view
             class="task-card"
@@ -568,6 +586,41 @@ onShow(async () => {
             box-shadow: $dark-shadow-sm;
         }
 
+        .empty-state {
+            background: linear-gradient(180deg, #1e1e2e 0%, #252538 100%);
+            border-color: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.3);
+
+            .moon-orb {
+                background: linear-gradient(135deg, #4b3b80 0%, #2d2d45 100%);
+                box-shadow: 0 0 50rpx rgba(107, 78, 255, 0.15);
+
+                &::after {
+                    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 100%);
+                }
+            }
+
+            .star {
+                opacity: 0.8;
+            }
+
+            .empty-title {
+                color: $dark-text-primary;
+            }
+
+            .empty-desc {
+                color: $dark-text-secondary;
+            }
+
+            .empty-arrow {
+                background: rgba(139, 110, 255, 0.15);
+
+                text {
+                    color: #a78bfa;
+                }
+            }
+        }
+
         .task-card {
             background: linear-gradient(135deg, rgba(255, 183, 77, 0.1) 0%, rgba(255, 138, 101, 0.08) 100%);
             box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.2);
@@ -789,6 +842,127 @@ onShow(async () => {
 
     &:active {
         transform: scale(0.99);
+    }
+}
+
+// 新用户空状态
+.empty-state {
+    margin: 32rpx;
+    padding: 60rpx 40rpx;
+    background: linear-gradient(180deg, #ffffff 0%, #f9f7ff 100%);
+    border-radius: 40rpx;
+    box-shadow: 0 8rpx 32rpx rgba(107, 78, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    border: 2rpx solid rgba(255, 255, 255, 0.8);
+    position: relative;
+    overflow: hidden;
+}
+
+.empty-illustration {
+    width: 200rpx;
+    height: 160rpx;
+    position: relative;
+    margin-bottom: 32rpx;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.moon-orb {
+    width: 100rpx;
+    height: 100rpx;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e0d4ff 0%, #f3efff 100%);
+    box-shadow: 0 0 40rpx rgba(139, 110, 255, 0.25);
+    position: relative;
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 10%;
+        left: 10%;
+        width: 80%;
+        height: 80%;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%);
+        opacity: 0.6;
+    }
+}
+
+.star {
+    position: absolute;
+    background: #ffd700;
+    border-radius: 50%;
+    opacity: 0.6;
+    animation: twinkle 3s infinite ease-in-out;
+}
+
+.star-1 {
+    width: 14rpx;
+    height: 14rpx;
+    top: 20rpx;
+    right: 40rpx;
+    animation-delay: 0s;
+}
+
+.star-2 {
+    width: 10rpx;
+    height: 10rpx;
+    bottom: 30rpx;
+    left: 50rpx;
+    animation-delay: 1.2s;
+}
+
+.star-3 {
+    width: 8rpx;
+    height: 8rpx;
+    top: 50rpx;
+    left: 20rpx;
+    animation-delay: 2.4s;
+}
+
+@keyframes twinkle {
+    0%,
+    100% {
+        opacity: 0.4;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.9;
+        transform: scale(1.3);
+        box-shadow: 0 0 10rpx rgba(255, 215, 0, 0.6);
+    }
+}
+
+.empty-title {
+    font-size: 34rpx;
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: 16rpx;
+    letter-spacing: 1rpx;
+}
+
+.empty-desc {
+    font-size: 26rpx;
+    color: $text-secondary;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    margin-bottom: 24rpx;
+}
+
+.empty-arrow {
+    padding: 12rpx 32rpx;
+    background: rgba(107, 78, 255, 0.06);
+    border-radius: 30rpx;
+    transition: all 0.3s;
+
+    text {
+        font-size: 24rpx;
+        color: #8b6eff;
+        font-weight: 500;
     }
 }
 
