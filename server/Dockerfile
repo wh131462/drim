@@ -37,8 +37,9 @@ COPY prisma ./prisma/
 # 只安装生产依赖
 RUN pnpm install --frozen-lockfile --prod
 
-# 生成 Prisma Client
-RUN pnpm prisma:generate
+# 从构建阶段复制 Prisma Client（避免在 prod 阶段安装 devDependencies）
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
 
 # 从构建阶段复制编译后的代码
 COPY --from=builder /app/dist ./dist
