@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <defs>
+    <linearGradient id="meditationGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B5CF6"/>
+      <stop offset="100%" style="stop-color:#A78BFA"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#meditationGrad)" d="M12 4c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm7 14v-1c-2.24 0-4.16-.96-5.5-2.5l-1.07-1.28c-.35-.42-.86-.72-1.43-.72s-1.08.3-1.43.72L8.5 14.5C7.16 16.04 5.24 17 3 17v1c2.77 0 5.19-1.17 7-3 1.81 1.83 4.23 3 7 3zM12 11c.83 0 1.5-.67 1.5-1.5S12.83 8 12 8s-1.5.67-1.5 1.5S11.17 11 12 11z"/>
+</svg>

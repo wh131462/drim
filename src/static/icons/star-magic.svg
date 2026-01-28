@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <defs>
+    <linearGradient id="starMagicGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FBBF24"/>
+      <stop offset="50%" style="stop-color:#F59E0B"/>
+      <stop offset="100%" style="stop-color:#D97706"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#starMagicGrad)" d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6.4-4.8-6.4 4.8 2.4-7.2-6-4.8h7.6z"/>
+  <circle fill="#FEF3C7" cx="18" cy="5" r="1.5"/>
+  <circle fill="#FEF3C7" cx="5" cy="8" r="1"/>
+  <circle fill="#FEF3C7" cx="20" cy="14" r="1"/>
+</svg>

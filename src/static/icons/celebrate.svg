@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <defs>
+    <linearGradient id="celebrateGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700"/>
+      <stop offset="100%" style="stop-color:#FF8C00"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#celebrateGrad)" d="M2.2 21.8l1.6-5.8 4.2 4.2-5.8 1.6zm2.6-7.4l5.8 5.8 11.2-11.2c.8-.8.8-2 0-2.8L18.6 3.2c-.8-.8-2-.8-2.8 0L4.8 14.4zm10.6-7.8l2.8 2.8-1.4 1.4-2.8-2.8 1.4-1.4z"/>
+  <circle fill="#FF6B6B" cx="18" cy="4" r="1.5"/>
+  <circle fill="#4ECDC4" cx="20" cy="8" r="1"/>
+  <circle fill="#A78BFA" cx="4" cy="4" r="1"/>
+  <circle fill="#F472B6" cx="8" cy="2" r="1.2"/>
+</svg>
