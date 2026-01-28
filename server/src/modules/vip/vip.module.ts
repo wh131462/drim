@@ -3,8 +3,8 @@ import { VipController } from './vip.controller';
 import { VipService } from './vip.service';
 
 @Module({
-  controllers: [VipController],
-  providers: [VipService],
-  exports: [VipService],
+    controllers: [VipController],
+    providers: [VipService],
+    exports: [VipService]
 })
 export class VipModule {}

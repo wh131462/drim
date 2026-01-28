@@ -14,6 +14,9 @@ interface UserState {
     darkMode: boolean;
 }
 
+// 登录锁，防止并发登录
+let loginPromise: Promise<boolean> | null = null;
+
 export const useUserStore = defineStore('user', {
     state: (): UserState => ({
         token: uni.getStorageSync('token') || '',
@@ -43,34 +46,54 @@ export const useUserStore = defineStore('user', {
          * @returns 是否需要完善资料
          */
         async login(): Promise<boolean> {
-            try {
-                // 获取微信登录 code
-                const { code } = await new Promise<UniApp.LoginRes>((resolve, reject) => {
-                    uni.login({
-                        provider: 'weixin',
-                        success: resolve,
-                        fail: reject
-                    });
-                });
-
-                // 调用后端登录接口
-                const { token, userInfo, isNewUser } = await userApi.login({ code });
-
-                // 保存登录状态
-                this.token = token;
-                this.userInfo = userInfo;
-                this.isLoggedIn = true;
-
-                // 持久化存储
-                uni.setStorageSync('token', token);
-                uni.setStorageSync('userInfo', userInfo);
-
-                // 返回是否需要完善资料
-                return isNewUser || !userInfo.nickname || !userInfo.avatar;
-            } catch (error) {
-                console.error('登录失败:', error);
-                throw error;
+            // 如果已有登录请求进行中，直接返回该 Promise
+            if (loginPromise) {
+                console.log('登录请求进行中，复用现有请求');
+                return loginPromise;
             }
+
+            // 如果已登录，直接返回
+            if (this.isLoggedIn && this.token) {
+                console.log('已登录，跳过登录流程');
+                return this.needsProfileSetup;
+            }
+
+            // 创建新的登录 Promise
+            loginPromise = (async () => {
+                try {
+                    // 获取微信登录 code
+                    const { code } = await new Promise<UniApp.LoginRes>((resolve, reject) => {
+                        uni.login({
+                            provider: 'weixin',
+                            success: resolve,
+                            fail: reject
+                        });
+                    });
+
+                    // 调用后端登录接口
+                    const { token, userInfo, isNewUser } = await userApi.login({ code });
+
+                    // 保存登录状态
+                    this.token = token;
+                    this.userInfo = userInfo;
+                    this.isLoggedIn = true;
+
+                    // 持久化存储
+                    uni.setStorageSync('token', token);
+                    uni.setStorageSync('userInfo', userInfo);
+
+                    // 返回是否需要完善资料
+                    return isNewUser || !userInfo.nickname || !userInfo.avatar;
+                } catch (error) {
+                    console.error('登录失败:', error);
+                    throw error;
+                } finally {
+                    // 清除登录锁
+                    loginPromise = null;
+                }
+            })();
+
+            return loginPromise;
         },
 
         /**
