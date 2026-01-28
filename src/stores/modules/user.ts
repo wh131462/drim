@@ -156,7 +156,7 @@ export const useUserStore = defineStore('user', {
         },
 
         /**
-         * 切换深色模式
+         * 切换暗黑模式
          */
         toggleDarkMode(enabled: boolean): void {
             this.darkMode = enabled;

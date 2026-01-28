@@ -24,6 +24,7 @@ export interface CompleteTaskResponse {
     success: boolean;
     points: number;
     totalPoints: number;
+    isDoubleReward: boolean;
 }
 
 export const taskApi = {

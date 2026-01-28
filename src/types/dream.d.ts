@@ -12,6 +12,7 @@ export interface Dream {
     status: DreamStatus;
     hasAnalysis: boolean;
     analysisId?: string;
+    fortuneScore?: number | null;
     createdAt: string;
 }
 
@@ -19,6 +20,17 @@ export interface DreamInput {
     content: string;
     tags?: string[];
     emotion?: Emotion;
+    isPublic?: boolean;
+}
+
+export interface DreamRewards {
+    dreamReward: number;
+    streakReward: number;
+    streakDays: number;
+}
+
+export interface CreateDreamResponse extends Dream {
+    rewards: DreamRewards;
 }
 
 export interface DreamDetail extends Dream {
@@ -46,6 +58,8 @@ export interface CalendarRecord {
     date: string;
     hasDream: boolean;
     dreamId: string | null;
+    dreamIds: string[];
+    dreamCount: number;
 }
 
 export interface CalendarResponse {

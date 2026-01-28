@@ -14,8 +14,13 @@ export const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 const TIMEOUT = 30000;
 
 // 获取 token
-function getToken(): string {
+export function getToken(): string {
     return uni.getStorageSync('token') || '';
+}
+
+// 获取 API 基础地址
+export function getBaseUrl(): string {
+    return BASE_URL;
 }
 
 // AI 服务错误友好提示映射

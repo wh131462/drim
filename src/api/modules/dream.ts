@@ -9,15 +9,16 @@ import type {
     DreamInput,
     DreamListParams,
     DreamListResponse,
-    CalendarResponse
+    CalendarResponse,
+    CreateDreamResponse
 } from '@/types/dream';
 
 export const dreamApi = {
     /**
      * 提交梦境
      */
-    create(data: DreamInput): Promise<Dream> {
-        return post<Dream>('/dream', data);
+    create(data: DreamInput): Promise<CreateDreamResponse> {
+        return post<CreateDreamResponse>('/dream', data);
     },
 
     /**
@@ -47,8 +48,11 @@ export const dreamApi = {
     update(
         dreamId: string,
         data: { content: string; reAnalyze?: boolean }
-    ): Promise<Dream & { needReAnalyze: boolean }> {
-        return put<Dream & { needReAnalyze: boolean }>(`/dream/${dreamId}`, data);
+    ): Promise<Dream & { needReAnalyze: boolean; pointsConsumed: number; remainingPoints: number }> {
+        return put<Dream & { needReAnalyze: boolean; pointsConsumed: number; remainingPoints: number }>(
+            `/dream/${dreamId}`,
+            data
+        );
     },
 
     /**

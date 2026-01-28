@@ -103,7 +103,7 @@ page {
         color 0.3s ease;
 }
 
-/* 深色模式全局样式 */
+/* 暗黑模式全局样式 */
 .dark-mode {
     page {
         background-color: $dark-bg-page;

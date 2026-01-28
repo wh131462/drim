@@ -20,6 +20,10 @@ export interface PublicDream {
     };
 }
 
+export interface ViewDreamRewards {
+    viewReward: number;
+}
+
 export interface PublicDreamDetail extends PublicDream {
     analysis?: {
         theme?: string;
@@ -27,6 +31,7 @@ export interface PublicDreamDetail extends PublicDream {
         fortuneScore?: number;
         fortuneTips?: any;
     };
+    rewards?: ViewDreamRewards | null;
 }
 
 export interface ExploreListParams {
