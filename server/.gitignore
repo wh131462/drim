@@ -2,3 +2,5 @@
 
 # 上传文件目录
 uploads/
+
+*.tsbuildinfo

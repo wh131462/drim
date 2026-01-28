@@ -6,10 +6,10 @@
     "private": true,
     "license": "UNLICENSED",
     "scripts": {
-        "predev": "prisma generate && ./scripts/kill-port.sh",
-        "dev": "nest start --watch",
-        "build": "nest build",
+        "build": "rm -f tsconfig.build.tsbuildinfo && nest build",
         "start": "node dist/main",
+        "predev": "prisma generate && ./scripts/kill-port.sh && npm run build",
+        "dev": "nest start --watch",
         "db:generate": "prisma generate",
         "db:migrate": "prisma migrate dev",
         "db:seed": "ts-node -r tsconfig-paths/register prisma/seed.ts",
