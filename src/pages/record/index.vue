@@ -382,8 +382,8 @@ async function handlePolish() {
 
         uni.showLoading({ title: '润色中...' });
 
-        // 调用真实 API
-        const response = await polishApi.polishText(originalContent);
+        // 调用真实 API - showError: false 使用页面自定义的错误处理
+        const response = await polishApi.polishText(originalContent, undefined, { showError: false });
 
         // 如果是第一次润色，先添加原始版本
         if (versions.value.length === 0) {
@@ -512,9 +512,9 @@ async function handleSubmit() {
 
         // 跳转到解析结果页（使用 redirectTo 替换当前页面，避免返回时出现空的记录页）
         uni.redirectTo({ url });
-    } catch (error) {
+    } catch (error: any) {
         uni.hideLoading();
-        uni.showToast({ title: '提交失败，请重试', icon: 'none' });
+        uni.showToast({ title: error?.message || '提交失败，请重试', icon: 'none' });
     }
 }
 

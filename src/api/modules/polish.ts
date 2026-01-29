@@ -3,6 +3,7 @@
  */
 
 import { get, post } from '../request';
+import type { RequestConfig } from '@/types/api';
 
 export interface PolishResult {
     versionId: string;
@@ -41,25 +42,37 @@ export const polishApi = {
     /**
      * 纯文本润色(不需要梦境ID)
      */
-    polishText(content: string, prompt?: string): Promise<{ content: string; quota: PolishQuota | null }> {
-        return post<{ content: string; quota: PolishQuota | null }>('/polish/text', {
-            content,
-            prompt
-        });
+    polishText(
+        content: string,
+        prompt?: string,
+        options?: Partial<RequestConfig>
+    ): Promise<{ content: string; quota: PolishQuota | null }> {
+        return post<{ content: string; quota: PolishQuota | null }>(
+            '/polish/text',
+            {
+                content,
+                prompt
+            },
+            options
+        );
     },
 
     /**
      * 润色梦境
      */
-    polishDream(dreamId: string, data?: { prompt?: string; basedOnVersionId?: string }): Promise<PolishResult> {
-        return post<PolishResult>(`/polish/dream/${dreamId}`, data);
+    polishDream(
+        dreamId: string,
+        data?: { prompt?: string; basedOnVersionId?: string },
+        options?: Partial<RequestConfig>
+    ): Promise<PolishResult> {
+        return post<PolishResult>(`/polish/dream/${dreamId}`, data, options);
     },
 
     /**
      * 获取润色配额
      */
-    getQuota(): Promise<PolishQuota> {
-        return get<PolishQuota>('/polish/quota');
+    getQuota(options?: Partial<RequestConfig>): Promise<PolishQuota> {
+        return get<PolishQuota>('/polish/quota', undefined, options);
     },
 
     /**
@@ -67,15 +80,16 @@ export const polishApi = {
      */
     switchVersion(
         dreamId: string,
-        versionId: string
+        versionId: string,
+        options?: Partial<RequestConfig>
     ): Promise<{ success: boolean; currentVersionId: string; content: string }> {
-        return post(`/polish/dream/${dreamId}/switch-version/${versionId}`);
+        return post(`/polish/dream/${dreamId}/switch-version/${versionId}`, undefined, options);
     },
 
     /**
      * 获取梦境版本历史
      */
-    getVersions(dreamId: string): Promise<VersionsResponse> {
-        return get<VersionsResponse>(`/polish/dream/${dreamId}/versions`);
+    getVersions(dreamId: string, options?: Partial<RequestConfig>): Promise<VersionsResponse> {
+        return get<VersionsResponse>(`/polish/dream/${dreamId}/versions`, undefined, options);
     }
 };

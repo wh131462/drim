@@ -242,8 +242,11 @@ async function startAnalysis() {
     loadingText.value = '正在启动智能解析...';
 
     try {
-        // 请求解析 (SSE 模式)
-        const response = await analysisApi.requestStream({ dreamId: dreamId.value });
+        // 请求解析 (SSE 模式) - showLoading: false 避免遮挡加载动画，showError: false 使用页面错误状态显示
+        const response = await analysisApi.requestStream(
+            { dreamId: dreamId.value },
+            { showLoading: false, showError: false }
+        );
 
         // 如果已完成，直接获取结果
         if (response.status === 'completed') {
@@ -295,7 +298,10 @@ function startSSEStream() {
 async function fallbackToPolling() {
     try {
         loadingText.value = '系统正在解析你的梦境...';
-        const response = await analysisApi.request({ dreamId: dreamId.value });
+        const response = await analysisApi.request(
+            { dreamId: dreamId.value },
+            { showLoading: false, showError: false }
+        );
         if (response.status === 'completed') {
             await loadAnalysisResult(response.analysisId);
         } else {
@@ -355,7 +361,7 @@ function pollForResult(analysisId: string) {
  */
 async function loadAnalysisResult(analysisId: string) {
     try {
-        const result = await analysisApi.getById(analysisId);
+        const result = await analysisApi.getById(analysisId, { showLoading: false, showError: false });
         analysis.value = result;
         handleAnalysisComplete();
     } catch (err: any) {
@@ -451,7 +457,7 @@ async function handleReanalyze() {
 
     try {
         // 调用重新解析接口
-        const response = await analysisApi.retry(dreamId.value);
+        const response = await analysisApi.retry(dreamId.value, { showLoading: false, showError: false });
 
         // 显示积分消耗提示
         showPointsConsumed(response.pointsConsumed, '重新解析');
