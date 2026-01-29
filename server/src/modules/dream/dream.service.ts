@@ -49,6 +49,9 @@ export class DreamService {
 
         const trimmedContent = dto.content.trim();
 
+        // 无意义内容检测
+        this.validateContentMeaningful(trimmedContent);
+
         // 内容安全检测
         await this.checkContentSecurity(trimmedContent, userId);
 
@@ -316,6 +319,9 @@ export class DreamService {
         const trimmedContent = dto.content.trim();
         const wordCount = trimmedContent.length;
 
+        // 无意义内容检测
+        this.validateContentMeaningful(trimmedContent);
+
         // 内容安全检测
         await this.checkContentSecurity(trimmedContent, userId);
 
@@ -550,6 +556,70 @@ export class DreamService {
             status: dream.status,
             createdAt: dream.createdAt.toISOString()
         };
+    }
+
+    /**
+     * 无意义内容检测
+     * @param content 待检测内容
+     * @throws BadRequestException 当内容被判定为无意义时
+     */
+    private validateContentMeaningful(content: string): void {
+        // 移除空白字符后的内容
+        const cleanContent = content.replace(/\s/g, '');
+        const length = cleanContent.length;
+
+        if (length === 0) {
+            throw new BadRequestException({
+                code: 20003,
+                message: '梦境内容不能为空'
+            });
+        }
+
+        // 检测重复字符比例（单个字符出现次数超过50%）
+        const charCount: Record<string, number> = {};
+        for (const char of cleanContent) {
+            charCount[char] = (charCount[char] || 0) + 1;
+        }
+        const maxCharCount = Math.max(...Object.values(charCount));
+        if (maxCharCount / length > 0.5) {
+            throw new BadRequestException({
+                code: 20003,
+                message: '梦境内容包含过多重复字符，请描述真实的梦境体验'
+            });
+        }
+
+        // 统计中文字符数量
+        const chineseChars = cleanContent.match(/[\u4e00-\u9fa5]/g) || [];
+        const chineseRatio = chineseChars.length / length;
+
+        // 统计英文字母数量
+        const englishChars = cleanContent.match(/[a-zA-Z]/g) || [];
+        const englishRatio = englishChars.length / length;
+
+        // 纯数字/符号内容检测（无中文且无英文）
+        if (chineseRatio === 0 && englishRatio === 0) {
+            throw new BadRequestException({
+                code: 20003,
+                message: '梦境内容需要包含文字描述，请用文字记录您的梦境'
+            });
+        }
+
+        // 中文内容比例过低检测（当内容较长时，中文比例应该较高）
+        if (length > 30 && chineseRatio < 0.3 && englishRatio < 0.5) {
+            throw new BadRequestException({
+                code: 20003,
+                message: '梦境内容需要包含更多文字描述，请详细记录您的梦境'
+            });
+        }
+
+        // 检测连续重复模式（如 "哈哈哈哈" 或 "abcabcabc"）
+        const repeatPattern = /(.{2,})\1{3,}/;
+        if (repeatPattern.test(cleanContent)) {
+            throw new BadRequestException({
+                code: 20003,
+                message: '梦境内容包含重复片段，请描述真实的梦境体验'
+            });
+        }
     }
 
     /**

@@ -406,6 +406,22 @@ export class AchievementService {
             if (progress >= achievement.conditionValue) {
                 // 解锁成就
                 try {
+                    // 确保成就记录存在于数据库中
+                    await this.prisma.achievement.upsert({
+                        where: { id: achievement.id },
+                        update: {},
+                        create: {
+                            id: achievement.id,
+                            name: achievement.name,
+                            description: achievement.description,
+                            icon: achievement.icon,
+                            conditionType: achievement.conditionType,
+                            conditionValue: achievement.conditionValue,
+                            rewardPoints: achievement.rewardPoints,
+                            sortOrder: achievement.sortOrder
+                        }
+                    });
+
                     const userAchievement = await this.prisma.userAchievement.create({
                         data: {
                             userId,
