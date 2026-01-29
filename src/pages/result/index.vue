@@ -471,7 +471,7 @@ async function handleReanalyze() {
                 cancelText: '取消',
                 success: (res) => {
                     if (res.confirm) {
-                        uni.navigateTo({ url: '/pages/privilege/index' });
+                        uni.navigateTo({ url: '/pages/vip/index' });
                     }
                 }
             });

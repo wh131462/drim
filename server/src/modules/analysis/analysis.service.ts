@@ -273,14 +273,47 @@ export class AnalysisService {
      */
     private parseAiResponse(response: string): ParsedAnalysis {
         try {
-            // 尝试提取JSON
-            const jsonMatch = response.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                return JSON.parse(jsonMatch[0]);
+            // 1. 移除 Markdown 代码块
+            let cleanedResponse = response.trim();
+            if (cleanedResponse.includes('```')) {
+                const codeBlockMatch = cleanedResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                if (codeBlockMatch) {
+                    cleanedResponse = codeBlockMatch[1].trim();
+                }
             }
-            throw new Error('No JSON found');
-        } catch {
+
+            // 2. 提取 JSON 对象
+            const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) {
+                this.logger.warn('AI response does not contain JSON object');
+                this.logger.debug(`Raw response: ${response.substring(0, 200)}...`);
+                throw new Error('No JSON found');
+            }
+
+            // 3. 解析 JSON
+            const parsed = JSON.parse(jsonMatch[0]) as Partial<ParsedAnalysis>;
+
+            // 4. 验证必需字段
+            const requiredFields = ['theme', 'interpretation', 'fortuneScore', 'fortuneTips', 'task'];
+            const missingFields = requiredFields.filter((field) => !(field in parsed));
+
+            if (missingFields.length > 0) {
+                this.logger.warn(`AI response missing required fields: ${missingFields.join(', ')}`);
+                this.logger.debug(`Parsed JSON: ${JSON.stringify(parsed)}`);
+                throw new Error(`Missing fields: ${missingFields.join(', ')}`);
+            }
+
+            // 5. 验证并规范化 fortuneScore
+            if (typeof parsed.fortuneScore !== 'number' || parsed.fortuneScore < 60 || parsed.fortuneScore > 100) {
+                this.logger.warn(`Invalid fortuneScore: ${parsed.fortuneScore}, clamping to 60-95`);
+                parsed.fortuneScore = Math.max(60, Math.min(95, parsed.fortuneScore || 75));
+            }
+
+            return parsed as ParsedAnalysis;
+        } catch (error) {
             // 降级处理：生成默认响应
+            this.logger.error('AI response parsing failed, using fallback analysis', error);
+            this.logger.debug(`Failed response: ${response}`);
             return this.generateFallbackAnalysis();
         }
     }
@@ -289,9 +322,9 @@ export class AnalysisService {
      * 生成降级响应
      */
     private generateFallbackAnalysis(): ParsedAnalysis {
-        // 生成 70-82 之间的随机评分
-        const baseScore = 70;
-        const randomBonus = Math.floor(Math.random() * 13);
+        // 生成 80-95 之间的随机评分
+        const baseScore = 80;
+        const randomBonus = Math.floor(Math.random() * 16);
         const fortuneScore = baseScore + randomBonus;
 
         return {
