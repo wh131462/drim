@@ -28,10 +28,10 @@ export const AD_CONFIG = {
     REWARDS: {
         /** 任务基础奖励积分 */
         TASK_BASE_POINTS: 10,
-        /** 任务双倍奖励积分 */
+        /** 任务双倍奖励积分（基础奖励 + 广告奖励） */
         TASK_DOUBLE_POINTS: 20,
-        /** 看广告获得积分 */
-        AD_WATCH_POINTS: 20,
+        /** 看广告获得积分（统一为10积分） */
+        AD_WATCH_POINTS: 10,
         /** 每日广告观看上限 */
         DAILY_AD_LIMIT: 5
     },
