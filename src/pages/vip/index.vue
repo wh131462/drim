@@ -227,7 +227,7 @@ const earnWays = [
 // 权益数据 - 使用SVG图标
 const benefits = [
     { icon: '/static/icons/ban.svg', name: '免广告', desc: '解析无需看广告' },
-    { icon: '/static/icons/infinity.svg', name: '无限润色', desc: '不限次数AI润色' },
+    { icon: '/static/icons/infinity.svg', name: '无限润色', desc: '不限次数润色' },
     { icon: '/static/icons/book.svg', name: '历史查看', desc: '查看全部历史记录' },
     { icon: '/static/icons/crystal.svg', name: '深度解析', desc: '更详细的心理分析' }
 ];

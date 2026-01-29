@@ -29,7 +29,7 @@
                         src="/static/icons/star.svg"
                         mode="aspectFit"
                     />
-                    <text>AI润色</text>
+                    <text>润色</text>
                 </view>
 
                 <!-- 版本切换器 (有多个版本时显示) -->

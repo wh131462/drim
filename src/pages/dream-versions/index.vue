@@ -93,7 +93,7 @@
                                         src="/static/icons/star.svg"
                                         mode="aspectFit"
                                     />
-                                    <text>AI润色</text>
+                                    <text>润色</text>
                                 </template>
                                 <template v-else>
                                     <image

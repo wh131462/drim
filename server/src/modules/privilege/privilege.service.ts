@@ -82,7 +82,7 @@ export class PrivilegeService {
                 },
                 {
                     key: 'unlimited_polish',
-                    name: '无限AI润色',
+                    name: '无限润色',
                     enabled: hasPrivilege
                 },
                 {
