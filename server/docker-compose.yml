@@ -14,6 +14,8 @@ services:
         command: >
             --character-set-server=utf8mb4
             --collation-server=utf8mb4_unicode_ci
+            --character-set-client-handshake=FALSE
+            --init-connect='SET NAMES utf8mb4'
             --innodb-buffer-pool-size=48M
             --innodb-log-buffer-size=4M
             --innodb-flush-method=O_DIRECT
