@@ -149,6 +149,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
+import { onShow } from '@dcloudio/uni-app';
 import { useUserStore, useSettingsStore } from '@/stores';
 import NavBar from '@/components/NavBar/index.vue';
 import TimePicker from '@/components/TimePicker/index.vue';
@@ -171,6 +172,12 @@ const settings = reactive({
 function syncFromStore() {
     settings.notification = settingsStore.notificationEnabled;
     settings.reminderTime = settingsStore.reminderTime;
+    settings.darkMode = userStore.isDarkMode;
+}
+
+// 保存本地设置到 localStorage（仅前端状态，暗黑模式已在 userStore 中处理）
+function saveLocalSettings() {
+    // 暗黑模式已通过 userStore.toggleDarkMode 保存，这里无需额外操作
 }
 
 async function handleNotificationChange(e: any) {
@@ -373,6 +380,11 @@ onMounted(async () => {
 
     // 从 store 加载设置（首页已预加载，这里直接使用缓存）
     await settingsStore.ensureSettings();
+    syncFromStore();
+});
+
+onShow(() => {
+    // 每次显示页面时，同步最新的暗黑模式状态
     syncFromStore();
 });
 </script>
