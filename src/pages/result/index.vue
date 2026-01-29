@@ -92,7 +92,7 @@
         <template v-else-if="analysis">
             <view
                 class="result-content"
-                :style="{ paddingTop: navBarHeight * 2 + 'rpx' }"
+                :style="{ paddingTop: `calc(${navBarHeight}px + 40rpx)` }"
             >
                 <!-- 头部区域 -->
                 <view class="result-header">
