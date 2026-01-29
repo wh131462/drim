@@ -956,8 +956,16 @@ onShow(async () => {
 .dream-swiper {
     height: 380rpx;
 
+    swiper-item {
+        padding: 0 4rpx;
+        box-sizing: border-box;
+    }
+
     .review-card {
         margin: 0;
+        height: 100%;
+        box-sizing: border-box;
+        border-radius: 40rpx;
     }
 }
 
