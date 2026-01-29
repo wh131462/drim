@@ -53,11 +53,13 @@
             <!-- 进度文字 -->
             <view class="loading-info">
                 <text class="loading-text">{{ loadingText }}</text>
-                <view class="loading-dots">
-                    <view class="dot"></view>
-                    <view class="dot"></view>
-                    <view class="dot"></view>
-                </view>
+            </view>
+
+            <!-- 装饰点 -->
+            <view class="loading-dots">
+                <view class="dot"></view>
+                <view class="dot"></view>
+                <view class="dot"></view>
             </view>
 
             <!-- 提示文字 -->
@@ -815,7 +817,6 @@ async function handleReanalyze() {
     align-items: center;
     justify-content: center;
     margin-top: 60rpx;
-    gap: 8rpx;
 }
 
 .loading-text {
@@ -827,38 +828,49 @@ async function handleReanalyze() {
 
 .loading-dots {
     display: flex;
-    gap: 6rpx;
-    margin-left: 4rpx;
+    align-items: center;
+    justify-content: center;
+    gap: 16rpx;
+    margin-top: 32rpx;
 }
 
 .loading-dots .dot {
-    width: 8rpx;
-    height: 8rpx;
-    background: #fff;
+    width: 12rpx;
+    height: 12rpx;
+    background: linear-gradient(135deg, #fff 0%, #c4b5fd 100%);
     border-radius: 50%;
-    animation: dotBounce 1.4s ease-in-out infinite;
+    box-shadow:
+        0 0 8rpx rgba(139, 110, 255, 0.6),
+        0 0 16rpx rgba(139, 110, 255, 0.3);
+    animation: dotWave 1.6s ease-in-out infinite;
 
     &:nth-child(1) {
         animation-delay: 0s;
     }
     &:nth-child(2) {
-        animation-delay: 0.2s;
+        animation-delay: 0.15s;
     }
     &:nth-child(3) {
-        animation-delay: 0.4s;
+        animation-delay: 0.3s;
     }
 }
 
-@keyframes dotBounce {
+@keyframes dotWave {
     0%,
-    80%,
     100% {
-        opacity: 0.3;
-        transform: scale(0.8);
+        opacity: 0.4;
+        transform: translateY(0) scale(0.8);
+        box-shadow:
+            0 0 8rpx rgba(139, 110, 255, 0.4),
+            0 0 16rpx rgba(139, 110, 255, 0.2);
     }
-    40% {
+    50% {
         opacity: 1;
-        transform: scale(1.2);
+        transform: translateY(-16rpx) scale(1.1);
+        box-shadow:
+            0 0 12rpx rgba(139, 110, 255, 0.8),
+            0 0 24rpx rgba(139, 110, 255, 0.5),
+            0 4rpx 8rpx rgba(0, 0, 0, 0.2);
     }
 }
 

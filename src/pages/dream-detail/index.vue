@@ -82,7 +82,11 @@
                                 class="more-btn"
                                 @tap="showActionSheet = true"
                             >
-                                <text class="more-dots">•••</text>
+                                <view class="more-dots">
+                                    <view class="dot"></view>
+                                    <view class="dot"></view>
+                                    <view class="dot"></view>
+                                </view>
                             </view>
                         </view>
                     </view>
@@ -908,8 +912,8 @@ onMounted(async () => {
             }
         }
 
-        .more-dots {
-            color: $dark-text-secondary;
+        .more-dots .dot {
+            background: $dark-text-secondary;
         }
 
         // 底部操作菜单
@@ -1403,10 +1407,17 @@ onMounted(async () => {
 }
 
 .more-dots {
-    font-size: 24rpx;
-    font-weight: 700;
-    color: $text-secondary;
-    letter-spacing: -2rpx;
+    display: flex;
+    align-items: center;
+    gap: 6rpx;
+
+    .dot {
+        width: 8rpx;
+        height: 8rpx;
+        border-radius: 50%;
+        background: $text-secondary;
+        transition: background 0.2s;
+    }
 }
 
 // 底部操作菜单
