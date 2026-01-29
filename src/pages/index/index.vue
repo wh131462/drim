@@ -180,7 +180,7 @@
         <!-- 今日改运任务 -->
         <view
             class="task-card"
-            v-if="currentTask"
+            v-if="taskStore.todayTask"
         >
             <!-- 装饰元素 -->
             <view class="task-decor task-decor-1"></view>
@@ -202,7 +202,7 @@
                         src="/static/icons/clover.svg"
                         mode="aspectFit"
                     />
-                    <text class="reward-value">+{{ currentTask.rewardPoints }}</text>
+                    <text class="reward-value">+{{ taskStore.todayTask.rewardPoints }}</text>
                 </view>
             </view>
 
@@ -210,13 +210,13 @@
                 <view class="task-icon-wrapper">
                     <image
                         class="task-type-icon"
-                        :src="getTaskIcon(currentTask.type)"
+                        :src="getTaskIcon(taskStore.todayTask.type)"
                         mode="aspectFit"
                     />
                     <view class="task-icon-ring"></view>
                 </view>
                 <view class="task-info">
-                    <text class="task-name">{{ currentTask.content }}</text>
+                    <text class="task-name">{{ taskStore.todayTask.content }}</text>
                     <view class="task-hint-row">
                         <text class="task-hint">完成后好运+1</text>
                         <image
@@ -231,19 +231,21 @@
             <view class="task-action">
                 <view
                     class="task-btn-fancy"
-                    :class="{ completed: currentTask.status === 'completed' }"
-                    @tap="currentTask.status === 'pending' && completeTask()"
+                    :class="{ completed: taskStore.todayTask.status === 'completed' }"
+                    @tap="taskStore.todayTask.status === 'pending' && completeTask()"
                 >
                     <image
-                        v-if="currentTask.status === 'completed'"
+                        v-if="taskStore.todayTask.status === 'completed'"
                         class="btn-icon"
                         src="/static/icons/celebrate.svg"
                         mode="aspectFit"
                     />
-                    <text class="btn-text">{{ currentTask.status === 'completed' ? '已完成' : '打卡领取' }}</text>
+                    <text class="btn-text">{{
+                        taskStore.todayTask.status === 'completed' ? '已完成' : '打卡领取'
+                    }}</text>
                     <view
                         class="btn-shine"
-                        v-if="currentTask.status === 'pending'"
+                        v-if="taskStore.todayTask.status === 'pending'"
                     ></view>
                 </view>
             </view>
@@ -265,7 +267,7 @@
         <!-- 任务奖励弹窗 -->
         <task-reward-modal
             v-model:visible="showTaskRewardModal"
-            :base-points="currentTask?.rewardPoints || 10"
+            :base-points="taskStore.todayTask?.rewardPoints || 10"
             @complete="onTaskRewardComplete"
         />
     </view>
@@ -274,11 +276,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { onShow, onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app';
-import { useUserStore, useDreamStore, useSettingsStore, useAchievementStore } from '@/stores';
+import { useUserStore, useDreamStore, useSettingsStore, useAchievementStore, useTaskStore } from '@/stores';
 import { getFriendlyDate, isToday, isYesterday } from '@/utils/date';
 import { getTagDisplayName } from '@/constants/tags';
-import { taskApi } from '@/api';
-import type { Task } from '@/api/modules/task';
 import type { Dream } from '@/types/dream';
 import CustomTabBar from '@/custom-tab-bar/index.vue';
 import UserProfileModal from '@/components/UserProfileModal/index.vue';
@@ -288,11 +288,8 @@ const userStore = useUserStore();
 const dreamStore = useDreamStore();
 const settingsStore = useSettingsStore();
 const achievementStore = useAchievementStore();
+const taskStore = useTaskStore();
 const statusBarHeight = ref(0);
-
-// 当前任务
-const currentTask = ref<Task | null>(null);
-const taskCompleted = ref(false);
 
 // 资料填写弹窗
 const showProfileModal = ref(false);
@@ -417,37 +414,15 @@ function getScoreGradient(score: number): string {
     return 'linear-gradient(135deg, #ef4444 0%, #f87171 100%)'; // 红色
 }
 
-async function loadTodayTask() {
-    try {
-        const response = await taskApi.getTodayTask();
-        if (response.task && response.task.status !== 'expired') {
-            currentTask.value = response.task;
-            taskCompleted.value = response.completed;
-        } else {
-            // 任务不存在或已过期时，重置状态
-            currentTask.value = null;
-            taskCompleted.value = false;
-        }
-    } catch (error: any) {
-        console.error('加载今日任务失败:', error);
-        // 请求失败时也重置状态，避免显示旧数据
-        currentTask.value = null;
-        taskCompleted.value = false;
-    }
-}
-
 async function completeTask() {
-    if (!currentTask.value) return;
+    if (!taskStore.todayTask) return;
 
     try {
         uni.showLoading({ title: '提交中...' });
-        const response = await taskApi.completeTask(currentTask.value.id);
+        const response = await taskStore.completeTask();
         uni.hideLoading();
 
         if (response.success) {
-            taskCompleted.value = true;
-            currentTask.value.status = 'completed';
-
             // 更新用户积分（基础奖励）
             userStore.userInfo!.luckyPoints = response.totalPoints;
 
@@ -478,7 +453,7 @@ async function loadPageData() {
     // 并行预加载所有页面需要的数据
     await Promise.all([
         dreamStore.ensureList(), // 首页：梦境列表
-        loadTodayTask(), // 首页：今日任务
+        taskStore.ensureTodayTask(), // 首页：今日任务
         settingsStore.ensureSettings(), // 记梦页/设置页：用户设置
         dreamStore.ensureCalendar(), // 我的页：日历数据
         userStore.ensureUserInfo(), // 多页面：用户信息

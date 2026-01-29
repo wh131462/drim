@@ -1343,6 +1343,7 @@ onShow(() => {
     bottom: 0;
     left: 0;
     right: 0;
+    z-index: 100;
     background: #fff;
     padding: 28rpx 40rpx;
     padding-bottom: calc(28rpx + 100rpx + env(safe-area-inset-bottom));
