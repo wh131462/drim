@@ -49,9 +49,9 @@
                                 />
                             </view>
                             <view class="philosophy-text">
-                                <text class="philosophy-title">AI 智能解析</text>
+                                <text class="philosophy-title">智能解析</text>
                                 <text class="philosophy-desc"
-                                    >结合心理学与 AI 技术，为你的梦境提供专业、深度的解读</text
+                                    >结合心理学与智能分析技术，为你的梦境提供专业、深度的解读</text
                                 >
                             </view>
                         </view>

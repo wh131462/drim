@@ -63,7 +63,7 @@
             </view>
 
             <!-- 提示文字 -->
-            <text class="loading-hint">AI 正在深度解读你的梦境...</text>
+            <text class="loading-hint">系统正在深度解读你的梦境...</text>
         </view>
 
         <!-- 错误状态 -->
@@ -162,7 +162,7 @@ const analysis = ref<any>(null);
 const error = ref<string | null>(null);
 const navBarHeight = ref(0);
 const dreamId = ref('');
-const loadingText = ref('AI 正在解析你的梦境...');
+const loadingText = ref('系统正在解析你的梦境...');
 const reanalyzing = ref(false);
 
 // 重新解析消耗的积分
@@ -239,7 +239,7 @@ async function startAnalysis() {
     loading.value = true;
     error.value = null;
     pollCount = 0;
-    loadingText.value = '正在启动 AI 解析...';
+    loadingText.value = '正在启动智能解析...';
 
     try {
         // 请求解析 (SSE 模式)
@@ -264,7 +264,7 @@ async function startAnalysis() {
  * SSE 流式接收
  */
 function startSSEStream() {
-    loadingText.value = 'AI 正在解析你的梦境...';
+    loadingText.value = '系统正在解析你的梦境...';
 
     closeSSE = connectAnalysisStream(dreamId.value, {
         onStart: () => {
@@ -294,7 +294,7 @@ function startSSEStream() {
  */
 async function fallbackToPolling() {
     try {
-        loadingText.value = 'AI 正在解析你的梦境...';
+        loadingText.value = '系统正在解析你的梦境...';
         const response = await analysisApi.request({ dreamId: dreamId.value });
         if (response.status === 'completed') {
             await loadAnalysisResult(response.analysisId);
@@ -328,7 +328,7 @@ function pollForResult(analysisId: string) {
                 loading.value = false;
                 handleAnalysisComplete();
             } else if (result.status === 'failed') {
-                error.value = 'AI 解析失败，请重试';
+                error.value = '智能解析失败，请重试';
                 loading.value = false;
             } else {
                 // 更新提示文字

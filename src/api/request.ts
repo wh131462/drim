@@ -29,37 +29,37 @@ function formatAiError(message: string): string {
 
     // 网络/连接错误
     if (lowerMsg.includes('timeout') || lowerMsg.includes('超时')) {
-        return 'AI 服务响应超时，请稍后重试';
+        return '服务响应超时，请稍后重试';
     }
     if (lowerMsg.includes('network') || lowerMsg.includes('econnrefused')) {
-        return 'AI 服务连接失败，请稍后重试';
+        return '服务连接失败，请稍后重试';
     }
 
     // HTTP 状态码错误
     if (lowerMsg.includes('status code 401') || lowerMsg.includes('unauthorized')) {
-        return 'AI 服务认证失败，请联系客服';
+        return '服务认证失败，请联系客服';
     }
     if (lowerMsg.includes('status code 403') || lowerMsg.includes('forbidden')) {
-        return 'AI 服务访问被拒绝';
+        return '服务访问被拒绝';
     }
     if (lowerMsg.includes('status code 404')) {
-        return 'AI 服务配置错误，请联系客服';
+        return '服务配置错误，请联系客服';
     }
     if (lowerMsg.includes('status code 429') || lowerMsg.includes('rate limit')) {
-        return 'AI 服务繁忙，请稍后重试';
+        return '服务繁忙，请稍后重试';
     }
     if (lowerMsg.includes('status code 5') || lowerMsg.includes('internal server')) {
-        return 'AI 服务暂时不可用，请稍后重试';
+        return '服务暂时不可用，请稍后重试';
     }
 
     // AI 响应格式错误
     if (lowerMsg.includes('ai响应格式异常') || lowerMsg.includes('response format')) {
-        return 'AI 服务返回异常，请重试';
+        return '服务返回异常，请重试';
     }
 
     // 配额相关
     if (lowerMsg.includes('quota') || lowerMsg.includes('配额')) {
-        return '今日 AI 润色次数已用完';
+        return '今日润色次数已用完';
     }
 
     return message;

@@ -58,7 +58,7 @@
                     />
                     <text v-if="polishQuota?.isVip">VIP 无限润色</text>
                     <text v-else-if="polishQuota">剩余 {{ polishQuota.remaining }}/{{ polishQuota.total }}</text>
-                    <text v-else>AI 润色</text>
+                    <text v-else>润色</text>
                 </view>
                 <view class="word-count">
                     <text :class="{ insufficient: dreamContent.length < 25 }"> {{ dreamContent.length }}/1000 </text>
@@ -380,7 +380,7 @@ async function handlePolish() {
         // 润色前保存原始内容（如果还没有版本）
         const originalContent = dreamContent.value.trim();
 
-        uni.showLoading({ title: 'AI 润色中...' });
+        uni.showLoading({ title: '润色中...' });
 
         // 调用真实 API
         const response = await polishApi.polishText(originalContent);
@@ -415,7 +415,7 @@ async function handlePolish() {
         }
 
         uni.hideLoading();
-        uni.showToast({ title: 'AI 润色完成', icon: 'success' });
+        uni.showToast({ title: '润色完成', icon: 'success' });
     } catch (error: any) {
         uni.hideLoading();
         const message = error?.message || '润色失败';
@@ -426,7 +426,7 @@ async function handlePolish() {
         if (isRetryable) {
             // 显示重试对话框
             uni.showModal({
-                title: 'AI 润色失败',
+                title: '润色失败',
                 content: message + '\n\n是否重试？',
                 confirmText: '重试',
                 cancelText: '取消',

@@ -110,7 +110,7 @@ export class AnalysisService {
             });
 
             // 调用 AI
-            this.sseService.emitProgress(dreamId, 'AI 正在深度解读...');
+            this.sseService.emitProgress(dreamId, '系统正在深度解读...');
             const aiResponse = await this.aiService.chat(prompt);
 
             // 解析 AI 响应
@@ -157,7 +157,7 @@ export class AnalysisService {
             });
 
             // 发送错误事件
-            this.sseService.emitError(dreamId, 'AI 解析失败，请重试');
+            this.sseService.emitError(dreamId, '智能解析失败，请重试');
         }
     }
 

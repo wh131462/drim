@@ -132,9 +132,9 @@
                 <view class="section">
                     <text class="section-title">五、AI服务特别说明</text>
                     <view class="section-content">
-                        <text class="paragraph bold">5.1 AI解析声明</text>
+                        <text class="paragraph bold">5.1 智能解析声明</text>
                         <text class="paragraph">
-                            本服务中的AI梦境解析功能基于人工智能技术，其解析结果仅供娱乐和参考，不构成任何专业的心理咨询、医疗诊断或其他专业建议。
+                            本服务中的梦境智能解析功能基于人工智能技术，其解析结果仅供娱乐和参考，不构成任何专业的心理咨询、医疗诊断或其他专业建议。
                         </text>
                         <text class="paragraph bold">5.2 运势提示声明</text>
                         <text class="paragraph">
@@ -180,7 +180,7 @@
                         </text>
                         <text class="paragraph bold">
                             7.3
-                            AI解析结果仅供参考，我们不对其准确性、适用性承担任何责任。如你因依赖AI解析结果而做出任何决定，由此产生的后果由你自行承担。
+                            智能解析结果仅供参考，我们不对其准确性、适用性承担任何责任。如你因依赖智能解析结果而做出任何决定，由此产生的后果由你自行承担。
                         </text>
                         <text class="paragraph bold">
                             7.4 你必须为自己账号下的一切行为负责，包括你所发表的任何内容及由此产生的任何后果。

@@ -180,8 +180,8 @@ ${content}
             const polishedContent = await this.aiService.chat(prompt);
             return polishedContent || content;
         } catch (error) {
-            console.error('AI 润色失败:', error);
-            throw new BadRequestException('AI 润色服务暂时不可用，请稍后重试');
+            console.error('润色失败:', error);
+            throw new BadRequestException('润色服务暂时不可用，请稍后重试');
         }
     }
 
