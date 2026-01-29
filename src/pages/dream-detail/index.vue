@@ -519,7 +519,7 @@ async function handleDelete() {
             if (res.confirm) {
                 try {
                     uni.showLoading({ title: '删除中...' });
-                    await dreamApi.delete(dreamId.value);
+                    await dreamStore.deleteDream(dreamId.value);
                     uni.hideLoading();
                     uni.showToast({ title: '已删除', icon: 'success' });
                     setTimeout(() => {

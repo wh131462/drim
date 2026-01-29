@@ -9,19 +9,23 @@
         <!-- 标题区域 -->
         <view class="header-section">
             <text class="header-title">成就概览</text>
-            <text class="header-subtitle">已解锁 {{ unlockedCount }} / {{ achievements.length }} 个成就</text>
+            <text class="header-subtitle"
+                >已解锁 {{ achievementStore.unlockedCount }} / {{ achievementStore.totalCount }} 个成就</text
+            >
         </view>
 
         <!-- 等级进度 -->
         <view class="progress-section">
             <view class="progress-header">
-                <text class="level-text">当前等级：Lv.{{ currentLevel }} {{ levelTitle }}</text>
-                <text class="exp-text">{{ currentExp }}/{{ nextLevelExp }} EXP</text>
+                <text class="level-text"
+                    >当前等级：Lv.{{ achievementStore.level }} {{ achievementStore.levelTitle }}</text
+                >
+                <text class="exp-text">{{ achievementStore.currentExp }}/{{ achievementStore.nextLevelExp }} EXP</text>
             </view>
             <view class="progress-bar">
                 <view
                     class="progress-fill"
-                    :style="{ width: progressPercent + '%' }"
+                    :style="{ width: achievementStore.progressPercent + '%' }"
                 ></view>
             </view>
         </view>
@@ -29,7 +33,7 @@
         <!-- 成就网格 -->
         <view class="achievements-grid">
             <view
-                v-for="achievement in achievements"
+                v-for="achievement in achievementStore.achievements"
                 :key="achievement.id"
                 class="achievement-item"
                 :class="{ unlocked: achievement.unlocked }"
@@ -48,7 +52,7 @@
 
         <!-- 加载中 -->
         <view
-            v-if="loading"
+            v-if="achievementStore.loading"
             class="loading-wrapper"
         >
             <text class="loading-text">加载中...</text>
@@ -57,34 +61,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { useUserStore } from '@/stores';
-import { achievementApi } from '@/api';
+import { ref, onMounted } from 'vue';
+import { useUserStore, useAchievementStore } from '@/stores';
 import type { Achievement } from '@/types/achievement';
 import NavBar from '@/components/NavBar/index.vue';
 
 const userStore = useUserStore();
+const achievementStore = useAchievementStore();
 const navBarHeight = ref(0);
-const loading = ref(false);
-
-// 成就数据
-const achievements = ref<Achievement[]>([]);
-
-// 等级数据
-const currentLevel = ref(1);
-const levelTitle = ref('梦境新手');
-const currentExp = ref(0);
-const nextLevelExp = ref(100);
-
-// 计算属性
-const unlockedCount = computed(() => {
-    return achievements.value.filter((a) => a.unlocked).length;
-});
-
-const progressPercent = computed(() => {
-    if (nextLevelExp.value === 0) return 0;
-    return Math.round((currentExp.value / nextLevelExp.value) * 100);
-});
 
 // 格式化解锁日期
 function formatUnlockDate(achievement: Achievement): string {
@@ -101,38 +85,13 @@ function formatUnlockDate(achievement: Achievement): string {
     return `${year}.${month}.${day}`;
 }
 
-// 加载成就数据
-async function loadAchievements() {
-    try {
-        loading.value = true;
-        const data = await achievementApi.getAchievementsWithProgress();
-
-        // 更新成就列表
-        achievements.value = data.achievements;
-
-        // 更新等级信息
-        currentLevel.value = data.level;
-        levelTitle.value = data.levelTitle;
-        currentExp.value = data.currentExp;
-        nextLevelExp.value = data.nextLevelExp;
-    } catch (error: any) {
-        console.error('加载成就数据失败:', error);
-        uni.showToast({
-            title: error.message || '加载失败',
-            icon: 'none'
-        });
-    } finally {
-        loading.value = false;
-    }
-}
-
 onMounted(async () => {
     const systemInfo = uni.getSystemInfoSync();
     const statusBarHeight = systemInfo.statusBarHeight || 0;
-    navBarHeight.value = statusBarHeight + 44; // 状态栏高度 + 导航栏内容高度
+    navBarHeight.value = statusBarHeight + 44;
 
-    // 加载成就数据
-    await loadAchievements();
+    // 从 store 加载（首页已预加载，这里直接使用缓存）
+    await achievementStore.ensureAchievements();
 });
 </script>
 
@@ -144,7 +103,7 @@ onMounted(async () => {
 .achievements-page {
     min-height: 100vh;
     background: $bg-page;
-    padding-bottom: 40rpx;
+    padding-bottom: 60rpx;
     transition: background-color 0.3s ease;
 
     &.dark-mode {
@@ -155,12 +114,12 @@ onMounted(async () => {
         }
 
         .header-subtitle {
-            color: $dark-text-secondary;
+            color: rgba($dark-text-primary, 0.6);
         }
 
         .progress-section {
             background: $dark-bg-card;
-            box-shadow: $dark-shadow-sm;
+            box-shadow: $dark-shadow-base;
         }
 
         .level-text {
@@ -169,14 +128,16 @@ onMounted(async () => {
 
         .exp-text {
             color: $dark-primary-color;
+            background: rgba($dark-primary-color, 0.1);
         }
 
         .progress-bar {
-            background: #2a2a2a;
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .progress-fill {
-            background: linear-gradient(135deg, $dark-primary-color 0%, #9f7aea 100%);
+            background: linear-gradient(90deg, $dark-primary-color 0%, #9f7aea 100%);
+            box-shadow: 0 0 10rpx rgba($dark-primary-color, 0.4);
         }
 
         .achievement-item {
@@ -184,8 +145,13 @@ onMounted(async () => {
             box-shadow: $dark-shadow-sm;
 
             &.unlocked {
-                background: linear-gradient(180deg, $dark-bg-card 0%, $dark-primary-light 100%);
-                border-color: rgba(139, 110, 255, 0.3);
+                background: linear-gradient(180deg, rgba($dark-bg-card, 0.8) 0%, rgba($dark-primary-color, 0.15) 100%);
+                border-color: rgba($dark-primary-color, 0.4);
+                box-shadow: 0 4rpx 20rpx rgba($dark-primary-color, 0.15);
+
+                .achievement-icon {
+                    text-shadow: 0 0 20rpx rgba($dark-primary-color, 0.3);
+                }
             }
         }
 
@@ -196,101 +162,166 @@ onMounted(async () => {
         .achievement-date {
             color: $dark-text-placeholder;
         }
+
+        .achievement-progress {
+            background: rgba($dark-primary-color, 0.2);
+        }
     }
 }
 
 // 标题区域
 .header-section {
-    padding: 40rpx 40rpx 0;
-    padding-top: calc(v-bind('navBarHeight') * 2rpx + 40rpx);
+    padding: 20rpx 40rpx 0;
+    padding-top: calc(v-bind('navBarHeight') * 2rpx + 20rpx);
+    margin-bottom: 40rpx;
 }
 
 .header-title {
     display: block;
-    font-size: 40rpx;
-    font-weight: 700;
+    font-size: 48rpx;
+    font-weight: 800;
     color: $text-primary;
-    margin-bottom: 8rpx;
+    margin-bottom: 12rpx;
+    letter-spacing: -1rpx;
 }
 
 .header-subtitle {
     font-size: 28rpx;
     color: $text-secondary;
+    opacity: 0.8;
 }
 
 // 等级进度
 .progress-section {
     background: #fff;
-    margin: 32rpx 40rpx;
+    margin: 0 40rpx 48rpx;
     padding: 40rpx;
     border-radius: 32rpx;
-    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+    box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.04);
+    position: relative;
+    overflow: hidden;
 }
 
 .progress-header {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 24rpx;
+    align-items: center;
+    margin-bottom: 28rpx;
 }
 
 .level-text {
-    font-size: 28rpx;
-    font-weight: 700;
+    font-size: 32rpx;
+    font-weight: 800;
     color: $text-primary;
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
 }
 
 .exp-text {
     font-size: 24rpx;
+    font-weight: 600;
     color: $primary-color;
+    background: rgba($primary-color, 0.08);
+    padding: 6rpx 16rpx;
+    border-radius: 100rpx;
 }
 
 .progress-bar {
-    height: 16rpx;
-    background: #edf2f7;
-    border-radius: 8rpx;
+    height: 20rpx;
+    background: #f0f2f5;
+    border-radius: 100rpx;
     overflow: hidden;
 }
 
 .progress-fill {
     height: 100%;
-    background: $primary-gradient;
-    border-radius: 8rpx;
-    transition: width 0.3s ease;
+    background: linear-gradient(90deg, $primary-color 0%, #9f7aea 100%);
+    border-radius: 100rpx;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.3) 50%,
+            rgba(255, 255, 255, 0) 100%
+        );
+        border-radius: 100rpx;
+    }
 }
 
 // 成就网格
 .achievements-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 32rpx;
+    gap: 24rpx;
     padding: 0 40rpx;
 }
 
 .achievement-item {
     background: #fff;
-    border-radius: 24rpx;
+    border-radius: 28rpx;
     padding: 32rpx 16rpx;
     text-align: center;
-    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.03);
     display: flex;
     flex-direction: column;
     align-items: center;
-    opacity: 0.5;
-    filter: grayscale(1);
-    transition: all 0.3s;
+    justify-content: space-between;
+    min-height: 220rpx;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    border: 2rpx solid transparent;
+
+    // 未解锁状态：更柔和的灰色，不使用 heavy filter
+    &:not(.unlocked) {
+        opacity: 0.8;
+        background: rgba(255, 255, 255, 0.6);
+
+        .achievement-icon {
+            filter: grayscale(1) opacity(0.5);
+            transform: scale(0.9);
+        }
+
+        .achievement-name {
+            color: $text-placeholder;
+        }
+    }
 
     &.unlocked {
-        opacity: 1;
-        filter: grayscale(0);
-        background: linear-gradient(180deg, #ffffff 0%, #f8f9ff 100%);
-        border: 2rpx solid #e0d9ff;
+        background: linear-gradient(180deg, #ffffff 0%, #fcfaff 100%);
+        border-color: rgba($primary-color, 0.15);
+        box-shadow: 0 8rpx 24rpx rgba($primary-color, 0.08);
+        transform: translateY(-2rpx);
+
+        .achievement-icon {
+            transform: scale(1.05);
+            text-shadow: 0 4rpx 12rpx rgba($primary-color, 0.2);
+        }
+    }
+
+    &:active {
+        transform: scale(0.96);
     }
 }
 
 .achievement-icon {
-    font-size: 64rpx;
+    font-size: 48rpx;
     margin-bottom: 16rpx;
-    display: block;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: nowrap;
+    height: 64rpx;
+    transition: all 0.3s ease;
 }
 
 .achievement-name {
@@ -298,24 +329,34 @@ onMounted(async () => {
     font-weight: 600;
     color: $text-primary;
     margin-bottom: 8rpx;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    height: 64rpx; // 强制高度对齐
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .achievement-date {
     font-size: 20rpx;
     color: $text-placeholder;
+    margin-top: auto;
 }
 
 .achievement-progress {
-    margin-top: 8rpx;
+    margin-top: auto;
     padding: 4rpx 12rpx;
-    background: rgba(107, 78, 255, 0.1);
+    background: rgba($primary-color, 0.08);
     border-radius: 12rpx;
 }
 
 .progress-text {
-    font-size: 18rpx;
+    font-size: 20rpx;
     color: $primary-color;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 // 加载状态

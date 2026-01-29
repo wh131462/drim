@@ -204,9 +204,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
-import { useDreamStore, useUserStore } from '@/stores';
+import { useDreamStore, useUserStore, useSettingsStore } from '@/stores';
 import { polishApi, dreamApi } from '@/api';
-import { settingsApi } from '@/api/modules/settings';
 import type { Emotion } from '@/types/dream';
 import type { PolishQuota } from '@/api/modules/polish';
 import { confirmPointsConsume, showPointsConsumed } from '@/utils/feedback';
@@ -215,6 +214,7 @@ import CustomTabBar from '@/custom-tab-bar/index.vue';
 
 const dreamStore = useDreamStore();
 const userStore = useUserStore();
+const settingsStore = useSettingsStore();
 const navBarHeight = ref(0);
 
 // 编辑模式相关
@@ -480,7 +480,14 @@ function togglePrivacy() {
 }
 
 async function handleSubmit() {
-    if (!canSubmit.value) return;
+    if (!canSubmit.value) {
+        const currentLength = dreamContent.value.trim().length;
+        uni.showToast({
+            title: `至少输入25字哦，还差${25 - currentLength}字`,
+            icon: 'none'
+        });
+        return;
+    }
 
     try {
         uni.showLoading({ title: '提交中...' });
@@ -513,7 +520,15 @@ async function handleSubmit() {
 
 // 编辑模式：仅保存
 async function handleSaveOnly() {
-    if (!canSubmit.value || !editingDreamId.value) return;
+    if (!canSubmit.value) {
+        const currentLength = dreamContent.value.trim().length;
+        uni.showToast({
+            title: `至少输入25字哦，还差${25 - currentLength}字`,
+            icon: 'none'
+        });
+        return;
+    }
+    if (!editingDreamId.value) return;
 
     try {
         uni.showLoading({ title: '保存中...' });
@@ -542,7 +557,15 @@ async function handleSaveOnly() {
 const REANALYZE_COST = 50;
 
 async function handleSaveAndReanalyze() {
-    if (!canSubmit.value || !editingDreamId.value) return;
+    if (!canSubmit.value) {
+        const currentLength = dreamContent.value.trim().length;
+        uni.showToast({
+            title: `至少输入25字哦，还差${25 - currentLength}字`,
+            icon: 'none'
+        });
+        return;
+    }
+    if (!editingDreamId.value) return;
 
     // 刷新用户积分信息
     await userStore.fetchUserInfo();
@@ -598,16 +621,10 @@ async function handleSaveAndReanalyze() {
     }
 }
 
-// 加载默认公开设置
-async function loadDefaultPublicSetting() {
-    try {
-        const settings = await settingsApi.getSettings();
-        if (settings?.privacy?.defaultDreamPublic !== undefined) {
-            isPublic.value = settings.privacy.defaultDreamPublic;
-        }
-    } catch (error) {
-        console.error('读取默认公开设置失败:', error);
-    }
+// 应用默认公开设置
+async function applyDefaultPublicSetting() {
+    await settingsStore.ensureSettings();
+    isPublic.value = settingsStore.defaultDreamPublic;
 }
 
 onMounted(() => {
@@ -616,7 +633,7 @@ onMounted(() => {
     navBarHeight.value = statusBarHeight + 44;
 
     // 从服务端读取默认公开状态
-    loadDefaultPublicSetting();
+    applyDefaultPublicSetting();
 
     // 加载配额
     loadQuota();
@@ -673,7 +690,7 @@ onShow(() => {
 
         // 非编辑模式：重置为新建状态，从服务端读取默认公开状态
         if (!isEditMode.value) {
-            loadDefaultPublicSetting();
+            applyDefaultPublicSetting();
         }
     } catch (error) {
         console.error('加载编辑版本失败:', error);
@@ -707,9 +724,10 @@ onShow(() => {
 
         .dream-textarea {
             color: $dark-text-primary;
+            caret-color: $dark-primary-color;
 
             &::placeholder {
-                color: rgba(255, 255, 255, 0.3);
+                color: rgba(255, 255, 255, 0.25);
             }
         }
 
@@ -915,13 +933,17 @@ onShow(() => {
     width: 100%;
     min-height: 360rpx;
     font-size: 32rpx;
-    line-height: 1.7;
+    line-height: 1.8;
+    letter-spacing: 1rpx;
     color: $text-primary;
     background: transparent;
     transition: opacity 0.3s ease;
+    caret-color: $primary-color;
 
     &::placeholder {
-        color: rgba(0, 0, 0, 0.35);
+        color: rgba(0, 0, 0, 0.3);
+        font-weight: 300;
+        letter-spacing: 0;
     }
 }
 

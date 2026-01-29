@@ -15,7 +15,7 @@
                     </view>
                     <switch
                         class="toggle-switch"
-                        :checked="privacy.defaultDreamPublic"
+                        :checked="settingsStore.privacy.defaultDreamPublic"
                         color="#6B4EFF"
                         @change="handleDefaultPublicChange"
                     />
@@ -28,7 +28,7 @@
                     </view>
                     <switch
                         class="toggle-switch"
-                        :checked="privacy.allowProfileView"
+                        :checked="settingsStore.privacy.allowProfileView"
                         color="#6B4EFF"
                         @change="handleAllowProfileViewChange"
                     />
@@ -47,33 +47,17 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useUserStore } from '@/stores';
+import { useUserStore, useSettingsStore } from '@/stores';
 import NavBar from '@/components/NavBar/index.vue';
-import { settingsApi } from '@/api/modules/settings';
 
 const userStore = useUserStore();
+const settingsStore = useSettingsStore();
 const navBarHeight = ref(0);
-
-const privacy = ref({
-    defaultDreamPublic: false,
-    allowProfileView: true
-});
-
-async function loadSettings() {
-    try {
-        const settings = await settingsApi.getSettings();
-        privacy.value = settings.privacy;
-    } catch (error) {
-        console.error('加载隐私设置失败:', error);
-    }
-}
 
 async function handleDefaultPublicChange(e: any) {
     const value = e.detail.value;
-
     try {
-        await settingsApi.updateSettings({ defaultDreamPublic: value });
-        privacy.value.defaultDreamPublic = value;
+        await settingsStore.setDefaultDreamPublic(value);
         uni.showToast({
             title: value ? '新梦境将默认公开' : '新梦境将默认私密',
             icon: 'none'
@@ -85,10 +69,8 @@ async function handleDefaultPublicChange(e: any) {
 
 async function handleAllowProfileViewChange(e: any) {
     const value = e.detail.value;
-
     try {
-        await settingsApi.updateSettings({ allowProfileView: value });
-        privacy.value.allowProfileView = value;
+        await settingsStore.setAllowProfileView(value);
         uni.showToast({
             title: value ? '已允许他人查看主页' : '已禁止他人查看主页',
             icon: 'none'
@@ -98,12 +80,12 @@ async function handleAllowProfileViewChange(e: any) {
     }
 }
 
-onMounted(() => {
-    loadSettings();
-
+onMounted(async () => {
     const systemInfo = uni.getSystemInfoSync();
     const statusBarHeight = systemInfo.statusBarHeight || 0;
     navBarHeight.value = statusBarHeight + 44;
+
+    await settingsStore.ensureSettings();
 });
 </script>
 

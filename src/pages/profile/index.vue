@@ -335,10 +335,14 @@ function goToSettings() {
     uni.navigateTo({ url: '/pages/settings/index' });
 }
 
-async function loadCalendar() {
+async function loadCalendar(force = false) {
     calendarLoading.value = true;
     try {
-        await dreamStore.fetchCalendar(currentYear.value, currentMonth.value);
+        if (force) {
+            await dreamStore.fetchCalendar(currentYear.value, currentMonth.value);
+        } else {
+            await dreamStore.ensureCalendar(currentYear.value, currentMonth.value);
+        }
     } finally {
         calendarLoading.value = false;
     }
@@ -398,12 +402,10 @@ onMounted(() => {
     loadCalendar();
 });
 
-// 页面显示时重新加载数据
+// 页面显示时智能加载数据
 onShow(() => {
-    // 刷新日历数据
     loadCalendar();
-    // 刷新用户信息（包含连续打卡天数等）
-    userStore.fetchUserInfo();
+    userStore.ensureUserInfo();
 });
 </script>
 

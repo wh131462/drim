@@ -291,14 +291,15 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { onLoad, onShow } from '@dcloudio/uni-app';
-import { useUserStore } from '@/stores';
+import { onLoad } from '@dcloudio/uni-app';
+import { useUserStore, useDreamStore } from '@/stores';
 import { dreamApi } from '@/api';
 import type { Dream, DreamListParams } from '@/types/dream';
 import { getFilterTags, getTagDisplayName, isPresetTag } from '@/constants/tags';
 import NavBar from '@/components/NavBar/index.vue';
 
 const userStore = useUserStore();
+const dreamStore = useDreamStore();
 const navBarHeight = ref(0);
 
 // 情绪选项
@@ -508,15 +509,16 @@ async function handleBatchDelete() {
             if (res.confirm) {
                 try {
                     uni.showLoading({ title: '删除中...' });
-                    await dreamApi.batchDelete(selectedIds.value);
+                    const count = selectedIds.value.length;
+                    await dreamStore.batchDeleteDreams(selectedIds.value);
                     uni.hideLoading();
 
                     uni.showToast({
-                        title: `已删除 ${selectedIds.value.length} 条`,
+                        title: `已删除 ${count} 条`,
                         icon: 'success'
                     });
 
-                    // 重新加载列表
+                    // 重新加载本地列表
                     selectedIds.value = [];
                     loadDreams(true);
                 } catch (error: any) {
@@ -584,12 +586,8 @@ onMounted(() => {
     loadDreams(true);
 });
 
-onShow(() => {
-    // 页面显示时刷新列表
-    if (dreams.value.length > 0) {
-        loadDreams(true);
-    }
-});
+// onShow 不再自动刷新，避免切换页面时的闪烁
+// 如需刷新可通过下拉刷新或事件通知
 </script>
 
 <style lang="scss" scoped>

@@ -149,54 +149,28 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
-import { useUserStore } from '@/stores';
+import { useUserStore, useSettingsStore } from '@/stores';
 import NavBar from '@/components/NavBar/index.vue';
 import TimePicker from '@/components/TimePicker/index.vue';
-import { settingsApi, type UserSettings } from '@/api/modules/settings';
+import { settingsApi } from '@/api/modules/settings';
 import { exportApi } from '@/api/modules/export';
 
 const userStore = useUserStore();
+const settingsStore = useSettingsStore();
 const navBarHeight = ref(0);
-const serverSettings = ref<UserSettings | null>(null);
 const showTimePicker = ref(false);
 
-// 设置数据
+// 设置数据（从 store 同步）
 const settings = reactive({
-    notification: true,
-    reminderTime: '08:00',
+    notification: false,
+    reminderTime: '22:00',
     darkMode: userStore.isDarkMode
 });
 
-// 方法
-function loadLocalSettings() {
-    try {
-        const savedSettings = uni.getStorageSync('app_settings');
-        if (savedSettings) {
-            Object.assign(settings, JSON.parse(savedSettings));
-        }
-    } catch (error) {
-        console.error('加载本地设置失败:', error);
-    }
-}
-
-function saveLocalSettings() {
-    try {
-        uni.setStorageSync('app_settings', JSON.stringify(settings));
-    } catch (error) {
-        console.error('保存本地设置失败:', error);
-    }
-}
-
-// 从服务端加载设置
-async function loadServerSettings() {
-    try {
-        serverSettings.value = await settingsApi.getSettings();
-        // 同步到本地 settings
-        settings.notification = serverSettings.value.notification.enabled;
-        settings.reminderTime = serverSettings.value.notification.reminderTime;
-    } catch (error) {
-        console.error('加载服务端设置失败:', error);
-    }
+// 从 store 同步设置到本地 reactive
+function syncFromStore() {
+    settings.notification = settingsStore.notificationEnabled;
+    settings.reminderTime = settingsStore.reminderTime;
 }
 
 async function handleNotificationChange(e: any) {
@@ -392,13 +366,14 @@ function handleLogout() {
 }
 
 // 生命周期
-onMounted(() => {
-    loadLocalSettings();
-    loadServerSettings();
-
+onMounted(async () => {
     const systemInfo = uni.getSystemInfoSync();
     const statusBarHeight = systemInfo.statusBarHeight || 0;
     navBarHeight.value = statusBarHeight + 44;
+
+    // 从 store 加载设置（首页已预加载，这里直接使用缓存）
+    await settingsStore.ensureSettings();
+    syncFromStore();
 });
 </script>
 

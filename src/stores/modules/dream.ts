@@ -6,6 +6,9 @@ import { defineStore } from 'pinia';
 import { dreamApi } from '@/api';
 import type { Dream, DreamInput, CalendarRecord, CreateDreamResponse } from '@/types/dream';
 
+// 缓存有效期（毫秒）
+const CACHE_TTL = 5 * 60 * 1000; // 5分钟
+
 interface DreamState {
     list: Dream[];
     current: Dream | null;
@@ -15,6 +18,9 @@ interface DreamState {
     page: number;
     currentYear: number;
     currentMonth: number;
+    // 缓存时间戳
+    listFetchedAt: number;
+    calendarKey: string; // 格式: "year-month"
 }
 
 export const useDreamStore = defineStore('dream', {
@@ -26,7 +32,9 @@ export const useDreamStore = defineStore('dream', {
         hasMore: true,
         page: 1,
         currentYear: new Date().getFullYear(),
-        currentMonth: new Date().getMonth() + 1
+        currentMonth: new Date().getMonth() + 1,
+        listFetchedAt: 0,
+        calendarKey: ''
     }),
 
     getters: {
@@ -89,8 +97,28 @@ export const useDreamStore = defineStore('dream', {
 
                 this.page = page + 1;
                 this.hasMore = this.list.length < total;
+                this.listFetchedAt = Date.now();
             } finally {
                 this.loading = false;
+            }
+        },
+
+        /**
+         * 智能加载列表：有缓存则静默，无数据或过期则加载
+         */
+        async ensureList(): Promise<void> {
+            const now = Date.now();
+            const isExpired = now - this.listFetchedAt > CACHE_TTL;
+
+            // 无数据时显示 loading 并加载
+            if (this.list.length === 0) {
+                await this.fetchList(true);
+                return;
+            }
+
+            // 有数据但过期，静默后台刷新
+            if (isExpired) {
+                this.fetchList(true);
             }
         },
 
@@ -125,13 +153,30 @@ export const useDreamStore = defineStore('dream', {
                 this.calendar = records;
                 this.currentYear = y;
                 this.currentMonth = m;
+                this.calendarKey = `${y}-${m}`;
             } catch (error) {
                 console.error('获取日历数据失败:', error);
             }
         },
 
         /**
-         * 删除梦境
+         * 智能加载日历：同月份不重复请求
+         */
+        async ensureCalendar(year?: number, month?: number): Promise<void> {
+            const y = year ?? this.currentYear;
+            const m = month ?? this.currentMonth;
+            const key = `${y}-${m}`;
+
+            // 同月份已加载，跳过
+            if (this.calendarKey === key && this.calendar.length > 0) {
+                return;
+            }
+
+            await this.fetchCalendar(y, m);
+        },
+
+        /**
+         * 删除梦境（同时更新日历）
          */
         async deleteDream(dreamId: string): Promise<void> {
             await dreamApi.delete(dreamId);
@@ -140,6 +185,24 @@ export const useDreamStore = defineStore('dream', {
             if (this.current?.id === dreamId) {
                 this.current = null;
             }
+
+            // 标记日历需要刷新
+            this.calendarKey = '';
+        },
+
+        /**
+         * 批量删除梦境
+         */
+        async batchDeleteDreams(dreamIds: string[]): Promise<void> {
+            await dreamApi.batchDelete(dreamIds);
+            this.list = this.list.filter((d) => !dreamIds.includes(d.id));
+
+            if (this.current && dreamIds.includes(this.current.id)) {
+                this.current = null;
+            }
+
+            // 标记日历需要刷新
+            this.calendarKey = '';
         },
 
         /**

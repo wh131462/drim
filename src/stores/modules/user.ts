@@ -6,12 +6,16 @@ import { defineStore } from 'pinia';
 import { userApi } from '@/api';
 import type { User, UserStats } from '@/types/user';
 
+// 用户信息缓存有效期
+const USER_INFO_TTL = 10 * 60 * 1000; // 10分钟
+
 interface UserState {
     token: string;
     userInfo: User | null;
     userStats: UserStats | null;
     isLoggedIn: boolean;
     darkMode: boolean;
+    infoFetchedAt: number;
 }
 
 // 登录锁，防止并发登录
@@ -23,7 +27,8 @@ export const useUserStore = defineStore('user', {
         userInfo: uni.getStorageSync('userInfo') || null,
         userStats: null,
         isLoggedIn: false,
-        darkMode: uni.getStorageSync('darkMode') || false
+        darkMode: uni.getStorageSync('darkMode') || false,
+        infoFetchedAt: 0
     }),
 
     getters: {
@@ -105,11 +110,33 @@ export const useUserStore = defineStore('user', {
             try {
                 this.userInfo = await userApi.getUserInfo();
                 this.isLoggedIn = true;
+                this.infoFetchedAt = Date.now();
                 uni.setStorageSync('userInfo', this.userInfo);
             } catch (error) {
                 // 获取失败，清除登录状态
                 this.logout();
                 throw error;
+            }
+        },
+
+        /**
+         * 智能获取用户信息：有缓存则静默，过期则后台刷新
+         */
+        async ensureUserInfo(): Promise<void> {
+            if (!this.token) return;
+
+            const now = Date.now();
+            const isExpired = now - this.infoFetchedAt > USER_INFO_TTL;
+
+            // 无用户信息，需要加载
+            if (!this.userInfo) {
+                await this.fetchUserInfo();
+                return;
+            }
+
+            // 有缓存但过期，静默后台刷新
+            if (isExpired) {
+                this.fetchUserInfo();
             }
         },
 

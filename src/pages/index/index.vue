@@ -274,7 +274,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { onShow, onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app';
-import { useUserStore, useDreamStore } from '@/stores';
+import { useUserStore, useDreamStore, useSettingsStore, useAchievementStore } from '@/stores';
 import { getFriendlyDate, isToday, isYesterday } from '@/utils/date';
 import { getTagDisplayName } from '@/constants/tags';
 import { taskApi } from '@/api';
@@ -286,6 +286,8 @@ import TaskRewardModal from '@/components/TaskRewardModal/index.vue';
 
 const userStore = useUserStore();
 const dreamStore = useDreamStore();
+const settingsStore = useSettingsStore();
+const achievementStore = useAchievementStore();
 const statusBarHeight = ref(0);
 
 // 当前任务
@@ -473,7 +475,15 @@ function onTaskRewardComplete(_data: { points: number; isDouble: boolean }) {
 async function loadPageData() {
     if (!userStore.isLoggedIn) return;
 
-    await Promise.all([dreamStore.fetchList(true), loadTodayTask()]);
+    // 并行预加载所有页面需要的数据
+    await Promise.all([
+        dreamStore.ensureList(), // 首页：梦境列表
+        loadTodayTask(), // 首页：今日任务
+        settingsStore.ensureSettings(), // 记梦页/设置页：用户设置
+        dreamStore.ensureCalendar(), // 我的页：日历数据
+        userStore.ensureUserInfo(), // 多页面：用户信息
+        achievementStore.ensureAchievements() // 成就页：成就数据
+    ]);
 }
 
 // 资料填写完成
@@ -512,18 +522,11 @@ onShow(async () => {
     // 每次页面显示时检查登录状态
     if (!userStore.isLoggedIn) {
         try {
-            const needsSetup = await userStore.login();
-            // 登录成功后，如果需要完善资料则弹出填写弹窗
-            if (needsSetup) {
-                showProfileModal.value = true;
-            }
+            await userStore.login();
         } catch (error) {
             console.error('自动登录失败:', error);
             return;
         }
-    } else if (userStore.needsProfileSetup) {
-        // 已登录但资料不完整，提示完善
-        showProfileModal.value = true;
     }
 
     // 已登录，加载数据
