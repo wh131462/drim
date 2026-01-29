@@ -34,6 +34,23 @@ export interface PublicDreamDetail extends PublicDream {
     rewards?: ViewDreamRewards | null;
 }
 
+export interface UserProfile {
+    id: string;
+    nickname: string;
+    avatar?: string;
+    isVip?: boolean;
+    consecutiveDays?: number;
+    publicDreamCount?: number;
+    totalLikes?: number;
+    createdAt?: string;
+    isPrivate: boolean;
+}
+
+export interface UserPublicDreamsParams {
+    page?: number;
+    pageSize?: number;
+}
+
 export interface ExploreListParams {
     keyword?: string;
     tag?: string;
@@ -94,5 +111,19 @@ export const exploreApi = {
      */
     toggleLike(dreamId: string): Promise<{ isLiked: boolean; likeCount: number }> {
         return post<{ isLiked: boolean; likeCount: number }>(`/explore/dream/${dreamId}/like`);
+    },
+
+    /**
+     * 获取用户公开主页信息
+     */
+    getUserProfile(userId: string): Promise<UserProfile> {
+        return get<UserProfile>(`/explore/user/${userId}/profile`);
+    },
+
+    /**
+     * 获取用户公开梦境列表
+     */
+    getUserPublicDreams(userId: string, params?: UserPublicDreamsParams): Promise<ExploreListResponse> {
+        return get<ExploreListResponse>(`/explore/user/${userId}/dreams`, params);
     }
 };

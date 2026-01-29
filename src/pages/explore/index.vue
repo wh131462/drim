@@ -105,7 +105,10 @@
                         @tap="viewDream(item.data.id)"
                     >
                         <!-- 作者信息 -->
-                        <view class="dream-author">
+                        <view
+                            class="dream-author"
+                            @tap.stop="goToUserProfile(item.data.author.id)"
+                        >
                             <view class="author-avatar">
                                 <image
                                     v-if="item.data.author.avatar && !item.data.author.avatarError"
@@ -400,6 +403,16 @@ function onLoadMore() {
 function viewDream(dreamId: string) {
     uni.navigateTo({
         url: `/pages/dream-detail/index?id=${dreamId}&source=filter`
+    });
+}
+
+function goToUserProfile(authorId: string) {
+    if (authorId === userStore.userInfo?.id) {
+        uni.switchTab({ url: '/pages/profile/index' });
+        return;
+    }
+    uni.navigateTo({
+        url: `/pages/user-profile/index?userId=${authorId}`
     });
 }
 

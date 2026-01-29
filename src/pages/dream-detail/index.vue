@@ -91,6 +91,7 @@
                     <view
                         v-if="dream.author && source !== 'own'"
                         class="author-section"
+                        @tap="goToUserProfile(dream.author.id)"
                     >
                         <view class="author-avatar">
                             <image
@@ -408,6 +409,16 @@ function goToVersionHistory() {
     }
     uni.navigateTo({
         url: `/pages/dream-versions/index?dreamId=${dreamId.value}`
+    });
+}
+
+function goToUserProfile(authorId: string) {
+    if (authorId === userStore.userInfo?.id) {
+        uni.switchTab({ url: '/pages/profile/index' });
+        return;
+    }
+    uni.navigateTo({
+        url: `/pages/user-profile/index?userId=${authorId}`
     });
 }
 

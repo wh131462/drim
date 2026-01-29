@@ -99,6 +99,13 @@
             }
         },
         {
+            "path": "pages/user-profile/index",
+            "style": {
+                "navigationBarTitleText": "用户主页",
+                "navigationStyle": "custom"
+            }
+        },
+        {
             "path": "pages/about/index",
             "style": {
                 "navigationBarTitleText": "关于梦见",

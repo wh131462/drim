@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Query, Param } from '@nestjs/common';
 import { ExploreService } from './explore.service';
 import { CurrentUser } from '@/common/decorators/user.decorator';
-import { GetPublicDreamsDto, ViewDreamDto } from './dto';
+import { GetPublicDreamsDto, ViewDreamDto, GetUserPublicDreamsDto } from './dto';
 
 @Controller('explore')
 export class ExploreController {
@@ -49,5 +49,25 @@ export class ExploreController {
     @Post('dream/:dreamId/like')
     async toggleLike(@CurrentUser('userId') userId: string, @Param('dreamId') dreamId: string) {
         return this.exploreService.toggleLike(userId, dreamId);
+    }
+
+    /**
+     * 获取用户公开主页信息
+     */
+    @Get('user/:userId/profile')
+    async getUserProfile(@CurrentUser('userId') currentUserId: string, @Param('userId') targetUserId: string) {
+        return this.exploreService.getUserProfile(currentUserId, targetUserId);
+    }
+
+    /**
+     * 获取用户公开梦境列表
+     */
+    @Get('user/:userId/dreams')
+    async getUserPublicDreams(
+        @CurrentUser('userId') currentUserId: string,
+        @Param('userId') targetUserId: string,
+        @Query() query: GetUserPublicDreamsDto
+    ) {
+        return this.exploreService.getUserPublicDreams(currentUserId, targetUserId, query);
     }
 }

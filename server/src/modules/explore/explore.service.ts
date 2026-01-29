@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { AchievementService, AchievementConditionType } from '../achievement/achievement.service';
-import { GetPublicDreamsDto, ViewDreamDto } from './dto';
+import { GetPublicDreamsDto, ViewDreamDto, GetUserPublicDreamsDto } from './dto';
 
 @Injectable()
 export class ExploreService {
@@ -466,6 +466,153 @@ export class ExploreService {
         return {
             isLiked,
             likeCount
+        };
+    }
+
+    /**
+     * 获取用户公开主页信息
+     */
+    async getUserProfile(currentUserId: string, targetUserId: string) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: targetUserId },
+            select: {
+                id: true,
+                nickname: true,
+                avatar: true,
+                isVip: true,
+                consecutiveDays: true,
+                createdAt: true,
+                preference: {
+                    select: { allowProfileView: true }
+                }
+            }
+        });
+
+        if (!user) {
+            throw new NotFoundException('用户不存在');
+        }
+
+        // 隐私检查：非本人且关闭了主页查看权限
+        const allowProfileView = user.preference?.allowProfileView ?? true;
+        if (!allowProfileView && targetUserId !== currentUserId) {
+            return {
+                id: user.id,
+                nickname: user.nickname,
+                avatar: user.avatar,
+                isPrivate: true
+            };
+        }
+
+        // 查询公开梦境数量
+        const publicDreamCount = await this.prisma.dream.count({
+            where: {
+                userId: targetUserId,
+                isPublic: true,
+                status: 'analyzed',
+                deletedAt: null
+            }
+        });
+
+        // 查询收到的总点赞数
+        const totalLikes = await this.prisma.dream.aggregate({
+            where: {
+                userId: targetUserId,
+                isPublic: true,
+                deletedAt: null
+            },
+            _sum: { likeCount: true }
+        });
+
+        return {
+            id: user.id,
+            nickname: user.nickname,
+            avatar: user.avatar,
+            isVip: user.isVip,
+            consecutiveDays: user.consecutiveDays,
+            publicDreamCount,
+            totalLikes: totalLikes._sum.likeCount || 0,
+            createdAt: user.createdAt,
+            isPrivate: false
+        };
+    }
+
+    /**
+     * 获取用户公开梦境列表
+     */
+    async getUserPublicDreams(currentUserId: string, targetUserId: string, query: GetUserPublicDreamsDto) {
+        const { page = 1, pageSize = 10 } = query;
+        const skip = (page - 1) * pageSize;
+
+        // 隐私检查
+        if (targetUserId !== currentUserId) {
+            const preference = await this.prisma.userPreference.findUnique({
+                where: { userId: targetUserId }
+            });
+            const allowProfileView = preference?.allowProfileView ?? true;
+            if (!allowProfileView) {
+                return { list: [], total: 0, page, pageSize, totalPages: 0 };
+            }
+        }
+
+        const where = {
+            userId: targetUserId,
+            isPublic: true,
+            status: 'analyzed' as const,
+            deletedAt: null
+        };
+
+        const [total, dreams] = await Promise.all([
+            this.prisma.dream.count({ where }),
+            this.prisma.dream.findMany({
+                where,
+                skip,
+                take: pageSize,
+                orderBy: { createdAt: 'desc' },
+                select: {
+                    id: true,
+                    content: true,
+                    tags: true,
+                    emotion: true,
+                    viewCount: true,
+                    likeCount: true,
+                    createdAt: true,
+                    user: {
+                        select: {
+                            id: true,
+                            nickname: true,
+                            avatar: true
+                        }
+                    },
+                    exploreViews: {
+                        where: { viewerId: currentUserId },
+                        select: { isLiked: true }
+                    }
+                }
+            })
+        ]);
+
+        const list = dreams.map((dream: any) => ({
+            id: dream.id,
+            content: dream.content.substring(0, 200),
+            tags: dream.tags ? JSON.parse(dream.tags) : [],
+            emotion: dream.emotion,
+            viewCount: dream.viewCount,
+            likeCount: dream.likeCount,
+            isLiked: dream.exploreViews[0]?.isLiked || false,
+            createdAt: dream.createdAt,
+            author: {
+                id: dream.user.id,
+                nickname: dream.user.nickname,
+                avatar: dream.user.avatar
+            }
+        }));
+
+        return {
+            list,
+            total,
+            page,
+            pageSize,
+            totalPages: Math.ceil(total / pageSize)
         };
     }
 }
