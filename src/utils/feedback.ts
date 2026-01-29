@@ -112,8 +112,8 @@ export function confirmPointsConsume(points: number, currentPoints: number, acti
                 cancelText: '取消',
                 success: (res) => {
                     if (res.confirm) {
-                        // 跳转到积分获取页面
-                        uni.navigateTo({ url: '/pages/privilege/index' });
+                        // 跳转到幸运值获取页面
+                        uni.navigateTo({ url: '/pages/vip/index' });
                     }
                     resolve(false);
                 }

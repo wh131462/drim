@@ -40,17 +40,17 @@
                     <view
                         class="action-option option-video"
                         @tap="handleWatchVideo"
-                        v-if="adStatus.canWatch"
+                        v-if="canWatch()"
                     >
                         <view class="option-left">
                             <text class="option-icon">🎬</text>
                             <view class="option-info">
                                 <text class="option-title">看视频获取积分</text>
-                                <text class="option-desc">今日剩余 {{ adStatus.remainingCount }} 次</text>
+                                <text class="option-desc">今日剩余 {{ adStatus.remaining }} 次</text>
                             </view>
                         </view>
                         <view class="option-right">
-                            <text class="points-value">+20</text>
+                            <text class="points-value">+10</text>
                             <text class="points-unit">幸运值</text>
                         </view>
                     </view>
@@ -151,26 +151,28 @@ const completed = ref(false);
 const earnedPoints = ref(0);
 const loading = ref(false);
 
-// 广告状态
+// 广告配额状态
 const adStatus = reactive({
-    todayAdCount: 0,
-    dailyLimit: 5,
-    remainingCount: 5,
-    canWatch: true
+    total: 5,
+    used: 0,
+    remaining: 5
 });
+
+// 是否可以看广告
+const canWatch = () => adStatus.remaining > 0;
 
 // 操作文本
 const actionText = props.actionType === 'analysis' ? '解析' : '润色';
 
 /**
- * 获取广告状态
+ * 获取广告配额
  */
-async function fetchAdStatus() {
+async function fetchAdQuota() {
     try {
-        const status = await pointsApi.getAdStatus();
-        Object.assign(adStatus, status);
+        const quota = await pointsApi.getAdQuota();
+        Object.assign(adStatus, quota);
     } catch (error) {
-        console.error('获取广告状态失败:', error);
+        console.error('获取广告配额失败:', error);
     }
 }
 
@@ -178,7 +180,7 @@ async function fetchAdStatus() {
  * 看视频获取积分
  */
 async function handleWatchVideo() {
-    if (loading.value || !adStatus.canWatch) return;
+    if (loading.value || !canWatch()) return;
     loading.value = true;
 
     try {
@@ -187,20 +189,17 @@ async function handleWatchVideo() {
 
         if (result.success && result.isEnded) {
             // 用户完整观看视频，领取积分奖励
-            const response = await pointsApi.claimAdReward('points_gain');
+            const response = await pointsApi.claimAdReward('points_gain', '积分不足弹窗');
 
             if (response.success) {
                 earnedPoints.value = response.points;
                 completed.value = true;
 
                 // 更新用户积分
-                if (userStore.userInfo) {
-                    userStore.userInfo.luckyPoints = response.totalPoints;
-                }
+                await userStore.fetchUserInfo();
 
-                // 更新广告状态
-                adStatus.remainingCount = response.remainingAdCount;
-                adStatus.canWatch = response.remainingAdCount > 0;
+                // 更新广告配额
+                adStatus.remaining = response.remaining;
             }
         } else if (result.success && !result.isEnded) {
             // 用户提前关闭视频
@@ -259,14 +258,14 @@ watch(
     () => props.visible,
     (val) => {
         if (val) {
-            fetchAdStatus();
+            fetchAdQuota();
         }
     }
 );
 
 onMounted(() => {
     if (props.visible) {
-        fetchAdStatus();
+        fetchAdQuota();
     }
 });
 </script>

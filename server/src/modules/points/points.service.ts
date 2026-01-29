@@ -1,16 +1,15 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PointsQueryDto } from './dto/points-query.dto';
-import { AdRewardType } from './dto/ad-reward.dto';
 
 /** 每日广告观看上限 */
 const DAILY_AD_LIMIT = 5;
 
-/** 广告奖励积分配置 */
-const AD_REWARD_POINTS = {
-    [AdRewardType.TASK_DOUBLE]: 10, // 任务双倍是额外 +10
-    [AdRewardType.POINTS_GAIN]: 20 // 直接看广告 +20
-};
+/** 广告奖励积分（统一10积分） */
+const AD_REWARD_POINTS = 10;
+
+/** 广告类型 */
+type AdRewardType = 'task_double' | 'points_gain';
 
 @Injectable()
 export class PointsService {
@@ -105,33 +104,35 @@ export class PointsService {
     }
 
     /**
-     * 获取广告观看状态
+     * 获取广告配额信息
      */
-    async getAdStatus(userId: string) {
+    async getAdQuota(userId: string) {
         const todayAdCount = await this.getTodayAdCount(userId);
-        const remainingCount = Math.max(0, DAILY_AD_LIMIT - todayAdCount);
+        const remaining = Math.max(0, DAILY_AD_LIMIT - todayAdCount);
 
         return {
-            todayAdCount,
-            dailyLimit: DAILY_AD_LIMIT,
-            remainingCount,
-            canWatch: remainingCount > 0
+            total: DAILY_AD_LIMIT,
+            used: todayAdCount,
+            remaining
         };
     }
 
     /**
      * 领取广告奖励
+     * @param userId 用户ID
+     * @param type 广告类型: task_double(任务翻倍) | points_gain(主动看广告)，默认 points_gain
+     * @param scene 观看场景，用于数据分析
      */
-    async claimAdReward(userId: string, type: AdRewardType) {
+    async claimAdReward(userId: string, type?: AdRewardType, scene?: string) {
         // 检查每日广告观看次数
         const todayAdCount = await this.getTodayAdCount(userId);
 
         if (todayAdCount >= DAILY_AD_LIMIT) {
-            throw new BadRequestException('今日广告观看次数已达上限');
+            throw new BadRequestException('今日观看次数已用完');
         }
 
-        // 获取奖励积分
-        const points = AD_REWARD_POINTS[type];
+        // 统一奖励 10 幸运值
+        const points = AD_REWARD_POINTS;
 
         // 获取当前用户积分
         const user = await this.prisma.user.findUnique({
@@ -145,8 +146,16 @@ export class PointsService {
 
         const newBalance = user.luckyPoints + points;
 
+        // 确定来源和描述
+        const isTaskDouble = type === 'task_double';
+        const source = isTaskDouble ? 'task_double' : 'ad_reward';
+        let description = isTaskDouble ? '任务翻倍奖励' : '观看广告奖励';
+        if (scene) {
+            description += ` (${scene})`;
+        }
+
         // 使用事务更新积分
-        const [updatedUser] = await this.prisma.$transaction([
+        await this.prisma.$transaction([
             // 更新用户积分
             this.prisma.user.update({
                 where: { id: userId },
@@ -159,8 +168,8 @@ export class PointsService {
                     type: 'earn',
                     amount: points,
                     balance: newBalance,
-                    source: type === AdRewardType.TASK_DOUBLE ? 'task_double' : 'ad_reward',
-                    description: type === AdRewardType.TASK_DOUBLE ? '任务双倍奖励' : '观看广告奖励'
+                    source,
+                    description
                 }
             })
         ]);
@@ -168,8 +177,8 @@ export class PointsService {
         return {
             success: true,
             points,
-            totalPoints: updatedUser.luckyPoints,
-            remainingAdCount: DAILY_AD_LIMIT - todayAdCount - 1
+            remaining: DAILY_AD_LIMIT - todayAdCount - 1,
+            total: DAILY_AD_LIMIT
         };
     }
 }

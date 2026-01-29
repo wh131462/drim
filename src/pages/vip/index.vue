@@ -37,6 +37,36 @@
             <!-- 积分获取方式 -->
             <view class="earn-section">
                 <text class="section-title">积分获取</text>
+
+                <!-- 看广告赚积分卡片 -->
+                <view
+                    class="ad-earn-card"
+                    :class="{ disabled: !canWatchAd }"
+                    @tap="handleWatchAd"
+                >
+                    <view class="ad-card-left">
+                        <view class="ad-icon-wrap">
+                            <image
+                                class="ad-icon"
+                                src="/static/icons/video.svg"
+                                mode="aspectFit"
+                            />
+                        </view>
+                        <view class="ad-info">
+                            <text class="ad-title">看广告赚积分</text>
+                            <text class="ad-quota">今日剩余 {{ adQuota.remaining }}/{{ adQuota.total }} 次</text>
+                        </view>
+                    </view>
+                    <view class="ad-card-right">
+                        <text class="ad-reward">+10</text>
+                        <image
+                            class="ad-arrow"
+                            src="/static/icons/arrow-right.svg"
+                            mode="aspectFit"
+                        />
+                    </view>
+                </view>
+
                 <view class="earn-grid">
                     <view
                         class="earn-card"
@@ -150,6 +180,9 @@ import { ref, computed, onMounted } from 'vue';
 import NavBar from '@/components/NavBar/index.vue';
 import { useUserStore } from '@/stores/modules/user';
 import { privilegeApi } from '@/api/modules/vip';
+import { pointsApi } from '@/api';
+import { rewardedVideoAd } from '@/utils/ad';
+import { showSimplePointsReward } from '@/utils/feedback';
 
 const userStore = useUserStore();
 
@@ -172,11 +205,20 @@ const privilegeExpireText = computed(() => {
     return days > 0 ? `剩余 ${days} 天` : '已过期';
 });
 
+// 广告配额
+const adQuota = ref({
+    total: 5,
+    used: 0,
+    remaining: 5
+});
+
+// 是否可以看广告
+const canWatchAd = computed(() => adQuota.value.remaining > 0);
+
 // 积分获取方式 - 使用SVG图标
 const earnWays = [
     { icon: '/static/icons/moon.svg', name: '每日记梦', points: 10 },
     { icon: '/static/icons/check.svg', name: '完成任务', points: 10 },
-    { icon: '/static/icons/video.svg', name: '看广告翻倍', points: 10 },
     { icon: '/static/icons/fire.svg', name: '连续打卡奖励', points: '20-200' },
     { icon: '/static/icons/trophy.svg', name: '解锁成就', points: '10-100' },
     { icon: '/static/icons/share.svg', name: '分享梦境', points: 5 }
@@ -305,14 +347,64 @@ async function handleExchange() {
     });
 }
 
+// 加载广告配额
+async function loadAdQuota() {
+    try {
+        const quota = await pointsApi.getAdQuota();
+        adQuota.value = quota;
+    } catch (error) {
+        console.error('加载广告配额失败:', error);
+    }
+}
+
+// 观看广告
+async function handleWatchAd() {
+    if (!canWatchAd.value) {
+        uni.showToast({
+            title: '今日观看次数已用完',
+            icon: 'none'
+        });
+        return;
+    }
+
+    // 显示激励视频广告
+    const result = await rewardedVideoAd.show('points_gain');
+
+    if (result.success && result.isEnded) {
+        // 用户完整观看，领取奖励
+        try {
+            const reward = await pointsApi.claimAdReward('points_gain', '权益中心');
+            showSimplePointsReward(reward.points, '观看广告');
+            // 刷新配额和用户信息
+            await Promise.all([loadAdQuota(), userStore.fetchUserInfo()]);
+        } catch (error: any) {
+            uni.showToast({
+                title: error.message || '领取失败',
+                icon: 'none'
+            });
+        }
+    } else if (result.success && !result.isEnded) {
+        uni.showToast({
+            title: '完整观看才能获得奖励哦',
+            icon: 'none'
+        });
+    } else if (result.errMsg) {
+        uni.showToast({
+            title: result.errMsg,
+            icon: 'none'
+        });
+    }
+}
+
 onMounted(() => {
     const systemInfo = uni.getSystemInfoSync();
     const statusBarHeight = systemInfo.statusBarHeight || 0;
     // 导航栏高度 = 状态栏高度 + 导航内容高度(44px)
     navBarHeight.value = statusBarHeight + 44;
 
-    // 加载权益信息
+    // 加载权益信息和广告配额
     loadPrivilegeInfo();
+    loadAdQuota();
 });
 </script>
 
@@ -390,6 +482,89 @@ onMounted(() => {
     color: $text-secondary;
 }
 
+// 看广告赚积分卡片
+.ad-earn-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    border: 2rpx solid rgba(107, 78, 255, 0.1);
+    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+    border-radius: 24rpx;
+    padding: 28rpx 32rpx;
+    margin-bottom: 24rpx; // 改为 margin-bottom，移除左右 margin
+    transition: all 0.2s ease;
+
+    &:active:not(.disabled) {
+        transform: scale(0.98);
+        opacity: 0.9;
+    }
+
+    &.disabled {
+        opacity: 0.5;
+    }
+}
+
+.ad-card-left {
+    display: flex;
+    align-items: center;
+    gap: 20rpx;
+}
+
+.ad-icon-wrap {
+    width: 72rpx;
+    height: 72rpx;
+    background: linear-gradient(135deg, $primary-color 0%, #9f7aea 100%);
+    border-radius: 20rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8rpx 24rpx rgba(107, 78, 255, 0.3);
+}
+
+.ad-icon {
+    width: 40rpx;
+    height: 40rpx;
+    filter: brightness(0) invert(1);
+}
+
+.ad-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8rpx;
+}
+
+.ad-title {
+    font-size: 30rpx;
+    font-weight: 600;
+    color: $text-primary;
+}
+
+.ad-quota {
+    font-size: 24rpx;
+    color: $text-secondary;
+}
+
+.ad-card-right {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+}
+
+.ad-reward {
+    font-size: 40rpx;
+    font-weight: 800;
+    color: $primary-color;
+}
+
+.ad-arrow {
+    width: 32rpx;
+    height: 32rpx;
+    opacity: 0.5;
+    filter: brightness(0) saturate(100%) invert(38%) sepia(79%) saturate(2785%) hue-rotate(237deg) brightness(101%)
+        contrast(104%);
+}
+
 // 特权状态
 .privilege-status {
     display: flex;
@@ -397,10 +572,14 @@ onMounted(() => {
     justify-content: center;
     gap: 16rpx;
     padding: 20rpx 40rpx;
-    margin: -20rpx 40rpx 40rpx;
-    background: rgba(107, 78, 255, 0.08);
+    margin: -40rpx 40rpx 40rpx; // 增加负 margin 上移，使其与头部连接更紧密
+    position: relative;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.8); // 增加背景不透明度
+    backdrop-filter: blur(10px);
     border-radius: 16rpx;
-    border: 2rpx solid rgba(107, 78, 255, 0.2);
+    border: 2rpx solid rgba(107, 78, 255, 0.1);
+    box-shadow: 0 4rpx 16rpx rgba(107, 78, 255, 0.08);
 }
 
 .privilege-badge {
@@ -704,6 +883,29 @@ onMounted(() => {
 
     .header-subtitle {
         color: $dark-text-secondary;
+    }
+
+    .ad-earn-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.08);
+        box-shadow: none;
+    }
+
+    .ad-title {
+        color: #fff;
+    }
+
+    .ad-quota {
+        color: $dark-text-secondary;
+    }
+
+    .ad-reward {
+        color: #ffd700;
+    }
+
+    .ad-arrow {
+        filter: brightness(0) saturate(100%) invert(83%) sepia(45%) saturate(1000%) hue-rotate(359deg) brightness(103%)
+            contrast(104%);
     }
 
     .privilege-status {

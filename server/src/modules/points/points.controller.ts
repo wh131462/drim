@@ -1,8 +1,7 @@
 import { Controller, Get, Post, Query, Body } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { PointsService } from './points.service';
 import { PointsQueryDto } from './dto/points-query.dto';
-import { ClaimAdRewardDto, AdRewardResponseDto, AdStatusResponseDto } from './dto/ad-reward.dto';
 import { CurrentUser, JwtPayload } from '@/common/decorators/user.decorator';
 
 @ApiTags('积分')
@@ -23,17 +22,18 @@ export class PointsController {
         return this.pointsService.getRecords(user.userId, query);
     }
 
-    @Get('ad-status')
-    @ApiOperation({ summary: '获取广告观看状态' })
-    @ApiResponse({ type: AdStatusResponseDto })
-    async getAdStatus(@CurrentUser() user: JwtPayload) {
-        return this.pointsService.getAdStatus(user.userId);
+    @Get('ad-quota')
+    @ApiOperation({ summary: '获取广告配额信息' })
+    async getAdQuota(@CurrentUser() user: JwtPayload) {
+        return this.pointsService.getAdQuota(user.userId);
     }
 
     @Post('ad-reward')
     @ApiOperation({ summary: '领取广告奖励' })
-    @ApiResponse({ type: AdRewardResponseDto })
-    async claimAdReward(@CurrentUser() user: JwtPayload, @Body() dto: ClaimAdRewardDto) {
-        return this.pointsService.claimAdReward(user.userId, dto.type);
+    async claimAdReward(
+        @CurrentUser() user: JwtPayload,
+        @Body() body: { type?: 'task_double' | 'points_gain'; scene?: string }
+    ) {
+        return this.pointsService.claimAdReward(user.userId, body.type, body.scene);
     }
 }

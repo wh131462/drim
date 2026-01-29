@@ -148,7 +148,7 @@ async function handleWatchVideo() {
 
         if (result.success && result.isEnded) {
             // 用户完整观看视频，领取双倍奖励
-            const response = await pointsApi.claimAdReward('task_double');
+            const response = await pointsApi.claimAdReward('task_double', '任务奖励翻倍');
 
             if (response.success) {
                 // 基础奖励 + 广告额外奖励 = 双倍
@@ -156,9 +156,7 @@ async function handleWatchVideo() {
                 completed.value = true;
 
                 // 更新用户积分
-                if (userStore.userInfo) {
-                    userStore.userInfo.luckyPoints = response.totalPoints;
-                }
+                await userStore.fetchUserInfo();
 
                 emit('complete', { points: earnedPoints.value, isDouble: true });
             }

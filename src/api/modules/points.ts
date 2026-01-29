@@ -30,16 +30,14 @@ export interface PointRecordsResponse {
 /** 广告奖励类型 */
 export type AdRewardType = 'task_double' | 'points_gain';
 
-/** 广告状态响应 */
-export interface AdStatusResponse {
-    /** 今日已观看广告次数 */
-    todayAdCount: number;
-    /** 每日广告上限 */
-    dailyLimit: number;
-    /** 剩余观看次数 */
-    remainingCount: number;
-    /** 是否还可以观看广告 */
-    canWatch: boolean;
+/** 广告配额信息 */
+export interface AdQuota {
+    /** 每日总配额 */
+    total: number;
+    /** 已使用次数 */
+    used: number;
+    /** 剩余次数 */
+    remaining: number;
 }
 
 /** 广告奖励响应 */
@@ -48,10 +46,10 @@ export interface AdRewardResponse {
     success: boolean;
     /** 获得的积分 */
     points: number;
-    /** 当前总积分 */
-    totalPoints: number;
-    /** 今日剩余广告观看次数 */
-    remainingAdCount: number;
+    /** 剩余次数 */
+    remaining: number;
+    /** 总配额 */
+    total: number;
 }
 
 export const pointsApi = {
@@ -74,17 +72,18 @@ export const pointsApi = {
     },
 
     /**
-     * 获取广告观看状态
+     * 获取广告配额信息
      */
-    getAdStatus(): Promise<AdStatusResponse> {
-        return get<AdStatusResponse>('/points/ad-status');
+    getAdQuota(): Promise<AdQuota> {
+        return get<AdQuota>('/points/ad-quota');
     },
 
     /**
      * 领取广告奖励
-     * @param type 广告类型: task_double(任务双倍) | points_gain(获取积分)
+     * @param type 广告类型: task_double(任务翻倍) | points_gain(主动看广告)
+     * @param scene 观看场景，用于数据分析
      */
-    claimAdReward(type: AdRewardType): Promise<AdRewardResponse> {
-        return post<AdRewardResponse>('/points/ad-reward', { type });
+    claimAdReward(type?: AdRewardType, scene?: string): Promise<AdRewardResponse> {
+        return post<AdRewardResponse>('/points/ad-reward', { type, scene });
     }
 };
