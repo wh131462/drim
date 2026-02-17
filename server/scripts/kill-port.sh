@@ -1,34 +1,49 @@
 #!/bin/bash
-# 清理指定端口的占用进程
+# 清理指定端口的占用进程（自动识别 Docker 容器）
 
 PORT=${1:-3333}
 
 echo "Checking port $PORT..."
 
-# 获取占用端口的进程 PID
-PIDS=$(lsof -ti :$PORT 2>/dev/null)
+PIDS=$(lsof -ti :"$PORT" 2>/dev/null)
 
 if [ -z "$PIDS" ]; then
   echo "Port $PORT is free."
   exit 0
 fi
 
+# Docker 可用时，优先通过 docker stop 处理容器占用
+if command -v docker &>/dev/null && docker info &>/dev/null 2>&1; then
+  CONTAINER_ID=$(docker ps --filter "publish=$PORT" --format '{{.ID}}' 2>/dev/null)
+  if [ -n "$CONTAINER_ID" ]; then
+    CONTAINER_NAME=$(docker ps --filter "publish=$PORT" --format '{{.Names}}' 2>/dev/null)
+    echo "Port $PORT is occupied by container: $CONTAINER_NAME"
+    docker stop "$CONTAINER_ID" >/dev/null 2>&1
+    docker rm "$CONTAINER_ID" >/dev/null 2>&1
+    echo "Container $CONTAINER_NAME stopped."
+    exit 0
+  fi
+fi
+
+# 非 Docker 进程：先 SIGTERM，再 SIGKILL
 echo "Found processes on port $PORT: $PIDS"
 
-# 终止进程
 for PID in $PIDS; do
-  echo "Killing process $PID..."
-  kill -9 $PID 2>/dev/null
+  kill "$PID" 2>/dev/null
 done
-
-# 等待一下确保端口释放
 sleep 1
 
-# 验证端口是否已释放
-if lsof -ti :$PORT >/dev/null 2>&1; then
+REMAINING=$(lsof -ti :"$PORT" 2>/dev/null)
+if [ -n "$REMAINING" ]; then
+  for PID in $REMAINING; do
+    kill -9 "$PID" 2>/dev/null
+  done
+  sleep 1
+fi
+
+if lsof -ti :"$PORT" >/dev/null 2>&1; then
   echo "Warning: Port $PORT is still occupied!"
   exit 1
-else
-  echo "Port $PORT is now free."
-  exit 0
 fi
+
+echo "Port $PORT is now free."

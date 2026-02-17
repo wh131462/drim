@@ -8,7 +8,7 @@
     "scripts": {
         "build": "rm -f tsconfig.build.tsbuildinfo && nest build",
         "start": "node dist/main",
-        "predev": "prisma generate && ./scripts/kill-port.sh && npm run build",
+        "predev": "./scripts/ensure-db.sh && prisma generate && ./scripts/kill-port.sh",
         "dev": "nest start --watch",
         "db:generate": "prisma generate",
         "db:migrate": "prisma migrate dev",
