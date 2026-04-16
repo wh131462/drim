@@ -62,6 +62,19 @@ jobs:
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
 
         steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Sync compose file to server
+              uses: appleboy/scp-action@v0.1.7
+              with:
+                  host: ${{ secrets.DEPLOY_HOST }}
+                  username: ${{ secrets.DEPLOY_USER }}
+                  key: ${{ secrets.DEPLOY_KEY }}
+                  source: server/docker-compose.prod.yml
+                  target: ${{ secrets.DEPLOY_PATH }}
+                  strip_components: 1
+
             - name: Deploy to server
               uses: appleboy/ssh-action@v1
               with:
