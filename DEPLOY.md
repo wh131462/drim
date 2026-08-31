@@ -6,9 +6,9 @@
 
 1. 构建不包含任何 Secret 的 Docker 镜像并推送至 GHCR。
 2. 部署任务读取 `production` Environment Secrets。
-3. 在 GitHub Runner 上生成权限为 `600` 的临时 `.env.production`。
-4. 将 Compose 文件和临时配置同步到服务器。
-5. 拉取并启动精确 commit SHA 对应的镜像。
+3. 在 GitHub Runner 上生成临时 `.env.production`，并仅在容器化传输步骤期间授予只读权限。
+4. 将 Compose 文件和临时配置同步到服务器，随后立即删除 Runner 上的临时配置。
+5. 在服务器上将配置权限收紧为 `600`，拉取并启动精确 commit SHA 对应的镜像。
 6. 部署结束后从服务器删除临时配置并退出 GHCR。
 
 Secrets 不会作为 Docker build argument，也不会进入镜像层或构建缓存。

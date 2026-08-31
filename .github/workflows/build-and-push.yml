@@ -98,7 +98,9 @@ jobs:
                   CONTENT_SECURITY_FAIL_SAFE: ${{ secrets.CONTENT_SECURITY_FAIL_SAFE }}
               run: |
                   node .github/scripts/render-production-env.mjs server/.env.production
-                  chmod 600 server/.env.production
+                  # scp-action runs in a separate container as a non-owner user.
+                  # Grant read-only access so it can package the temporary file.
+                  chmod 644 server/.env.production
 
             - name: Sync deployment files to server
               uses: appleboy/scp-action@v0.1.7
@@ -110,6 +112,10 @@ jobs:
                   target: ${{ secrets.DEPLOY_PATH }}
                   strip_components: 1
                   overwrite: true
+
+            - name: Remove runtime configuration from runner
+              if: always()
+              run: rm -f server/.env.production
 
             - name: Deploy to server
               uses: appleboy/ssh-action@v1
