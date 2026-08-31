@@ -27,7 +27,6 @@ function readAdminConfig() {
     const cookieSecret = process.env.ADMIN_COOKIE_SECRET;
 
     if (!email || !password || !cookieSecret) return null;
-    if (password.length < 12) throw new Error('ADMIN_PASSWORD 至少需要 12 个字符');
     if (cookieSecret.length < 32) throw new Error('ADMIN_COOKIE_SECRET 至少需要 32 个字符');
     return { email, password, cookieSecret };
 }

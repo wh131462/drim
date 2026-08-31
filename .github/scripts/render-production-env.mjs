@@ -49,9 +49,6 @@ const values = {
     CONTENT_SECURITY_FAIL_SAFE: process.env.CONTENT_SECURITY_FAIL_SAFE || 'true'
 };
 
-if (values.ADMIN_PASSWORD.length < 12) {
-    throw new Error('ADMIN_PASSWORD must contain at least 12 characters');
-}
 if (values.ADMIN_COOKIE_SECRET.length < 32) {
     throw new Error('ADMIN_COOKIE_SECRET must contain at least 32 characters');
 }

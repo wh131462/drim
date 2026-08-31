@@ -138,7 +138,7 @@ npm run prisma:studio
 
 ```bash
 ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=请设置至少12位的独立强密码
+ADMIN_PASSWORD=请设置独立强密码
 ADMIN_COOKIE_SECRET=请设置至少32位的随机字符串
 ```
 

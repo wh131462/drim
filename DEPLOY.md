@@ -38,11 +38,11 @@ Secrets 不会作为 Docker build argument，也不会进入镜像层或构建�
 
 ### 管理后台
 
-| Secret                | 是否必填 | 说明                        |
-| --------------------- | -------- | --------------------------- |
-| `ADMIN_EMAIL`         | 是       | 后台管理员邮箱              |
-| `ADMIN_PASSWORD`      | 是       | 后台密码，至少 12 位        |
-| `ADMIN_COOKIE_SECRET` | 是       | Cookie 签名密钥，至少 32 位 |
+| Secret                | 是否必填 | 说明                         |
+| --------------------- | -------- | ---------------------------- |
+| `ADMIN_EMAIL`         | 是       | 后台管理员邮箱               |
+| `ADMIN_PASSWORD`      | 是       | 后台密码，建议使用独立强密码 |
+| `ADMIN_COOKIE_SECRET` | 是       | Cookie 签名密钥，至少 32 位  |
 
 可通过以下命令生成 Cookie 密钥：
 
