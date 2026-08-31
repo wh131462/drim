@@ -178,17 +178,7 @@ pnpm build:mp-weixin
 
 ### 后端部署
 
-```bash
-# 构建
-pnpm server:build
-
-# PM2 启动
-pm2 start server/dist/main.js --name drim-server
-
-# 或 Docker 部署
-cd server && docker build -t drim-server .
-docker run -p 3000:3000 drim-server
-```
+生产后端由 GitHub Actions 自动构建和部署。运行时配置统一来自 GitHub `production` Environment Secrets，服务器不手工维护 `.env`，敏感值也不会写入 Docker 镜像。完整配置见 [生产部署说明](DEPLOY.md)。
 
 ## 文档
 
@@ -197,6 +187,7 @@ docker run -p 3000:3000 drim-server
 - [API 接口设计](docs/03-API接口设计.md)
 - [数据库设计](docs/04-数据库设计.md)
 - [前端开发指南](docs/05-前端开发指南.md)
+- [生产部署说明](DEPLOY.md)
 
 ## License
 

@@ -134,7 +134,7 @@ npm run prisma:studio
 
 服务内置 AdminJS 管理后台，用于查看全库梦境统计、梦境列表、解析结果和用户信息。后台关闭新增、编辑和删除操作，并隐藏用户 OpenID、UnionID 和手机号。
 
-在 `.env` 中配置以下三项后启用：
+本地开发时，在 `.env` 中配置以下三项后启用：
 
 ```bash
 ADMIN_EMAIL=admin@example.com
@@ -148,23 +148,7 @@ ADMIN_COOKIE_SECRET=请设置至少32位的随机字符串
 
 ## 部署
 
-### Docker 部署
-
-```dockerfile
-FROM node:18-alpine
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci --only=production
-
-COPY . .
-RUN npm run build
-
-EXPOSE 3333
-
-CMD ["npm", "run", "start:prod"]
-```
+生产部署由 GitHub Actions 自动完成，服务器不再手工维护 `.env`。配置方法、完整 Secrets 清单、服务器前置条件和运维命令见 [DEPLOY.md](../DEPLOY.md)。
 
 ### 环境要求
 

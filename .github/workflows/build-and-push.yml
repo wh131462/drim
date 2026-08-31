@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Build, Push and Deploy
 
 on:
     push:
@@ -8,11 +8,16 @@ on:
         paths:
             - 'server/**'
             - '.github/workflows/build-and-push.yml'
+            - '.github/scripts/render-production-env.mjs'
     workflow_dispatch: # 允许手动触发
 
 env:
     REGISTRY: ghcr.io
     IMAGE_NAME: ${{ github.repository }}-api
+
+concurrency:
+    group: drim-production-deploy
+    cancel-in-progress: false
 
 jobs:
     build-and-push:
@@ -43,6 +48,7 @@ jobs:
                   tags: |
                       type=ref,event=branch
                       type=sha,prefix=
+                      type=raw,value=${{ github.sha }}
                       type=raw,value=latest,enable={{is_default_branch}}
 
             - name: Build and push Docker image
@@ -60,29 +66,69 @@ jobs:
         needs: build-and-push
         runs-on: ubuntu-latest
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+        environment: production
+        permissions:
+            contents: read
+            packages: read
 
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
 
-            - name: Sync compose file to server
+            - name: Generate production runtime configuration
+              env:
+                  IMAGE_TAG: ${{ github.sha }}
+                  MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+                  BASE_URL: ${{ secrets.BASE_URL }}
+                  API_DOMAIN: ${{ secrets.API_DOMAIN }}
+                  JWT_SECRET: ${{ secrets.JWT_SECRET }}
+                  JWT_EXPIRES_IN: ${{ secrets.JWT_EXPIRES_IN }}
+                  ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+                  ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+                  ADMIN_COOKIE_SECRET: ${{ secrets.ADMIN_COOKIE_SECRET }}
+                  WECHAT_APPID: ${{ secrets.WECHAT_APPID }}
+                  WECHAT_SECRET: ${{ secrets.WECHAT_SECRET }}
+                  WECHAT_REMINDER_TEMPLATE_ID: ${{ secrets.WECHAT_REMINDER_TEMPLATE_ID }}
+                  AI_API_KEY: ${{ secrets.AI_API_KEY }}
+                  AI_API_URL: ${{ secrets.AI_API_URL }}
+                  AI_MODEL: ${{ secrets.AI_MODEL }}
+                  AI_API_FORMAT: ${{ secrets.AI_API_FORMAT }}
+                  AI_SYSTEM_PROMPT: ${{ secrets.AI_SYSTEM_PROMPT }}
+                  CONTENT_SECURITY_SKIP: ${{ secrets.CONTENT_SECURITY_SKIP }}
+                  CONTENT_SECURITY_FAIL_SAFE: ${{ secrets.CONTENT_SECURITY_FAIL_SAFE }}
+              run: |
+                  node .github/scripts/render-production-env.mjs server/.env.production
+                  chmod 600 server/.env.production
+
+            - name: Sync deployment files to server
               uses: appleboy/scp-action@v0.1.7
               with:
                   host: ${{ secrets.DEPLOY_HOST }}
                   username: ${{ secrets.DEPLOY_USER }}
                   key: ${{ secrets.DEPLOY_KEY }}
-                  source: server/docker-compose.prod.yml
+                  source: server/docker-compose.prod.yml,server/.env.production
                   target: ${{ secrets.DEPLOY_PATH }}
                   strip_components: 1
+                  overwrite: true
 
             - name: Deploy to server
               uses: appleboy/ssh-action@v1
+              env:
+                  DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+                  GHCR_USERNAME: ${{ github.actor }}
+                  GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
                   host: ${{ secrets.DEPLOY_HOST }}
                   username: ${{ secrets.DEPLOY_USER }}
                   key: ${{ secrets.DEPLOY_KEY }}
+                  envs: DEPLOY_PATH,GHCR_USERNAME,GHCR_TOKEN
                   script: |
-                      cd ${{ secrets.DEPLOY_PATH }}
-                      docker compose -f docker-compose.prod.yml pull api
-                      docker compose -f docker-compose.prod.yml up -d api
+                      set -eu
+                      cd "$DEPLOY_PATH"
+                      chmod 600 .env.production
+                      echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+                      trap 'rm -f .env.production; docker logout ghcr.io >/dev/null 2>&1 || true' EXIT
+                      docker compose --env-file .env.production -f docker-compose.prod.yml config --quiet
+                      docker compose --env-file .env.production -f docker-compose.prod.yml pull api
+                      docker compose --env-file .env.production -f docker-compose.prod.yml up -d --remove-orphans
                       docker image prune -f

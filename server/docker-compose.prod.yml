@@ -1,9 +1,6 @@
 # 生产环境部署配置
-# 使用方法:
-# 1. 复制 .env.example 为 .env 并填入实际配置
-# 2. 登录 GitHub Container Registry: docker login ghcr.io -u <username> -p <token>
-# 3. 首次部署运行: ./scripts/deploy.sh setup
-# 4. 后续更新运行: ./scripts/deploy.sh update
+# .env.production 由 GitHub Actions 从 production Environment Secrets 自动生成并下发。
+# 服务器不应手工维护该文件，也不要把密钥写入镜像构建参数。
 
 networks:
     proxy:
@@ -17,14 +14,14 @@ services:
         container_name: drim-mysql
         restart: unless-stopped
         environment:
-            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is required}
             MYSQL_DATABASE: drim
             TZ: Asia/Shanghai
         volumes:
             - mysql_data:/var/lib/mysql
         command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --character-set-client-handshake=FALSE --init-connect='SET NAMES utf8mb4' --innodb-buffer-pool-size=256M --innodb-log-buffer-size=8M --innodb-flush-method=O_DIRECT --key-buffer-size=16M --max-connections=50 --table-open-cache=128 --thread-cache-size=8 --tmp-table-size=32M --max-heap-table-size=32M --performance-schema=OFF --skip-log-bin
         healthcheck:
-            test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'root', '-p${MYSQL_ROOT_PASSWORD}']
+            test: ['CMD-SHELL', 'mysqladmin ping -h localhost -u root --password="$${MYSQL_ROOT_PASSWORD}"']
             interval: 10s
             timeout: 5s
             retries: 10
@@ -38,25 +35,29 @@ services:
 
     api:
         # 从 GitHub Container Registry 拉取镜像
-        image: ghcr.io/${GITHUB_REPOSITORY:-wh131462/drim}-api:latest
+        image: ghcr.io/${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is required}-api:${IMAGE_TAG:?IMAGE_TAG is required}
         container_name: drim-api
         restart: unless-stopped
         environment:
             NODE_ENV: production
             PORT: 3333
-            BASE_URL: ${BASE_URL:-https://api.131462.cloud}
-            DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD}@mysql:3306/drim
-            JWT_SECRET: ${JWT_SECRET}
-            ADMIN_EMAIL: ${ADMIN_EMAIL}
-            ADMIN_PASSWORD: ${ADMIN_PASSWORD}
-            ADMIN_COOKIE_SECRET: ${ADMIN_COOKIE_SECRET}
-            WECHAT_APPID: ${WECHAT_APPID}
-            WECHAT_SECRET: ${WECHAT_SECRET}
+            BASE_URL: ${BASE_URL:?BASE_URL is required}
+            DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+            JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+            JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:?JWT_EXPIRES_IN is required}
+            ADMIN_EMAIL: ${ADMIN_EMAIL:?ADMIN_EMAIL is required}
+            ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}
+            ADMIN_COOKIE_SECRET: ${ADMIN_COOKIE_SECRET:?ADMIN_COOKIE_SECRET is required}
+            WECHAT_APPID: ${WECHAT_APPID:?WECHAT_APPID is required}
+            WECHAT_SECRET: ${WECHAT_SECRET:?WECHAT_SECRET is required}
             WECHAT_REMINDER_TEMPLATE_ID: ${WECHAT_REMINDER_TEMPLATE_ID:-}
-            AI_API_KEY: ${AI_API_KEY}
-            AI_API_URL: ${AI_API_URL}
-            AI_MODEL: ${AI_MODEL}
-            AI_API_FORMAT: ${AI_API_FORMAT:-openai}
+            AI_API_KEY: ${AI_API_KEY:?AI_API_KEY is required}
+            AI_API_URL: ${AI_API_URL:?AI_API_URL is required}
+            AI_MODEL: ${AI_MODEL:?AI_MODEL is required}
+            AI_API_FORMAT: ${AI_API_FORMAT:?AI_API_FORMAT is required}
+            AI_SYSTEM_PROMPT: ${AI_SYSTEM_PROMPT:?AI_SYSTEM_PROMPT is required}
+            CONTENT_SECURITY_SKIP: ${CONTENT_SECURITY_SKIP:?CONTENT_SECURITY_SKIP is required}
+            CONTENT_SECURITY_FAIL_SAFE: ${CONTENT_SECURITY_FAIL_SAFE:?CONTENT_SECURITY_FAIL_SAFE is required}
         volumes:
             - uploads_data:/app/uploads
         depends_on:
@@ -67,7 +68,7 @@ services:
             - internal
         labels:
             - traefik.enable=true
-            - traefik.http.routers.drim-api.rule=Host(`${API_DOMAIN:-api.131462.cloud}`)
+            - traefik.http.routers.drim-api.rule=Host(`${API_DOMAIN:?API_DOMAIN is required}`)
             - traefik.http.routers.drim-api.entrypoints=websecure
             - traefik.http.routers.drim-api.tls.certresolver=letsencrypt
             - traefik.http.services.drim-api.loadbalancer.server.port=3333
