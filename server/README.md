@@ -130,6 +130,22 @@ npm run test
 npm run prisma:studio
 ```
 
+## 只读管理后台
+
+服务内置 AdminJS 管理后台，用于查看全库梦境统计、梦境列表、解析结果和用户信息。后台关闭新增、编辑和删除操作，并隐藏用户 OpenID、UnionID 和手机号。
+
+在 `.env` 中配置以下三项后启用：
+
+```bash
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=请设置至少12位的独立强密码
+ADMIN_COOKIE_SECRET=请设置至少32位的随机字符串
+```
+
+可通过 `openssl rand -base64 48` 生成 Cookie 密钥。启动后访问 `http://localhost:3333/admin`，生产环境访问 `${BASE_URL}/admin`。
+
+管理后台包含梦境正文等敏感数据，建议额外使用防火墙、IP 白名单或 Cloudflare Access 限制访问。
+
 ## 部署
 
 ### Docker 部署

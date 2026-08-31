@@ -4,9 +4,13 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import { AppModule } from './app.module';
+import { setupAdminPanel } from './admin/admin.bootstrap';
 
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+    // Traefik 终止 TLS，管理后台的 Secure Cookie 需要信任第一层代理。
+    app.set('trust proxy', 1);
 
     // 静态文件服务（头像等上传文件）
     app.useStaticAssets(join(process.cwd(), 'uploads'), {
@@ -43,10 +47,15 @@ async function bootstrap() {
         SwaggerModule.setup('api/docs', app, document);
     }
 
+    const adminEnabled = await setupAdminPanel(app);
+
     const port = process.env.PORT || 3000;
     await app.listen(port);
     console.log(`Application is running on: http://localhost:${port}`);
     console.log(`Swagger docs: http://localhost:${port}/api/docs`);
+    if (adminEnabled) {
+        console.log(`Admin panel: http://localhost:${port}/admin`);
+    }
 }
 
 bootstrap();

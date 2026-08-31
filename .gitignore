@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+.adminjs/
 .pnp/
 .pnp.js
 

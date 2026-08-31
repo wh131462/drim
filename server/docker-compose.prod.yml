@@ -47,6 +47,9 @@ services:
             BASE_URL: ${BASE_URL:-https://api.131462.cloud}
             DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD}@mysql:3306/drim
             JWT_SECRET: ${JWT_SECRET}
+            ADMIN_EMAIL: ${ADMIN_EMAIL}
+            ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+            ADMIN_COOKIE_SECRET: ${ADMIN_COOKIE_SECRET}
             WECHAT_APPID: ${WECHAT_APPID}
             WECHAT_SECRET: ${WECHAT_SECRET}
             WECHAT_REMINDER_TEMPLATE_ID: ${WECHAT_REMINDER_TEMPLATE_ID:-}
