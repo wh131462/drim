@@ -1,4 +1,4 @@
-import { Injectable, Logger, Optional } from '@nestjs/common';
+import { Injectable, Logger, Optional, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { RedisService } from '@/shared/cache/redis.service';
@@ -61,6 +61,18 @@ export class WechatService {
         this.appId = this.configService.get('WECHAT_APPID', '');
         this.appSecret = this.configService.get('WECHAT_SECRET', '');
         this.reminderTemplateId = this.configService.get('WECHAT_REMINDER_TEMPLATE_ID', '');
+
+        if (this.configService.get('NODE_ENV') === 'production') {
+            if (!this.appId || !this.appSecret) {
+                throw new Error('生产环境必须配置 WECHAT_APPID 和 WECHAT_SECRET');
+            }
+            if (this.configService.get('CONTENT_SECURITY_SKIP', 'false') === 'true') {
+                throw new Error('生产环境禁止 CONTENT_SECURITY_SKIP=true');
+            }
+            if (this.configService.get('CONTENT_SECURITY_FAIL_SAFE', 'false') === 'true') {
+                throw new Error('生产环境禁止 CONTENT_SECURITY_FAIL_SAFE=true');
+            }
+        }
     }
 
     /**
@@ -151,8 +163,10 @@ export class WechatService {
      * @see https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/sec-center/sec-check/msgSecCheck.html
      */
     async checkTextSecurity(content: string, openId: string, scene: 1 | 2 | 3 | 4 = 4): Promise<ContentSecurityResult> {
+        const production = this.configService.get('NODE_ENV') === 'production';
         // 开发环境可跳过检测
-        const skipCheck = this.configService.get('CONTENT_SECURITY_SKIP', 'false') === 'true';
+        const skipCheck = !production && this.configService.get('CONTENT_SECURITY_SKIP', 'false') === 'true';
+        const failSafe = !production && this.configService.get('CONTENT_SECURITY_FAIL_SAFE', 'true') === 'true';
         if (skipCheck) {
             this.logger.warn('内容安全检测已跳过 (CONTENT_SECURITY_SKIP=true)');
             return { safe: true, suggest: 'pass', label: 100 };
@@ -174,15 +188,17 @@ export class WechatService {
             if (data.errcode !== 0) {
                 this.logger.error(`checkTextSecurity error: ${data.errcode} - ${data.errmsg}`);
                 // 接口调用失败时，根据配置决定是否放行
-                const failSafe = this.configService.get('CONTENT_SECURITY_FAIL_SAFE', 'true') === 'true';
                 if (failSafe) {
                     this.logger.warn('内容安全检测接口异常，启用 fail-safe 放行');
                     return { safe: true, suggest: 'pass', label: 100, message: '检测服务暂时不可用' };
                 }
-                return { safe: false, suggest: 'risky', label: 0, message: `检测服务异常: ${data.errmsg}` };
+                throw new ServiceUnavailableException('内容安全检测暂时不可用，请稍后重试');
             }
 
             const result = data.result;
+            if (!result) {
+                throw new ServiceUnavailableException('内容安全检测返回异常，请稍后重试');
+            }
             const safe = result?.suggest === 'pass';
 
             // 提取违规关键词
@@ -204,12 +220,11 @@ export class WechatService {
         } catch (error) {
             this.logger.error('checkTextSecurity request failed', error);
             // 网络异常时的 fail-safe 处理
-            const failSafe = this.configService.get('CONTENT_SECURITY_FAIL_SAFE', 'true') === 'true';
             if (failSafe) {
                 this.logger.warn('内容安全检测网络异常，启用 fail-safe 放行');
                 return { safe: true, suggest: 'pass', label: 100, message: '检测服务暂时不可用' };
             }
-            throw error;
+            throw new ServiceUnavailableException('内容安全检测暂时不可用，请稍后重试');
         }
     }
 

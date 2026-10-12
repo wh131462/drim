@@ -7,7 +7,8 @@ import {
     IsBoolean,
     MaxLength,
     MinLength,
-    ArrayMaxSize
+    ArrayMaxSize,
+    ValidateIf
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -37,6 +38,13 @@ export class CreateDreamDto {
     @MaxLength(1000, { message: '梦境内容不能超过1000字' })
     content: string;
 
+    @ApiPropertyOptional({ description: '未润色的原始梦境内容', minLength: 25, maxLength: 1000 })
+    @IsString()
+    @IsOptional()
+    @MinLength(25, { message: '原始梦境内容至少需要25字' })
+    @MaxLength(1000, { message: '原始梦境内容不能超过1000字' })
+    originalContent?: string;
+
     @ApiPropertyOptional({
         description: '标签',
         type: [String],
@@ -46,7 +54,7 @@ export class CreateDreamDto {
     @IsOptional()
     @ArrayMaxSize(3, { message: '最多选择3个标签' })
     @IsString({ each: true })
-    tags?: string[];
+    tags?: string[] | null;
 
     @ApiPropertyOptional({
         description: '情绪',
@@ -55,13 +63,18 @@ export class CreateDreamDto {
     @IsString()
     @IsOptional()
     @IsIn(VALID_EMOTIONS, { message: '无效的情绪类型' })
-    emotion?: string;
+    emotion?: string | null;
 
     @ApiPropertyOptional({
         description: '是否公开到探索广场',
         default: false
     })
     @IsBoolean()
-    @IsOptional()
+    @ValidateIf((_object, value) => value !== undefined)
     isPublic?: boolean;
+
+    @ApiPropertyOptional({ description: '本次保存的版本类型', enum: ['original', 'polished', 'edited'] })
+    @IsIn(['original', 'polished', 'edited'])
+    @ValidateIf((_object, value) => value !== undefined)
+    versionType?: 'original' | 'polished' | 'edited';
 }

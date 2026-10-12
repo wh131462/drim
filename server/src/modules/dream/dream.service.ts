@@ -3,6 +3,7 @@ import {
     BadRequestException,
     NotFoundException,
     ForbiddenException,
+    ConflictException,
     Inject,
     forwardRef,
     Optional
@@ -25,7 +26,11 @@ export class DreamService {
         private readonly achievementService: AchievementService,
         private readonly settingsService: SettingsService,
         @Optional() private readonly wechatService?: WechatService
-    ) {}
+    ) {
+        if (process.env.NODE_ENV === 'production' && !this.wechatService) {
+            throw new Error('生产环境必须注入 WechatService 以进行内容安全检测');
+        }
+    }
 
     /**
      * 创建梦境
@@ -48,12 +53,26 @@ export class DreamService {
         }
 
         const trimmedContent = dto.content.trim();
+        const trimmedOriginalContent = (dto.originalContent ?? dto.content).trim();
+
+        if (trimmedOriginalContent.length < 25 || trimmedOriginalContent.length > 1000) {
+            throw new BadRequestException({
+                code: 20001,
+                message: '原始梦境内容长度必须为25-1000字'
+            });
+        }
 
         // 无意义内容检测
         this.validateContentMeaningful(trimmedContent);
+        if (trimmedOriginalContent !== trimmedContent) {
+            this.validateContentMeaningful(trimmedOriginalContent);
+        }
 
         // 内容安全检测
         await this.checkContentSecurity(trimmedContent, userId);
+        if (trimmedOriginalContent !== trimmedContent) {
+            await this.checkContentSecurity(trimmedOriginalContent, userId);
+        }
 
         // 如果前端传入了 isPublic，使用传入的值；否则使用用户默认隐私设置
         let isPublic = dto.isPublic;
@@ -62,57 +81,71 @@ export class DreamService {
             isPublic = privacySettings.defaultDreamPublic;
         }
 
-        // 创建梦境记录
-        const dream = await this.prisma.dream.create({
-            data: {
-                userId,
-                content: trimmedContent,
-                originalContent: trimmedContent, // 保存原始内容
-                tags: dto.tags ? JSON.stringify(dto.tags) : null,
-                emotion: dto.emotion,
-                wordCount,
-                isPublic // 使用用户默认隐私设置
-            }
-        });
-
-        // 创建原始版本
-        await this.prisma.dreamVersion.create({
-            data: {
-                dreamId: dream.id,
-                userId,
-                type: 'original',
-                content: trimmedContent,
-                versionNumber: 1,
-                isCurrent: true
-            }
-        });
-
-        // 更新用户连续记梦天数并获取奖励信息
-        const streakReward = await this.userService.updateConsecutiveDays(userId);
-
-        // 记录梦境基础奖励 +5 积分
+        const hasModifiedContent = trimmedOriginalContent !== trimmedContent;
+        const appliedVersionType = dto.versionType === 'edited' ? 'edited' : 'polished';
         const DREAM_REWARD = 5;
-        const user = await this.prisma.user.findUnique({ where: { id: userId } });
-        if (user) {
-            const newBalance = user.luckyPoints + DREAM_REWARD;
-            await this.prisma.$transaction([
-                this.prisma.user.update({
-                    where: { id: userId },
-                    data: { luckyPoints: newBalance }
-                }),
-                this.prisma.pointRecord.create({
+        const { dream, streakReward } = await this.prisma.$transaction(async (tx) => {
+            const streakReward = await this.userService.updateConsecutiveDays(userId, tx);
+            const createdDream = await tx.dream.create({
+                data: {
+                    userId,
+                    content: trimmedContent,
+                    originalContent: trimmedOriginalContent,
+                    tags: dto.tags ? JSON.stringify(dto.tags) : null,
+                    emotion: dto.emotion ?? null,
+                    wordCount,
+                    isPublic
+                }
+            });
+
+            const originalVersion = await tx.dreamVersion.create({
+                data: {
+                    dreamId: createdDream.id,
+                    userId,
+                    type: 'original',
+                    content: trimmedOriginalContent,
+                    versionNumber: 1,
+                    isCurrent: !hasModifiedContent
+                }
+            });
+
+            let currentVersionId = originalVersion.id;
+            if (hasModifiedContent) {
+                const appliedVersion = await tx.dreamVersion.create({
                     data: {
+                        dreamId: createdDream.id,
                         userId,
-                        type: 'earn',
-                        amount: DREAM_REWARD,
-                        balance: newBalance,
-                        source: 'dream_create',
-                        sourceId: dream.id,
-                        description: `记录梦境 +${DREAM_REWARD}`
+                        type: appliedVersionType,
+                        content: trimmedContent,
+                        polishedFrom: appliedVersionType === 'polished' ? originalVersion.id : null,
+                        versionNumber: 2,
+                        isCurrent: true
                     }
-                })
-            ]);
-        }
+                });
+                currentVersionId = appliedVersion.id;
+            }
+
+            const dream = await tx.dream.update({
+                where: { id: createdDream.id },
+                data: { currentVersionId }
+            });
+            const rewardedUser = await tx.user.update({
+                where: { id: userId },
+                data: { luckyPoints: { increment: DREAM_REWARD } }
+            });
+            await tx.pointRecord.create({
+                data: {
+                    userId,
+                    type: 'earn',
+                    amount: DREAM_REWARD,
+                    balance: rewardedUser.luckyPoints,
+                    source: 'dream_create',
+                    sourceId: dream.id,
+                    description: `记录梦境 +${DREAM_REWARD}`
+                }
+            });
+            return { dream, streakReward };
+        });
 
         // 异步检查成就（记梦和连续打卡相关）
         this.achievementService
@@ -124,6 +157,7 @@ export class DreamService {
 
         return {
             ...this.formatDream(dream),
+            currentVersionType: hasModifiedContent ? appliedVersionType : 'original',
             rewards: {
                 dreamReward: DREAM_REWARD,
                 streakReward: streakReward?.bonus || 0,
@@ -223,6 +257,15 @@ export class DreamService {
         }
 
         const result: any = this.formatDream(dream);
+        const currentVersion = await this.prisma.dreamVersion.findFirst({
+            where: {
+                dreamId,
+                ...(dream.currentVersionId ? { id: dream.currentVersionId } : { isCurrent: true })
+            },
+            orderBy: { versionNumber: 'desc' },
+            select: { type: true }
+        });
+        result.currentVersionType = currentVersion?.type || 'original';
 
         if (dream.analysis && dream.analysis.status === 'completed') {
             result.analysis = {
@@ -307,89 +350,74 @@ export class DreamService {
         if (!dream) {
             throw new NotFoundException('梦境不存在');
         }
-
         if (dream.userId !== userId) {
             throw new ForbiddenException('无权编辑该梦境');
         }
-
         if (dream.status === 'deleted') {
             throw new NotFoundException('梦境已删除');
         }
 
         const trimmedContent = dto.content.trim();
         const wordCount = trimmedContent.length;
-
-        // 无意义内容检测
-        this.validateContentMeaningful(trimmedContent);
-
-        // 内容安全检测
-        await this.checkContentSecurity(trimmedContent, userId);
-
-        // 更新梦境内容
-        const updatedDream = await this.prisma.dream.update({
-            where: { id: dreamId },
-            data: {
-                content: trimmedContent,
-                wordCount,
-                updatedAt: new Date()
-            }
-        });
-
-        // 创建编辑版本记录
-        const latestVersion = await this.prisma.dreamVersion.findFirst({
-            where: { dreamId },
-            orderBy: { versionNumber: 'desc' }
-        });
-
-        await this.prisma.dreamVersion.create({
-            data: {
-                dreamId,
-                userId,
-                type: 'edited',
-                content: trimmedContent,
-                versionNumber: (latestVersion?.versionNumber || 0) + 1,
-                isCurrent: true
-            }
-        });
-
-        // 将之前的版本设为非当前
-        if (latestVersion) {
-            await this.prisma.dreamVersion.update({
-                where: { id: latestVersion.id },
-                data: { isCurrent: false }
-            });
+        if (wordCount < 25 || wordCount > 1000) {
+            throw new BadRequestException({ code: 20001, message: '梦境内容长度必须为25-1000字' });
         }
 
-        // 重新解析相关
-        let pointsConsumed = 0;
-        let remainingPoints = 0;
+        this.validateContentMeaningful(trimmedContent);
+        await this.checkContentSecurity(trimmedContent, userId);
 
-        // 如果需要重新解析，检查积分并扣除
-        if (dto.reAnalyze && dream.analysis) {
-            const REANALYZE_COST = 50;
-
-            // 获取用户当前积分
-            const user = await this.prisma.user.findUnique({
-                where: { id: userId }
+        const REANALYZE_COST = 50;
+        const result = await this.prisma.$transaction(async (tx) => {
+            const editedAt = new Date(Math.max(Date.now(), dream.updatedAt.getTime() + 1));
+            const claimed = await tx.dream.updateMany({
+                where: {
+                    id: dreamId,
+                    userId,
+                    status: { not: 'deleted' },
+                    updatedAt: dream.updatedAt,
+                    currentVersionId: dream.currentVersionId
+                },
+                data: { updatedAt: editedAt }
             });
-
-            if (!user || user.luckyPoints < REANALYZE_COST) {
-                throw new BadRequestException({
-                    code: 30001,
-                    message: `积分不足，重新解析需要${REANALYZE_COST}积分`
-                });
+            if (claimed.count !== 1) {
+                throw new ConflictException('梦境已更新，请重新加载后再保存');
             }
 
-            remainingPoints = user.luckyPoints - REANALYZE_COST;
-            pointsConsumed = REANALYZE_COST;
+            const currentDream = await tx.dream.findUnique({
+                where: { id: dreamId },
+                include: { analysis: true }
+            });
 
-            // 使用事务：扣除积分、记录消耗、删除旧解析、删除旧任务
-            await this.prisma.$transaction([
-                this.prisma.user.update({
+            if (!currentDream || currentDream.userId !== userId || currentDream.status === 'deleted') {
+                throw new NotFoundException('梦境不存在或已删除');
+            }
+            if (currentDream.analysis?.status === 'processing') {
+                throw new ConflictException('梦境解析中，请等待完成后再编辑');
+            }
+
+            const shouldReAnalyze = dto.reAnalyze === true;
+            let pointsConsumed = 0;
+            let remainingPoints = 0;
+
+            if (shouldReAnalyze && currentDream.analysis) {
+                const charged = await tx.user.updateMany({
+                    where: { id: userId, luckyPoints: { gte: REANALYZE_COST } },
+                    data: { luckyPoints: { decrement: REANALYZE_COST } }
+                });
+                if (charged.count !== 1) {
+                    throw new BadRequestException({
+                        code: 30001,
+                        message: `积分不足，重新解析需要${REANALYZE_COST}积分`
+                    });
+                }
+
+                const chargedUser = await tx.user.findUnique({
                     where: { id: userId },
-                    data: { luckyPoints: remainingPoints }
-                }),
-                this.prisma.pointRecord.create({
+                    select: { luckyPoints: true }
+                });
+                pointsConsumed = REANALYZE_COST;
+                remainingPoints = chargedUser?.luckyPoints ?? 0;
+                await tx.pointRecord.create({
                     data: {
                         userId,
                         type: 'consume',
@@ -399,27 +427,63 @@ export class DreamService {
                         sourceId: dreamId,
                         description: `编辑后重新解析 -${REANALYZE_COST}`
                     }
-                }),
-                this.prisma.analysis.delete({
-                    where: { id: dream.analysis.id }
-                }),
-                this.prisma.task.deleteMany({
-                    where: { dreamId }
-                })
-            ]);
+                });
+                await tx.analysis.delete({ where: { id: currentDream.analysis.id } });
+                await tx.task.deleteMany({ where: { dreamId } });
+            }
 
-            // 标记状态为 pending
-            await this.prisma.dream.update({
-                where: { id: dreamId },
-                data: { status: 'pending' }
+            const latestVersion = await tx.dreamVersion.findFirst({
+                where: { dreamId },
+                orderBy: { versionNumber: 'desc' }
             });
-        }
+            let versionType = dto.versionType || 'edited';
+            if (versionType === 'original' && trimmedContent !== currentDream.originalContent) versionType = 'edited';
+            const originalVersion =
+                versionType === 'original'
+                    ? await tx.dreamVersion.findFirst({
+                          where: { dreamId, type: 'original', content: trimmedContent },
+                          orderBy: { versionNumber: 'asc' }
+                      })
+                    : null;
+            await tx.dreamVersion.updateMany({
+                where: { dreamId, isCurrent: true },
+                data: { isCurrent: false }
+            });
+            const currentVersion = originalVersion
+                ? await tx.dreamVersion.update({ where: { id: originalVersion.id }, data: { isCurrent: true } })
+                : await tx.dreamVersion.create({
+                      data: {
+                          dreamId,
+                          userId,
+                          type: versionType,
+                          content: trimmedContent,
+                          polishedFrom: versionType === 'polished' ? currentDream.currentVersionId : null,
+                          versionNumber: (latestVersion?.versionNumber || 0) + 1,
+                          isCurrent: true
+                      }
+                  });
+
+            const data: any = {
+                content: trimmedContent,
+                wordCount,
+                currentVersionId: currentVersion.id,
+                updatedAt: editedAt
+            };
+            if (dto.tags !== undefined) data.tags = dto.tags === null ? null : JSON.stringify(dto.tags);
+            if (dto.emotion !== undefined) data.emotion = dto.emotion;
+            if (dto.isPublic !== undefined) data.isPublic = dto.isPublic;
+            if (shouldReAnalyze) data.status = 'pending';
+
+            const updatedDream = await tx.dream.update({ where: { id: dreamId }, data });
+            return { updatedDream, pointsConsumed, remainingPoints, versionType };
+        });
 
         return {
-            ...this.formatDream(updatedDream),
+            ...this.formatDream(result.updatedDream),
+            currentVersionType: result.versionType,
             needReAnalyze: dto.reAnalyze || false,
-            pointsConsumed,
-            remainingPoints
+            pointsConsumed: result.pointsConsumed,
+            remainingPoints: result.remainingPoints
         };
     }
 
@@ -551,9 +615,13 @@ export class DreamService {
         return {
             id: dream.id,
             content: dream.content,
+            originalContent: dream.originalContent,
+            currentVersionId: dream.currentVersionId,
             tags: dream.tags ? JSON.parse(dream.tags) : [],
             emotion: dream.emotion,
             status: dream.status,
+            isPublic: dream.isPublic,
+            wordCount: dream.wordCount,
             createdAt: dream.createdAt.toISOString()
         };
     }
@@ -629,6 +697,9 @@ export class DreamService {
      */
     private async checkContentSecurity(content: string, userId: string): Promise<void> {
         if (!this.wechatService) {
+            if (process.env.NODE_ENV === 'production') {
+                throw new BadRequestException('内容安全检测不可用，请稍后重试');
+            }
             return; // WechatService 未注入时跳过检测
         }
 
@@ -639,6 +710,9 @@ export class DreamService {
         });
 
         if (!user?.openId) {
+            if (process.env.NODE_ENV === 'production') {
+                throw new BadRequestException('用户身份无效，请重新登录后提交');
+            }
             return; // 无 openId 时跳过检测（可能是测试账号）
         }
 

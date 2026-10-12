@@ -1,8 +1,10 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { RedisService } from '@/shared/cache/redis.service';
 import { WechatService } from '@/shared/wechat/wechat.service';
+import { isVipActive } from '@/common/utils/vip';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
@@ -47,7 +49,7 @@ export class UserService {
         const token = this.jwtService.sign(payload);
 
         // 4. 缓存用户信息
-        await this.redisService.setJson(`user:info:${user.id}`, user, 86400);
+        await this.redisService.setJson(`user:info:${user.id}`, this.formatUserInfo(user), 86400);
 
         return {
             token,
@@ -74,7 +76,7 @@ export class UserService {
         const token = this.jwtService.sign(payload);
 
         // 缓存用户信息
-        await this.redisService.setJson(`user:info:${user.id}`, user, 86400);
+        await this.redisService.setJson(`user:info:${user.id}`, this.formatUserInfo(user), 86400);
 
         return {
             token,
@@ -120,7 +122,7 @@ export class UserService {
         }
 
         // 更新缓存
-        await this.redisService.setJson(`user:info:${userId}`, user, 86400);
+        await this.redisService.setJson(`user:info:${userId}`, this.formatUserInfo(user), 86400);
 
         return this.formatUserInfo(user);
     }
@@ -202,7 +204,7 @@ export class UserService {
         });
 
         // 更新缓存
-        await this.redisService.setJson(`user:info:${userId}`, user, 86400);
+        await this.redisService.setJson(`user:info:${userId}`, this.formatUserInfo(user), 86400);
 
         return this.formatUserInfo(user);
     }
@@ -308,73 +310,60 @@ export class UserService {
     /**
      * 更新连续记梦天数
      */
-    async updateConsecutiveDays(userId: string): Promise<{ consecutiveDays: number; bonus: number } | null> {
-        const user = await this.prisma.user.findUnique({
-            where: { id: userId }
-        });
+    async updateConsecutiveDays(
+        userId: string,
+        transaction?: Prisma.TransactionClient
+    ): Promise<{ consecutiveDays: number; bonus: number } | null> {
+        if (!transaction) {
+            const result = await this.prisma.$transaction((tx) => this.updateConsecutiveDays(userId, tx));
+            await this.redisService.del(`user:info:${userId}`);
+            return result;
+        }
 
+        // 先锁定用户行，让同日并发记梦只发放一次连续奖励。
+        const counted = await transaction.user.updateMany({
+            where: { id: userId },
+            data: { totalDreams: { increment: 1 } }
+        });
+        if (counted.count !== 1) return null;
+
+        const user = await transaction.user.findUnique({ where: { id: userId } });
         if (!user) return null;
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-
         const lastDreamDate = user.lastDreamDate ? new Date(user.lastDreamDate) : null;
-
         let newConsecutiveDays = 1;
 
         if (lastDreamDate) {
             lastDreamDate.setHours(0, 0, 0, 0);
             const diffDays = Math.floor((today.getTime() - lastDreamDate.getTime()) / (1000 * 60 * 60 * 24));
-
-            if (diffDays === 0) {
-                // 今天已经记录过
-                return { consecutiveDays: user.consecutiveDays, bonus: 0 };
-            } else if (diffDays === 1) {
-                // 连续记录
-                newConsecutiveDays = user.consecutiveDays + 1;
-            }
-            // 超过1天，重置为1
+            if (diffDays === 0) return { consecutiveDays: user.consecutiveDays, bonus: 0 };
+            if (diffDays === 1) newConsecutiveDays = user.consecutiveDays + 1;
         }
 
-        await this.prisma.user.update({
+        const streakBonus = this.STREAK_REWARDS.find((reward) => newConsecutiveDays === reward.days)?.bonus || 0;
+        const updatedUser = await transaction.user.update({
             where: { id: userId },
             data: {
                 consecutiveDays: newConsecutiveDays,
                 lastDreamDate: today,
-                totalDreams: { increment: 1 }
+                luckyPoints: { increment: streakBonus }
             }
         });
 
-        // 检查是否达到连续打卡奖励节点
-        let streakBonus = 0;
-        const matchedReward = this.STREAK_REWARDS.find((r) => newConsecutiveDays === r.days);
-        if (matchedReward) {
-            streakBonus = matchedReward.bonus;
-            // 发放连续打卡奖励
-            const updatedUser = await this.prisma.user.findUnique({ where: { id: userId } });
-            if (updatedUser) {
-                const newBalance = updatedUser.luckyPoints + streakBonus;
-                await this.prisma.$transaction([
-                    this.prisma.user.update({
-                        where: { id: userId },
-                        data: { luckyPoints: newBalance }
-                    }),
-                    this.prisma.pointRecord.create({
-                        data: {
-                            userId,
-                            type: 'earn',
-                            amount: streakBonus,
-                            balance: newBalance,
-                            source: 'streak_bonus',
-                            description: `连续打卡${newConsecutiveDays}天奖励 +${streakBonus}`
-                        }
-                    })
-                ]);
-            }
+        if (streakBonus > 0) {
+            await transaction.pointRecord.create({
+                data: {
+                    userId,
+                    type: 'earn',
+                    amount: streakBonus,
+                    balance: updatedUser.luckyPoints,
+                    source: 'streak_bonus',
+                    description: `连续打卡${newConsecutiveDays}天奖励 +${streakBonus}`
+                }
+            });
         }
-
-        // 更新缓存
-        await this.redisService.del(`user:info:${userId}`);
 
         return { consecutiveDays: newConsecutiveDays, bonus: streakBonus };
     }
@@ -383,16 +372,18 @@ export class UserService {
      * 格式化用户信息
      */
     private formatUserInfo(user: any) {
+        const vipActive = isVipActive(user);
         return {
             id: user.id,
             nickname: user.nickname,
             avatar: user.avatar,
-            isVip: user.isVip,
-            vipExpireAt: user.vipExpireAt
-                ? typeof user.vipExpireAt === 'string'
-                    ? user.vipExpireAt
-                    : user.vipExpireAt.toISOString()
-                : null,
+            isVip: vipActive,
+            vipExpireAt:
+                vipActive && user.vipExpireAt
+                    ? typeof user.vipExpireAt === 'string'
+                        ? user.vipExpireAt
+                        : user.vipExpireAt.toISOString()
+                    : null,
             luckyPoints: user.luckyPoints,
             consecutiveDays: user.consecutiveDays,
             totalDreams: user.totalDreams,

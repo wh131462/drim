@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { SwitchVersionDto } from './dto/switch-version.dto';
 
@@ -15,7 +15,7 @@ export class VersionService {
             where: { id: dreamId }
         });
 
-        if (!dream) {
+        if (!dream || dream.status === 'deleted') {
             throw new NotFoundException({
                 code: 40401,
                 message: '梦境不存在'
@@ -48,7 +48,8 @@ export class VersionService {
         const stats = {
             total: versions.length,
             original: versions.filter((v) => v.type === 'original').length,
-            polished: versions.filter((v) => v.type === 'polished').length
+            polished: versions.filter((v) => v.type === 'polished').length,
+            edited: versions.filter((v) => v.type === 'edited').length
         };
 
         return {
@@ -78,7 +79,7 @@ export class VersionService {
             where: { id: dreamId }
         });
 
-        if (!dream) {
+        if (!dream || dream.status === 'deleted') {
             throw new NotFoundException({
                 code: 40401,
                 message: '梦境不存在'
@@ -107,20 +108,27 @@ export class VersionService {
             });
         }
 
-        // 如果已经是当前版本，直接返回
-        if (targetVersion.isCurrent) {
-            return {
-                message: '该版本已是当前版本',
-                currentVersion: {
-                    versionId: targetVersion.id,
-                    versionNumber: targetVersion.versionNumber,
-                    type: targetVersion.type
-                }
-            };
-        }
-
         // 使用事务切换版本
-        await this.prisma.$transaction(async (tx) => {
+        const switched = await this.prisma.$transaction(async (tx) => {
+            const locked = await tx.dream.updateMany({
+                where: {
+                    id: dreamId,
+                    userId,
+                    status: { not: 'deleted' },
+                    updatedAt: dream.updatedAt,
+                    currentVersionId: dream.currentVersionId
+                },
+                data: { updatedAt: new Date(Math.max(Date.now(), dream.updatedAt.getTime() + 1)) }
+            });
+            if (locked.count !== 1) {
+                throw new ConflictException('梦境已更新，请重新加载后再切换');
+            }
+            const currentDream = await tx.dream.findUnique({ where: { id: dreamId }, include: { analysis: true } });
+            if (currentDream?.analysis?.status === 'processing') {
+                throw new ConflictException('梦境解析中，请等待完成后再切换版本');
+            }
+            if (currentDream?.currentVersionId === versionId) return false;
+
             // 1. 将所有版本的 isCurrent 设为 false
             await tx.dreamVersion.updateMany({
                 where: { dreamId },
@@ -138,13 +146,15 @@ export class VersionService {
                 where: { id: dreamId },
                 data: {
                     content: targetVersion.content,
+                    wordCount: targetVersion.content.trim().length,
                     currentVersionId: versionId
                 }
             });
+            return true;
         });
 
         return {
-            message: '版本切换成功',
+            message: switched ? '版本切换成功' : '该版本已是当前版本',
             currentVersion: {
                 versionId: targetVersion.id,
                 versionNumber: targetVersion.versionNumber,
@@ -163,13 +173,14 @@ export class VersionService {
             include: {
                 dream: {
                     select: {
-                        userId: true
+                        userId: true,
+                        status: true
                     }
                 }
             }
         });
 
-        if (!version) {
+        if (!version || version.dream.status === 'deleted') {
             throw new NotFoundException({
                 code: 40402,
                 message: '版本不存在'

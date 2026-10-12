@@ -1,10 +1,15 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import {
+    Injectable,
+    BadRequestException,
+    NotFoundException,
+    ForbiddenException,
+    ConflictException,
+    Logger
+} from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { AiService } from '@/shared/ai/ai.service';
 import { PromptService } from './prompt.service';
 import { AnalysisSSEService } from './analysis-sse.service';
-import { DreamService } from '../dream/dream.service';
-import { TaskService } from '../task/task.service';
 import { RequestAnalysisDto } from './dto/request-analysis.dto';
 
 @Injectable()
@@ -15,62 +20,62 @@ export class AnalysisService {
         private readonly prisma: PrismaService,
         private readonly aiService: AiService,
         private readonly promptService: PromptService,
-        private readonly sseService: AnalysisSSEService,
-        private readonly dreamService: DreamService,
-        private readonly taskService: TaskService
+        private readonly sseService: AnalysisSSEService
     ) {}
 
     /**
      * 请求解析
      */
     async requestAnalysis(userId: string, dto: RequestAnalysisDto) {
-        const dream = await this.dreamService.getDreamById(dto.dreamId);
+        const result = await this.prisma.$transaction(async (tx) => {
+            const locked = await tx.dream.updateMany({
+                where: { id: dto.dreamId, userId, status: { not: 'deleted' } },
+                data: { updatedAt: new Date() }
+            });
+            if (locked.count !== 1) {
+                const dream = await tx.dream.findUnique({ where: { id: dto.dreamId } });
+                if (!dream || dream.status === 'deleted') throw new NotFoundException('梦境不存在');
+                throw new ForbiddenException('无权访问该梦境');
+            }
 
-        if (!dream) {
-            throw new NotFoundException('梦境不存在');
-        }
+            const dream = await tx.dream.findUnique({ where: { id: dto.dreamId } });
+            if (!dream) throw new NotFoundException('梦境不存在');
+            const existingAnalysis = await tx.analysis.findUnique({ where: { dreamId: dto.dreamId } });
 
-        if (dream.userId !== userId) {
-            throw new ForbiddenException('无权访问该梦境');
-        }
+            if (existingAnalysis?.status === 'completed' || existingAnalysis?.status === 'processing') {
+                return { dream, analysis: existingAnalysis, shouldProcess: false };
+            }
 
-        // 检查是否已有解析
-        const existingAnalysis = await this.prisma.analysis.findUnique({
-            where: { dreamId: dto.dreamId }
+            const analysis = existingAnalysis
+                ? await tx.analysis.update({
+                      where: { id: existingAnalysis.id },
+                      data: {
+                          status: 'processing',
+                          theme: null,
+                          interpretation: null,
+                          fortuneScore: null,
+                          fortuneTips: null
+                      }
+                  })
+                : await tx.analysis.create({
+                      data: { dreamId: dto.dreamId, userId, status: 'processing' }
+                  });
+            if (existingAnalysis?.status === 'failed') {
+                await tx.task.deleteMany({ where: { dreamId: dto.dreamId } });
+            }
+            await tx.dream.update({ where: { id: dto.dreamId }, data: { status: 'pending' } });
+            return { dream, analysis, shouldProcess: true };
         });
 
-        if (existingAnalysis && existingAnalysis.status === 'completed') {
-            return {
-                analysisId: existingAnalysis.id,
-                status: existingAnalysis.status
-            };
-        }
-
-        // 创建或更新解析记录
-        let analysis;
-        if (existingAnalysis) {
-            analysis = await this.prisma.analysis.update({
-                where: { id: existingAnalysis.id },
-                data: { status: 'processing' }
-            });
-        } else {
-            analysis = await this.prisma.analysis.create({
-                data: {
-                    dreamId: dto.dreamId,
-                    userId,
-                    status: 'processing'
-                }
+        if (result.shouldProcess) {
+            void this.processAnalysis(result.analysis.id, result.dream).catch((error) => {
+                this.logger.error(`Analysis failed for ${result.analysis.id}:`, error);
             });
         }
-
-        // 异步执行解析
-        this.processAnalysis(analysis.id, dream).catch((error) => {
-            this.logger.error(`Analysis failed for ${analysis.id}:`, error);
-        });
 
         return {
-            analysisId: analysis.id,
-            status: 'processing'
+            analysisId: result.analysis.id,
+            status: result.analysis.status
         };
     }
 
@@ -125,24 +130,83 @@ export class AnalysisService {
                 scoreReason: parsed.scoreReason || '综合梦境意象分析得出'
             };
 
-            const analysis = await this.prisma.analysis.update({
-                where: { id: analysisId },
-                data: {
-                    status: 'completed',
-                    theme: parsed.theme,
-                    interpretation: parsed.interpretation,
-                    fortuneScore: parsed.fortuneScore,
-                    fortuneTips: JSON.stringify(fortuneTipsWithReason),
-                    aiModel: 'qwen-turbo',
-                    latency
+            const analysis = await this.prisma.$transaction(async (tx) => {
+                // 与请求和编辑保持相同锁顺序，避免解析完成时覆盖软删除。
+                const lockedDream = await tx.dream.updateMany({
+                    where: { id: dreamId, userId: dream.userId, status: { not: 'deleted' } },
+                    data: { updatedAt: new Date() }
+                });
+                if (lockedDream.count !== 1) {
+                    throw new ConflictException('梦境不存在或已删除');
                 }
+
+                const claimed = await tx.analysis.updateMany({
+                    where: { id: analysisId, status: 'processing' },
+                    data: { updatedAt: new Date() }
+                });
+                if (claimed.count !== 1) {
+                    throw new ConflictException('解析任务已结束，请刷新后重试');
+                }
+
+                const current = await tx.analysis.findUnique({
+                    where: { id: analysisId },
+                    select: { id: true, userId: true, status: true, dreamId: true }
+                });
+                if (!current || current.status !== 'processing') {
+                    throw new ConflictException('解析任务已结束，请刷新后重试');
+                }
+
+                const currentDream = await tx.dream.findUnique({
+                    where: { id: current.dreamId },
+                    select: {
+                        status: true,
+                        content: true,
+                        originalContent: true,
+                        tags: true,
+                        emotion: true,
+                        currentVersionId: true
+                    }
+                });
+                if (
+                    !currentDream ||
+                    currentDream.status === 'deleted' ||
+                    currentDream.content !== dream.content ||
+                    currentDream.originalContent !== dream.originalContent ||
+                    currentDream.tags !== dream.tags ||
+                    currentDream.emotion !== dream.emotion ||
+                    currentDream.currentVersionId !== dream.currentVersionId
+                ) {
+                    throw new ConflictException('梦境内容已变化，请重新发起解析');
+                }
+
+                await tx.task.create({
+                    data: {
+                        userId: current.userId,
+                        dreamId: current.dreamId,
+                        type: parsed.task.type,
+                        content: parsed.task.content,
+                        rewardPoints: 10,
+                        expireAt: (() => {
+                            const expireAt = new Date();
+                            expireAt.setHours(23, 59, 59, 999);
+                            return expireAt;
+                        })()
+                    }
+                });
+                await tx.dream.update({ where: { id: current.dreamId }, data: { status: 'analyzed' } });
+                return tx.analysis.update({
+                    where: { id: analysisId },
+                    data: {
+                        status: 'completed',
+                        theme: parsed.theme,
+                        interpretation: parsed.interpretation,
+                        fortuneScore: parsed.fortuneScore,
+                        fortuneTips: JSON.stringify(fortuneTipsWithReason),
+                        aiModel: 'qwen-turbo',
+                        latency
+                    }
+                });
             });
-
-            // 创建改运任务
-            await this.taskService.createFromAnalysis(analysis.userId, dream.id, parsed.task);
-
-            // 更新梦境状态
-            await this.dreamService.updateStatus(dream.id, 'analyzed');
 
             // 获取完整结果并发送完成事件
             const fullResult = await this.getById(analysis.userId, analysisId);
@@ -151,13 +215,15 @@ export class AnalysisService {
             this.logger.error(`Analysis processing failed:`, error);
 
             // 标记失败
-            await this.prisma.analysis.update({
-                where: { id: analysisId },
+            const failed = await this.prisma.analysis.updateMany({
+                where: { id: analysisId, status: 'processing' },
                 data: { status: 'failed' }
             });
 
             // 发送错误事件
-            this.sseService.emitError(dreamId, '智能解析失败，请重试');
+            if (failed.count === 1) {
+                this.sseService.emitError(dreamId, '智能解析失败，请重试');
+            }
         }
     }
 
@@ -208,63 +274,59 @@ export class AnalysisService {
      */
     async retry(userId: string, dreamId: string) {
         const COST_POINTS = 50;
-
-        // 检查用户积分
-        const user = await this.prisma.user.findUnique({
-            where: { id: userId }
-        });
-
-        if (!user || user.luckyPoints < COST_POINTS) {
-            throw new BadRequestException({
-                code: 30001,
-                message: `积分不足，需要${COST_POINTS}积分`
+        const result = await this.prisma.$transaction(async (tx) => {
+            const locked = await tx.dream.updateMany({
+                where: { id: dreamId, userId, status: { not: 'deleted' } },
+                data: { updatedAt: new Date(), status: 'pending' }
             });
-        }
+            if (locked.count !== 1) {
+                const dream = await tx.dream.findUnique({ where: { id: dreamId } });
+                if (!dream || dream.status === 'deleted') throw new NotFoundException('梦境不存在');
+                throw new ForbiddenException('无权访问该梦境');
+            }
 
-        const dream = await this.dreamService.getDreamById(dreamId);
+            const dream = await tx.dream.findUnique({ where: { id: dreamId } });
+            if (!dream) throw new NotFoundException('梦境不存在');
+            const existingAnalysis = await tx.analysis.findUnique({ where: { dreamId } });
+            if (existingAnalysis?.status === 'processing') {
+                throw new ConflictException('解析正在进行中，请勿重复操作');
+            }
 
-        if (!dream || dream.userId !== userId) {
-            throw new NotFoundException('梦境不存在');
-        }
+            const charged = await tx.user.updateMany({
+                where: { id: userId, luckyPoints: { gte: COST_POINTS } },
+                data: { luckyPoints: { decrement: COST_POINTS } }
+            });
+            if (charged.count !== 1) {
+                throw new BadRequestException({ code: 30001, message: `积分不足，需要${COST_POINTS}积分` });
+            }
 
-        const newBalance = user.luckyPoints - COST_POINTS;
-
-        // 使用事务确保数据一致性
-        await this.prisma.$transaction([
-            // 扣除积分
-            this.prisma.user.update({
-                where: { id: userId },
-                data: { luckyPoints: newBalance }
-            }),
-            // 记录积分消耗
-            this.prisma.pointRecord.create({
+            const user = await tx.user.findUnique({ where: { id: userId }, select: { luckyPoints: true } });
+            const remainingPoints = user?.luckyPoints ?? 0;
+            await tx.pointRecord.create({
                 data: {
                     userId,
                     type: 'consume',
                     amount: COST_POINTS,
-                    balance: newBalance,
+                    balance: remainingPoints,
                     source: 'dream_reanalyze',
                     sourceId: dreamId,
                     description: `重新解析梦境 -${COST_POINTS}`
                 }
-            }),
-            // 删除旧解析
-            this.prisma.analysis.deleteMany({
-                where: { dreamId }
-            }),
-            // 删除旧任务
-            this.prisma.task.deleteMany({
-                where: { dreamId }
-            })
-        ]);
+            });
+            await tx.analysis.deleteMany({ where: { dreamId } });
+            await tx.task.deleteMany({ where: { dreamId } });
+            const analysis = await tx.analysis.create({ data: { dreamId, userId, status: 'processing' } });
+            return { dream, analysis, remainingPoints };
+        });
 
-        // 重新请求解析
-        const result = await this.requestAnalysis(userId, { dreamId });
-
+        void this.processAnalysis(result.analysis.id, result.dream).catch((error) => {
+            this.logger.error(`Analysis failed for ${result.analysis.id}:`, error);
+        });
         return {
-            ...result,
+            analysisId: result.analysis.id,
+            status: result.analysis.status,
             pointsConsumed: COST_POINTS,
-            remainingPoints: newBalance
+            remainingPoints: result.remainingPoints
         };
     }
 
