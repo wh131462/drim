@@ -7,6 +7,7 @@ import type {
     Dream,
     DreamDetail,
     DreamInput,
+    DreamUpdate,
     DreamListParams,
     DreamListResponse,
     CalendarResponse,
@@ -47,7 +48,7 @@ export const dreamApi = {
      */
     update(
         dreamId: string,
-        data: { content: string; reAnalyze?: boolean }
+        data: DreamUpdate
     ): Promise<Dream & { needReAnalyze: boolean; pointsConsumed: number; remainingPoints: number }> {
         return put<Dream & { needReAnalyze: boolean; pointsConsumed: number; remainingPoints: number }>(
             `/dream/${dreamId}`,

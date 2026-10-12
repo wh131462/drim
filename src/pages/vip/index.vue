@@ -177,6 +177,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { onShow } from '@dcloudio/uni-app';
 import NavBar from '@/components/NavBar/index.vue';
 import { useUserStore } from '@/stores/modules/user';
 import { privilegeApi } from '@/api/modules/vip';
@@ -188,6 +189,7 @@ const userStore = useUserStore();
 
 // 加载状态
 const loading = ref(false);
+const exchanging = ref(false);
 
 // 导航栏高度
 const navBarHeight = ref(0);
@@ -196,7 +198,7 @@ const navBarHeight = ref(0);
 const userPoints = computed(() => userStore.userInfo?.luckyPoints || 0);
 
 // 特权状态
-const hasPrivilege = computed(() => userStore.userInfo?.isVip || false);
+const hasPrivilege = computed(() => userStore.isVip);
 const privilegeExpireText = computed(() => {
     if (!userStore.userInfo?.vipExpireAt) return '';
     const expireDate = new Date(userStore.userInfo.vipExpireAt);
@@ -254,12 +256,13 @@ const currentExchange = computed(() => {
 
 // 是否可以兑换
 const canExchange = computed(() => {
-    if (!currentExchange.value) return false;
+    if (exchanging.value || !currentExchange.value) return false;
     return userPoints.value >= currentExchange.value.points;
 });
 
 // 兑换按钮文字
 const exchangeButtonText = computed(() => {
+    if (exchanging.value) return '兑换处理中...';
     if (!currentExchange.value) return '请选择权益';
     if (userPoints.value < currentExchange.value.points) {
         return `积分不足（还差 ${currentExchange.value.points - userPoints.value} 积分）`;
@@ -313,6 +316,7 @@ function selectExchange(item: (typeof exchangeItems.value)[0]) {
 }
 
 async function handleExchange() {
+    if (exchanging.value) return;
     if (!canExchange.value) {
         uni.showToast({ title: '积分不足，快去记梦吧！', icon: 'none' });
         return;
@@ -321,6 +325,7 @@ async function handleExchange() {
     const item = currentExchange.value;
     if (!item) return;
 
+    exchanging.value = true;
     uni.showModal({
         title: '确认兑换',
         content: `确定消耗 ${item.points} 积分兑换「${item.name}」(${item.duration})？`,
@@ -328,10 +333,21 @@ async function handleExchange() {
             if (res.confirm) {
                 uni.showLoading({ title: '兑换中...' });
                 try {
-                    await privilegeApi.exchange(item.id);
+                    const exchange = await privilegeApi.exchange(item.id);
 
-                    // 更新用户状态
-                    await userStore.fetchUserInfo();
+                    if (userStore.userInfo) {
+                        try {
+                            userStore.setUserInfo({
+                                ...userStore.userInfo,
+                                luckyPoints: exchange.remainingPoints,
+                                isVip: true,
+                                vipExpireAt: exchange.privilegeExpireAt
+                            });
+                        } catch (error) {
+                            console.warn('兑换后权益缓存更新失败:', error);
+                        }
+                    }
+                    void userStore.fetchUserInfo().catch((error) => console.warn('兑换后用户信息刷新失败:', error));
 
                     uni.hideLoading();
                     uni.showToast({ title: '兑换成功！', icon: 'success' });
@@ -341,8 +357,15 @@ async function handleExchange() {
                 } catch (error: any) {
                     uni.hideLoading();
                     uni.showToast({ title: error.message || '兑换失败', icon: 'none' });
+                } finally {
+                    exchanging.value = false;
                 }
+            } else {
+                exchanging.value = false;
             }
+        },
+        fail: () => {
+            exchanging.value = false;
         }
     });
 }
@@ -405,6 +428,11 @@ onMounted(() => {
     // 加载权益信息和广告配额
     loadPrivilegeInfo();
     loadAdQuota();
+});
+
+onShow(() => {
+    userStore.refreshVipStatus();
+    void userStore.ensureUserInfo().catch((error) => console.warn('权益页用户信息刷新失败:', error));
 });
 </script>
 

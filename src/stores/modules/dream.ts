@@ -118,7 +118,7 @@ export const useDreamStore = defineStore('dream', {
 
             // 有数据但过期，静默后台刷新
             if (isExpired) {
-                this.fetchList(true);
+                void this.fetchList(true).catch((error) => console.warn('后台刷新梦境列表失败:', error));
             }
         },
 
@@ -129,6 +129,8 @@ export const useDreamStore = defineStore('dream', {
             const response = await dreamApi.create(input);
             this.list.unshift(response);
             this.current = response;
+            this.calendarKey = '';
+            this.listFetchedAt = 0;
             return response;
         },
 

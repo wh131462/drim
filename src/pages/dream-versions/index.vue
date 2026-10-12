@@ -30,7 +30,7 @@
                 </view>
                 <view class="stat-box">
                     <text class="stat-value">{{ polishedVersions }}</text>
-                    <text class="stat-label">润色版本</text>
+                    <text class="stat-label">润色 / 编辑</text>
                 </view>
             </view>
         </view>
@@ -52,7 +52,8 @@
                     :class="{
                         current: version.isCurrent,
                         original: version.type === 'original',
-                        polished: version.type === 'polished'
+                        polished: version.type === 'polished',
+                        edited: version.type === 'edited'
                     }"
                 >
                     <image
@@ -85,7 +86,7 @@
                         <view class="version-type">
                             <view
                                 class="type-badge"
-                                :class="{ original: version.type === 'original' }"
+                                :class="{ original: version.type === 'original', edited: version.type === 'edited' }"
                             >
                                 <template v-if="version.type === 'polished'">
                                     <image
@@ -101,7 +102,7 @@
                                         src="/static/icons/edit.svg"
                                         mode="aspectFit"
                                     />
-                                    <text>原始版本</text>
+                                    <text>{{ version.type === 'edited' ? '编辑版本' : '原始版本' }}</text>
                                 </template>
                             </view>
                             <image
@@ -216,23 +217,27 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
-import { useUserStore } from '@/stores';
+import { useDreamStore, useUserStore } from '@/stores';
 import { versionApi } from '@/api';
 import type { DreamVersion } from '@/api/modules/version';
 import NavBar from '@/components/NavBar/index.vue';
 
 const userStore = useUserStore();
+const dreamStore = useDreamStore();
 
 // 数据
 const versions = ref<DreamVersion[]>([]);
 const dreamId = ref('');
 const isReady = ref(false);
 const navBarHeight = ref(0);
+const switching = ref(false);
 
 // 计算属性
 const totalVersions = computed(() => versions.value.length);
 const originalVersions = computed(() => versions.value.filter((v) => v.type === 'original').length);
-const polishedVersions = computed(() => versions.value.filter((v) => v.type === 'polished').length);
+const polishedVersions = computed(
+    () => versions.value.filter((v) => v.type === 'polished' || v.type === 'edited').length
+);
 
 // 方法
 async function loadVersions() {
@@ -254,7 +259,9 @@ async function loadVersions() {
 }
 
 function editVersion(version: DreamVersion) {
+    if (switching.value) return;
     // 将版本信息存储到本地，供记录页面使用
+    uni.removeStorageSync('editingDream');
     uni.setStorageSync('editingVersion', {
         versionId: version.versionId,
         dreamId: version.dreamId,
@@ -274,6 +281,7 @@ function editVersion(version: DreamVersion) {
             });
         },
         fail: (err) => {
+            uni.removeStorageSync('editingVersion');
             console.error('跳转失败:', err);
             uni.showToast({
                 title: '跳转失败，请重试',
@@ -293,8 +301,10 @@ function copyVersion(version: DreamVersion) {
 }
 
 async function switchVersion(version: DreamVersion) {
+    if (switching.value) return;
+    switching.value = true;
     try {
-        uni.showLoading({ title: '切换中...' });
+        uni.showLoading({ title: '切换中...', mask: true });
 
         await versionApi.switchVersion(dreamId.value, version.versionId);
 
@@ -302,6 +312,7 @@ async function switchVersion(version: DreamVersion) {
         versions.value.forEach((v) => {
             v.isCurrent = v.versionId === version.versionId;
         });
+        dreamStore.listFetchedAt = 0;
 
         uni.hideLoading();
         uni.showToast({ title: '已切换到该版本', icon: 'success' });
@@ -312,6 +323,8 @@ async function switchVersion(version: DreamVersion) {
             title: error.message || '切换失败',
             icon: 'none'
         });
+    } finally {
+        switching.value = false;
     }
 }
 
@@ -492,6 +505,16 @@ onMounted(() => {
                 brightness(93%) contrast(100%);
         }
     }
+
+    &.edited {
+        background: #fff7ed;
+        border: 3rpx solid #f59e0b;
+
+        .dot-icon {
+            filter: brightness(0) saturate(100%) invert(63%) sepia(87%) saturate(1186%) hue-rotate(359deg)
+                brightness(101%) contrast(95%);
+        }
+    }
 }
 
 .dot-icon {
@@ -559,6 +582,11 @@ onMounted(() => {
             filter: brightness(0) saturate(100%) invert(56%) sepia(59%) saturate(482%) hue-rotate(111deg)
                 brightness(94%) contrast(94%);
         }
+    }
+
+    &.edited {
+        background: #fff7ed;
+        color: #d97706;
     }
 }
 
@@ -804,6 +832,11 @@ onMounted(() => {
                 filter: brightness(0) saturate(100%) invert(63%) sepia(74%) saturate(1143%) hue-rotate(216deg)
                     brightness(102%) contrast(101%);
             }
+        }
+
+        &.edited {
+            background: rgba(245, 158, 11, 0.15);
+            border-color: #f59e0b;
         }
     }
 

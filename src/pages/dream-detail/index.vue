@@ -43,7 +43,13 @@
                                     src="/static/icons/star.svg"
                                     mode="aspectFit"
                                 />
-                                <text>{{ currentVersionType === 'polished' ? '润色版 v2' : '原始版本' }}</text>
+                                <text>{{
+                                    currentVersionType === 'polished'
+                                        ? '润色版本'
+                                        : currentVersionType === 'edited'
+                                          ? '编辑版本'
+                                          : '原始版本'
+                                }}</text>
                             </view>
 
                             <!-- 隐私徽章 -->
@@ -355,7 +361,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { onLoad, onShareAppMessage } from '@dcloudio/uni-app';
+import { onLoad, onShow, onShareAppMessage } from '@dcloudio/uni-app';
 import { useDreamStore, useUserStore } from '@/stores';
 import { dreamApi, exploreApi } from '@/api';
 import { showSimplePointsReward } from '@/utils/feedback';
@@ -366,7 +372,7 @@ const userStore = useUserStore();
 const loading = ref(true);
 const dream = ref<any>(null);
 const navBarHeight = ref(0);
-const currentVersionType = ref('polished'); // 'original' | 'polished'
+const currentVersionType = ref('original');
 const dreamId = ref('');
 const source = ref('own'); // 来源：random/filter/own
 const avatarError = ref(false);
@@ -491,9 +497,7 @@ async function loadDreamDetail() {
             dream.value = await dreamApi.getById(dreamId.value);
         }
 
-        // 判断当前版本类型（如果有版本信息）
-        // 这里简化处理，默认为润色版
-        currentVersionType.value = dream.value.currentVersionId ? 'polished' : 'original';
+        currentVersionType.value = dream.value.currentVersionType || 'original';
 
         loading.value = false;
 
@@ -563,13 +567,17 @@ function handleDeleteFromSheet() {
 
 // 编辑相关方法 - 跳转到记梦页面进行编辑
 function handleEditFromSheet() {
+    if (!dream.value || source.value !== 'own') return;
     showActionSheet.value = false;
     setTimeout(() => {
         // 将当前梦境信息存入 storage，供记梦页面读取
         // 包含 isEditMode 标志，因为 switchTab 不支持传参
+        uni.removeStorageSync('editingVersion');
         uni.setStorageSync('editingDream', {
             dreamId: dreamId.value,
             content: dream.value?.content || '',
+            originalContent: dream.value?.originalContent,
+            currentVersionType: dream.value?.currentVersionType,
             tags: dream.value?.tags || [],
             emotion: dream.value?.emotion || null,
             isPublic: dream.value?.isPublic || false,
@@ -578,7 +586,11 @@ function handleEditFromSheet() {
         });
         // 记梦页是 tabbar 页面，需要使用 switchTab
         uni.switchTab({
-            url: '/pages/record/index'
+            url: '/pages/record/index',
+            fail: () => {
+                uni.removeStorageSync('editingDream');
+                uni.showToast({ title: '跳转失败，请重试', icon: 'none' });
+            }
         });
     }, 200);
 }
@@ -722,9 +734,13 @@ onLoad((options) => {
     }
 });
 
+onShow(() => {
+    if (source.value === 'own' && dream.value && !loading.value) void loadDreamDetail();
+});
+
 onMounted(async () => {
     const systemInfo = uni.getSystemInfoSync();
-    navBarHeight.value = systemInfo.statusBarHeight + 44;
+    navBarHeight.value = (systemInfo.statusBarHeight || 0) + 44;
 
     // 如果参数有效，加载数据
     if (dreamId.value) {

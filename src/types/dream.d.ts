@@ -14,13 +14,24 @@ export interface Dream {
     analysisId?: string;
     fortuneScore?: number | null;
     createdAt: string;
+    isPublic?: boolean;
+    originalContent?: string;
+    currentVersionId?: string | null;
+    currentVersionType?: 'original' | 'polished' | 'edited';
 }
 
 export interface DreamInput {
     content: string;
+    originalContent?: string;
+    versionType?: 'original' | 'polished' | 'edited';
     tags?: string[];
     emotion?: Emotion;
     isPublic?: boolean;
+}
+
+export interface DreamUpdate extends Omit<DreamInput, 'originalContent' | 'emotion'> {
+    emotion?: Emotion | null;
+    reAnalyze?: boolean;
 }
 
 export interface DreamRewards {
@@ -70,7 +81,21 @@ export interface CalendarResponse {
     monthTotal: number;
 }
 
-export type Emotion = 'happy' | 'fear' | 'confused' | 'sad';
+export type Emotion =
+    | 'happy'
+    | 'sad'
+    | 'angry'
+    | 'fear'
+    | 'surprise'
+    | 'disgust'
+    | 'calm'
+    | 'anxious'
+    | 'confused'
+    | 'excited'
+    | 'lonely'
+    | 'shame'
+    | 'love'
+    | 'bored';
 
 export type DreamStatus = 'pending' | 'analyzed' | 'deleted';
 

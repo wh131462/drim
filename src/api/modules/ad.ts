@@ -22,7 +22,7 @@ export const adApi = {
      * 上报广告事件
      */
     report(params: AdReportParams): Promise<void> {
-        return post<void>('/ad/report', params as Record<string, unknown>);
+        return post<void>('/ad/report', params);
     },
 
     /**

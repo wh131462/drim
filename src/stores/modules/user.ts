@@ -5,6 +5,7 @@
 import { defineStore } from 'pinia';
 import { userApi } from '@/api';
 import type { User, UserStats } from '@/types/user';
+import { isVipActive, normalizeVipStatus } from '@/utils/vip';
 
 // 用户信息缓存有效期
 const USER_INFO_TTL = 10 * 60 * 1000; // 10分钟
@@ -20,11 +21,24 @@ interface UserState {
 
 // 登录锁，防止并发登录
 let loginPromise: Promise<boolean> | null = null;
+let vipExpiryTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleVipExpiry(onExpire: () => void, user: User | null): void {
+    if (vipExpiryTimer) clearTimeout(vipExpiryTimer);
+    vipExpiryTimer = null;
+    if (!user || !isVipActive(user)) return;
+
+    const delay = Math.min(Math.max(Date.parse(user.vipExpireAt!) - Date.now(), 1), 2_147_483_647);
+    vipExpiryTimer = setTimeout(() => {
+        if (isVipActive(user)) scheduleVipExpiry(onExpire, user);
+        else onExpire();
+    }, delay);
+}
 
 export const useUserStore = defineStore('user', {
     state: (): UserState => ({
         token: uni.getStorageSync('token') || '',
-        userInfo: uni.getStorageSync('userInfo') || null,
+        userInfo: normalizeVipStatus((uni.getStorageSync('userInfo') as User) || null),
         userStats: null,
         isLoggedIn: false,
         darkMode: uni.getStorageSync('darkMode') || false,
@@ -32,7 +46,7 @@ export const useUserStore = defineStore('user', {
     }),
 
     getters: {
-        isVip: (state): boolean => state.userInfo?.isVip ?? false,
+        isVip: (state): boolean => isVipActive(state.userInfo),
         luckyPoints: (state): number => state.userInfo?.luckyPoints ?? 0,
         consecutiveDays: (state): number => state.userInfo?.consecutiveDays ?? 0,
         nickname: (state): string => state.userInfo?.nickname ?? '梦游者',
@@ -80,12 +94,14 @@ export const useUserStore = defineStore('user', {
 
                     // 保存登录状态
                     this.token = token;
-                    this.userInfo = userInfo;
+                    this.userInfo = normalizeVipStatus(userInfo);
                     this.isLoggedIn = true;
+                    this.infoFetchedAt = Date.now();
+                    scheduleVipExpiry(() => this.refreshVipStatus(), this.userInfo);
 
                     // 持久化存储
                     uni.setStorageSync('token', token);
-                    uni.setStorageSync('userInfo', userInfo);
+                    uni.setStorageSync('userInfo', this.userInfo);
 
                     // 返回是否需要完善资料
                     return isNewUser || !userInfo.nickname || !userInfo.avatar;
@@ -108,13 +124,14 @@ export const useUserStore = defineStore('user', {
             if (!this.token) return;
 
             try {
-                this.userInfo = await userApi.getUserInfo();
+                this.userInfo = normalizeVipStatus(await userApi.getUserInfo());
                 this.isLoggedIn = true;
                 this.infoFetchedAt = Date.now();
                 uni.setStorageSync('userInfo', this.userInfo);
+                scheduleVipExpiry(() => this.refreshVipStatus(), this.userInfo);
             } catch (error) {
-                // 获取失败，清除登录状态
-                this.logout();
+                // 网络异常保留缓存；401 由请求层通知退出登录。
+                this.refreshVipStatus();
                 throw error;
             }
         },
@@ -123,6 +140,7 @@ export const useUserStore = defineStore('user', {
          * 智能获取用户信息：有缓存则静默，过期则后台刷新
          */
         async ensureUserInfo(): Promise<void> {
+            this.refreshVipStatus();
             if (!this.token) return;
 
             const now = Date.now();
@@ -136,7 +154,7 @@ export const useUserStore = defineStore('user', {
 
             // 有缓存但过期，静默后台刷新
             if (isExpired) {
-                this.fetchUserInfo();
+                void this.fetchUserInfo().catch((error) => console.error('后台刷新用户信息失败:', error));
             }
         },
 
@@ -157,8 +175,19 @@ export const useUserStore = defineStore('user', {
          * 设置用户信息
          */
         setUserInfo(userInfo: User): void {
-            this.userInfo = userInfo;
+            this.userInfo = normalizeVipStatus(userInfo);
+            this.infoFetchedAt = Date.now();
+            scheduleVipExpiry(() => this.refreshVipStatus(), this.userInfo);
             uni.setStorageSync('userInfo', this.userInfo);
+        },
+
+        refreshVipStatus(): void {
+            if (this.userInfo?.isVip && !isVipActive(this.userInfo)) {
+                this.userInfo = { ...this.userInfo, isVip: false };
+                this.infoFetchedAt = 0;
+            }
+            if (this.userInfo) uni.setStorageSync('userInfo', this.userInfo);
+            scheduleVipExpiry(() => this.refreshVipStatus(), this.userInfo);
         },
 
         /**
@@ -185,10 +214,13 @@ export const useUserStore = defineStore('user', {
          * 退出登录
          */
         logout(): void {
+            if (vipExpiryTimer) clearTimeout(vipExpiryTimer);
+            vipExpiryTimer = null;
             this.token = '';
             this.userInfo = null;
             this.userStats = null;
             this.isLoggedIn = false;
+            this.infoFetchedAt = 0;
 
             uni.removeStorageSync('token');
             uni.removeStorageSync('userInfo');
@@ -198,6 +230,7 @@ export const useUserStore = defineStore('user', {
          * 检查登录状态
          */
         checkLogin(): boolean {
+            this.refreshVipStatus();
             if (this.token && this.userInfo) {
                 this.isLoggedIn = true;
                 return true;

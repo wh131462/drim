@@ -7,7 +7,7 @@ import { get, post } from '../request';
 /**
  * 版本类型
  */
-export type VersionType = 'original' | 'polished';
+export type VersionType = 'original' | 'polished' | 'edited';
 
 /**
  * 版本统计信息
@@ -16,6 +16,7 @@ export interface VersionStats {
     total: number;
     original: number;
     polished: number;
+    edited?: number;
 }
 
 /**

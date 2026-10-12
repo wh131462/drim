@@ -121,6 +121,54 @@
                     <text class="analysis-text">{{ analysis.interpretation }}</text>
                 </view>
 
+                <view
+                    v-if="analysis.fortuneTips"
+                    class="fortune-tips-card"
+                >
+                    <text class="section-caption">把解析带回今天</text>
+                    <view class="fortune-tips-grid">
+                        <view
+                            v-for="item in fortuneTipItems"
+                            :key="item.label"
+                            class="fortune-tip"
+                            ><text class="fortune-tip-label">{{ item.label }}</text
+                            ><text>{{ item.value }}</text></view
+                        >
+                    </view>
+                </view>
+
+                <view
+                    v-if="analysis.task"
+                    class="result-task-card"
+                >
+                    <text class="section-caption">今日小任务</text>
+                    <text class="result-task-content">{{ analysis.task.content }}</text>
+                    <text class="result-task-reward">完成可获得 +{{ analysis.task.rewardPoints }} 幸运值</text>
+                </view>
+
+                <!-- 延伸阅读：按解析主题匹配静态书单 -->
+                <view
+                    v-if="recommendedBooks.length"
+                    class="reading-section"
+                >
+                    <view class="reading-section-header">
+                        <text class="reading-section-title">延伸阅读</text>
+                        <text
+                            class="reading-section-link"
+                            @tap="goToBooks"
+                            >查看书店</text
+                        >
+                    </view>
+                    <BookCard
+                        v-for="book in recommendedBooks"
+                        :key="book.id"
+                        :book="book"
+                        :saved="savedBooks.includes(book.id)"
+                        :reason="book.reason"
+                        @save="saveBook"
+                    />
+                </view>
+
                 <!-- 重新解析按钮 -->
                 <view class="reanalyze-section">
                     <view
@@ -133,6 +181,10 @@
                     </view>
                     <text class="reanalyze-hint">对解析结果不满意？可以消耗幸运值重新解析</text>
                 </view>
+
+                <text class="result-disclaimer">{{
+                    analysis.disclaimer || '本解析仅供自我探索与娱乐参考，不构成专业建议。'
+                }}</text>
             </view>
         </template>
 
@@ -147,14 +199,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
-import { onLoad } from '@dcloudio/uni-app';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { onLoad, onShow } from '@dcloudio/uni-app';
 import { useUserStore } from '@/stores';
 import { analysisApi } from '@/api';
+import { dreamApi } from '@/api';
 import { connectAnalysisStream } from '@/utils/sse-client';
 import { confirmPointsConsume, showPointsConsumed } from '@/utils/feedback';
 import NavBar from '@/components/NavBar/index.vue';
 import DreamRewardModal from '@/components/DreamRewardModal/index.vue';
+import BookCard from '@/components/BookCard/index.vue';
+import { recommendBooks } from '@/constants/content';
+import { readSavedBooks, toggleSavedBook } from '@/utils/content';
 
 const userStore = useUserStore();
 const loading = ref(true);
@@ -164,6 +220,18 @@ const navBarHeight = ref(0);
 const dreamId = ref('');
 const loadingText = ref('系统正在解析你的梦境...');
 const reanalyzing = ref(false);
+const savedBooks = ref<string[]>([]);
+const dreamContext = ref('');
+const recommendedBooks = computed(() =>
+    recommendBooks(`${dreamContext.value} ${analysis.value?.theme || ''} ${analysis.value?.interpretation || ''}`)
+);
+const fortuneTipItems = computed(() =>
+    [
+        { label: '事业', value: analysis.value?.fortuneTips?.career },
+        { label: '关系', value: analysis.value?.fortuneTips?.love },
+        { label: '身心', value: analysis.value?.fortuneTips?.health }
+    ].filter((item) => item.value)
+);
 
 // 重新解析消耗的积分
 const REANALYZE_COST = 50;
@@ -202,10 +270,36 @@ onLoad((options: any) => {
 
 onMounted(async () => {
     const systemInfo = uni.getSystemInfoSync();
-    navBarHeight.value = systemInfo.statusBarHeight + 44;
-
+    navBarHeight.value = (systemInfo.statusBarHeight || 0) + 44;
+    void loadDreamContext();
     await startAnalysis();
 });
+
+onShow(() => {
+    savedBooks.value = readSavedBooks();
+});
+
+async function loadDreamContext() {
+    if (!dreamId.value) return;
+    try {
+        const dream = await dreamApi.getById(dreamId.value);
+        dreamContext.value = `${dream.content} ${(dream.tags || []).join(' ')}`;
+    } catch {
+        // 公开详情或旧记录无额外上下文时仍展示通用书单。
+    }
+}
+
+function saveBook(id: string) {
+    try {
+        savedBooks.value = toggleSavedBook(id, savedBooks.value);
+    } catch {
+        uni.showToast({ title: '收藏保存失败，请重试', icon: 'none' });
+    }
+}
+
+function goToBooks() {
+    uni.navigateTo({ url: '/pages/books/index' });
+}
 
 onUnmounted(() => {
     cleanup();
@@ -438,32 +532,32 @@ function getStarStyle(index: number) {
  * 处理重新解析
  */
 async function handleReanalyze() {
-    if (reanalyzing.value) return;
-
-    // 刷新用户积分信息
-    await userStore.fetchUserInfo();
-
-    // 确认消耗积分
-    const confirmed = await confirmPointsConsume(REANALYZE_COST, userStore.luckyPoints, '重新解析');
-
-    if (!confirmed) return;
-
+    if (reanalyzing.value || loading.value) return;
     reanalyzing.value = true;
-    cleanup();
-    loading.value = true;
-    error.value = null;
-    pollCount = 0;
-    loadingText.value = '正在重新解析...';
-
     try {
+        await userStore.fetchUserInfo();
+        const confirmed = await confirmPointsConsume(REANALYZE_COST, userStore.luckyPoints, '重新解析');
+        if (!confirmed) return;
+
+        cleanup();
+        loading.value = true;
+        error.value = null;
+        pollCount = 0;
+        loadingText.value = '正在重新解析...';
+
         // 调用重新解析接口
         const response = await analysisApi.retry(dreamId.value, { showLoading: false, showError: false });
 
         // 显示积分消耗提示
         showPointsConsumed(response.pointsConsumed, '重新解析');
 
-        // 更新用户积分
-        userStore.fetchUserInfo();
+        // 刷新失败不影响已启动的解析。
+        try {
+            userStore.updateLuckyPoints(response.remainingPoints);
+        } catch (error) {
+            console.warn('解析后积分缓存更新失败:', error);
+        }
+        void userStore.fetchUserInfo().catch((error) => console.warn('解析后用户信息刷新失败:', error));
 
         // 使用 SSE 流式接收新的解析结果
         startSSEStream();
@@ -1086,6 +1180,95 @@ async function handleReanalyze() {
     font-size: 30rpx;
     color: $text-secondary;
     line-height: 1.8;
+}
+
+.fortune-tips-card,
+.result-task-card {
+    margin: 32rpx 0;
+    padding: 32rpx;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 28rpx;
+}
+
+.section-caption {
+    display: block;
+    font-size: 30rpx;
+    font-weight: 600;
+    margin-bottom: 24rpx;
+}
+.fortune-tips-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 24rpx;
+}
+.fortune-tip {
+    display: flex;
+    gap: 20rpx;
+    font-size: 28rpx;
+    line-height: 1.7;
+    color: $text-secondary;
+}
+.fortune-tip-label {
+    color: $primary-color;
+    white-space: nowrap;
+}
+.result-task-content {
+    display: block;
+    font-size: 30rpx;
+    line-height: 1.8;
+}
+.result-task-reward {
+    display: block;
+    margin-top: 18rpx;
+    font-size: 24rpx;
+    color: $primary-color;
+}
+.result-disclaimer {
+    display: block;
+    margin: 36rpx 0;
+    color: $text-placeholder;
+    font-size: 23rpx;
+    line-height: 1.7;
+    text-align: center;
+}
+.dark-mode .fortune-tips-card,
+.dark-mode .result-task-card {
+    background: $dark-bg-card;
+    color: $dark-text-primary;
+}
+.dark-mode .fortune-tip {
+    color: $dark-text-secondary;
+}
+
+.reading-section {
+    margin: 36rpx 0;
+    padding: 32rpx;
+    border-radius: 28rpx;
+    background: rgba(255, 255, 255, 0.92);
+}
+
+.reading-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.reading-section-title {
+    font-size: 32rpx;
+    font-weight: 600;
+}
+
+.reading-section-link {
+    color: $primary-color;
+    font-size: 24rpx;
+}
+
+.reading-section :deep(.book-card:first-of-type) {
+    padding-top: 24rpx;
+}
+
+.dark-mode .reading-section {
+    background: $dark-bg-card;
 }
 
 .reanalyze-section {

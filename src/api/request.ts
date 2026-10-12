@@ -108,7 +108,7 @@ export function request<T>(config: RequestConfig): Promise<T> {
                             duration: 2000
                         });
                     }
-                    reject(new Error(errorMsg));
+                    reject(Object.assign(new Error(errorMsg), { code: data.code }));
                 }
             },
             fail: (err) => {
@@ -164,7 +164,7 @@ function handleUnauthorized(): void {
 }
 
 // GET 请求
-export function get<T>(url: string, data?: Record<string, unknown>, options?: Partial<RequestConfig>): Promise<T> {
+export function get<T>(url: string, data?: object, options?: Partial<RequestConfig>): Promise<T> {
     // 对于 GET 请求，将参数转换为 URL 查询字符串
     let finalUrl = url;
     if (data && Object.keys(data).length > 0) {
@@ -186,7 +186,7 @@ export function get<T>(url: string, data?: Record<string, unknown>, options?: Pa
 }
 
 // POST 请求
-export function post<T>(url: string, data?: Record<string, unknown>, options?: Partial<RequestConfig>): Promise<T> {
+export function post<T>(url: string, data?: RequestConfig['data'], options?: Partial<RequestConfig>): Promise<T> {
     return request<T>({
         url,
         method: 'POST',
@@ -196,7 +196,7 @@ export function post<T>(url: string, data?: Record<string, unknown>, options?: P
 }
 
 // PUT 请求
-export function put<T>(url: string, data?: Record<string, unknown>, options?: Partial<RequestConfig>): Promise<T> {
+export function put<T>(url: string, data?: RequestConfig['data'], options?: Partial<RequestConfig>): Promise<T> {
     return request<T>({
         url,
         method: 'PUT',
@@ -206,7 +206,7 @@ export function put<T>(url: string, data?: Record<string, unknown>, options?: Pa
 }
 
 // DELETE 请求
-export function del<T>(url: string, data?: Record<string, unknown>, options?: Partial<RequestConfig>): Promise<T> {
+export function del<T>(url: string, data?: RequestConfig['data'], options?: Partial<RequestConfig>): Promise<T> {
     return request<T>({
         url,
         method: 'DELETE',

@@ -4,7 +4,32 @@
         :class="{ 'dark-mode': userStore.isDarkMode }"
     >
         <!-- 导航栏 -->
-        <NavBar :title="isEditMode ? '编辑梦境' : '记录梦境'" />
+        <NavBar
+            :title="isEditMode ? '编辑梦境' : '记录梦境'"
+            custom-back
+            @back="handleBack"
+        />
+        <view class="record-intro"><text>记下梦里的片段</text><text>不用写得完美，先留住最鲜明的画面。</text></view>
+        <view
+            v-if="loadingEditor || editorLoadError"
+            class="record-settings"
+        >
+            <text>{{ loadingEditor ? '正在加载编辑内容...' : editorLoadError }}</text>
+            <template v-if="editorLoadError && !loadingEditor">
+                <button
+                    class="setting-chip"
+                    @tap="loadEditor"
+                >
+                    重试
+                </button>
+                <button
+                    class="setting-chip"
+                    @tap="cancelEditLoad"
+                >
+                    取消编辑
+                </button>
+            </template>
+        </view>
 
         <!-- 输入区域 -->
         <view class="textarea-container">
@@ -13,6 +38,7 @@
                 class="dream-textarea"
                 placeholder="昨晚梦见了什么？试着描述梦中的场景、人物和发生的事情...（至少25字）"
                 :maxlength="1000"
+                :disabled="submitting || polishing || editorUnavailable"
                 auto-height
             />
 
@@ -21,7 +47,7 @@
                 <!-- AI 润色按钮 -->
                 <view
                     class="polish-btn"
-                    :class="{ disabled: !canPolish }"
+                    :class="{ disabled: !canSubmit }"
                     @tap="handlePolish"
                 >
                     <image
@@ -29,7 +55,7 @@
                         src="/static/icons/star.svg"
                         mode="aspectFit"
                     />
-                    <text>润色</text>
+                    <text>AI 润色</text>
                 </view>
 
                 <!-- 版本切换器 (有多个版本时显示) -->
@@ -39,7 +65,7 @@
                     @tap="showVersionPicker"
                 >
                     <text class="version-badge">v{{ currentVersionNumber }}</text>
-                    <text>{{ currentVersionType }}</text>
+                    <text>{{ versionLabel }}</text>
                     <image
                         class="dropdown-icon"
                         src="/static/icons/arrow-right.svg"
@@ -56,12 +82,18 @@
                         src="/static/icons/info.svg"
                         mode="aspectFit"
                     />
-                    <text v-if="polishQuota?.isVip">VIP 无限润色</text>
-                    <text v-else-if="polishQuota">剩余 {{ polishQuota.remaining }}/{{ polishQuota.total }}</text>
-                    <text v-else>润色</text>
+                    <text v-if="userStore.isVip">VIP 无限润色</text>
+                    <text v-else-if="polishQuota">今日剩余 {{ polishQuota.remaining }} 次</text>
+                    <text
+                        v-else
+                        @tap="loadQuota"
+                        >配额加载失败，重试</text
+                    >
                 </view>
                 <view class="word-count">
-                    <text :class="{ insufficient: dreamContent.length < 25 }"> {{ dreamContent.length }}/1000 </text>
+                    <text :class="{ insufficient: contentLength < 25 }"
+                        >{{ contentLength }}/1000{{ contentLength < 25 ? `，还差${25 - contentLength}字` : '' }}</text
+                    >
                 </view>
             </view>
         </view>
@@ -110,48 +142,55 @@
             </view>
         </view>
 
-        <!-- 梦中情绪 -->
-        <view class="section-wrapper">
-            <view class="section-title">
-                <view class="title-bar"></view>
-                <text>梦中情绪 (单选)</text>
-            </view>
-            <view class="emotion-grid">
-                <view
-                    v-for="emotion in emotions"
-                    :key="emotion.id"
-                    class="emotion-item"
-                    :class="{ active: selectedEmotion === emotion.id }"
-                    @tap="selectEmotion(emotion.id)"
-                >
-                    <text class="emotion-icon">{{ emotion.emoji }}</text>
-                    <text
-                        class="emotion-text"
-                        :class="{ active: selectedEmotion === emotion.id }"
-                        >{{ emotion.name }}</text
-                    >
-                </view>
-            </view>
+        <view class="record-settings">
+            <button
+                class="setting-chip"
+                :disabled="submitting || editorUnavailable"
+                @tap="isPublic = !isPublic"
+            >
+                {{ isPublic ? '公开（探索广场可见）' : '私密（仅自己可见）' }}
+            </button>
+            <picker
+                :range="emotionLabels"
+                :value="emotionIndex"
+                :disabled="submitting || editorUnavailable"
+                @change="selectEmotion"
+                ><view class="setting-chip">{{ emotionLabels[emotionIndex] }} ▾</view></picker
+            >
         </view>
-
-        <!-- 隐私设置 -->
-        <view class="privacy-section">
-            <view class="privacy-toggle">
-                <view class="privacy-info">
-                    <view class="privacy-icon">{{ isPublic ? '🌍' : '🔒' }}</view>
-                    <view class="privacy-text">
-                        <text class="privacy-title">{{ isPublic ? '公开梦境' : '私密梦境' }}</text>
-                        <text class="privacy-desc">{{ isPublic ? '允许其他用户在探索页面查看' : '仅自己可见' }}</text>
-                    </view>
-                </view>
-                <view
-                    class="toggle-switch"
-                    :class="{ active: isPublic }"
-                    @tap="togglePrivacy"
+        <view
+            v-if="showPolishPreview"
+            class="polish-preview"
+        >
+            <text class="preview-title">{{ polishDraft ? '你的润色预览' : '润色示例（静态内容）' }}</text>
+            <text class="preview-copy">{{
+                polishDraft ||
+                '原句：我梦见走进一条没有尽头的走廊。\n示例：梦里，我沿着一条漫长的走廊前行，脚步声轻轻回响，尽头隐没在微光里。'
+            }}</text>
+            <text class="preview-hint">原始内容始终保留。生成使用一次润色配额，确认应用后才切换版本。</text>
+            <view class="preview-actions"
+                ><button
+                    class="setting-chip"
+                    :disabled="polishing"
+                    @tap="showPolishPreview = false"
                 >
-                    <view class="toggle-slider"></view>
-                </view>
-            </view>
+                    取消</button
+                ><button
+                    v-if="!polishDraft"
+                    class="setting-chip active"
+                    :disabled="!canPolish || polishing"
+                    @tap="generatePolish"
+                >
+                    {{ polishing ? '正在生成...' : '生成我的润色' }}</button
+                ><button
+                    v-else
+                    class="setting-chip active"
+                    :disabled="dreamContent.trim() !== polishSource"
+                    @tap="applyPolish"
+                >
+                    应用润色
+                </button></view
+            >
         </view>
 
         <!-- 底部按钮 -->
@@ -162,7 +201,7 @@
                     <view
                         class="edit-btn save"
                         :class="{ disabled: !canSubmit }"
-                        @tap="handleSaveOnly"
+                        @tap="saveDream(false)"
                     >
                         <text>仅保存</text>
                     </view>
@@ -170,7 +209,7 @@
                         v-if="hasAnalysis"
                         class="edit-btn reanalyze"
                         :class="{ disabled: !canSubmit }"
-                        @tap="handleSaveAndReanalyze"
+                        @tap="saveDream(true)"
                     >
                         <text>保存并重新解析</text>
                     </view>
@@ -178,35 +217,45 @@
                         v-else
                         class="edit-btn reanalyze"
                         :class="{ disabled: !canSubmit }"
-                        @tap="handleSaveAndReanalyze"
+                        @tap="saveDream(true)"
                     >
                         <text>保存并解析</text>
                     </view>
                 </view>
             </template>
-            <!-- 新建模式：显示单个按钮 -->
             <template v-else>
-                <view
-                    class="submit-btn"
-                    :class="{ disabled: !canSubmit }"
-                    @tap="handleSubmit"
+                <view class="edit-actions"
+                    ><button
+                        class="edit-btn save"
+                        :disabled="!canSubmit"
+                        @tap="saveDream(false)"
+                    >
+                        仅保存</button
+                    ><button
+                        class="edit-btn reanalyze"
+                        :disabled="!canSubmit"
+                        @tap="saveDream(true)"
+                    >
+                        开始解析
+                    </button></view
                 >
-                    <text>开始解析</text>
-                </view>
             </template>
         </view>
 
         <!-- 自定义 TabBar -->
-        <custom-tab-bar :selected="1" />
+        <custom-tab-bar
+            :selected="2"
+            :before-switch="confirmLeave"
+        />
     </view>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { onShow } from '@dcloudio/uni-app';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { onShow, onHide, onBackPress } from '@dcloudio/uni-app';
 import { useDreamStore, useUserStore, useSettingsStore } from '@/stores';
-import { polishApi, dreamApi } from '@/api';
-import type { Emotion } from '@/types/dream';
+import { polishApi, dreamApi, versionApi } from '@/api';
+import type { Emotion, DreamDetail } from '@/types/dream';
 import type { PolishQuota } from '@/api/modules/polish';
 import { confirmPointsConsume, showPointsConsumed } from '@/utils/feedback';
 import NavBar from '@/components/NavBar/index.vue';
@@ -216,27 +265,41 @@ const dreamStore = useDreamStore();
 const userStore = useUserStore();
 const settingsStore = useSettingsStore();
 const navBarHeight = ref(0);
-
-// 编辑模式相关
 const isEditMode = ref(false);
 const editingDreamId = ref<string | null>(null);
-const hasAnalysis = ref(false); // 是否已有解析结果
-
-// 数据
+const hasAnalysis = ref(false);
 const dreamContent = ref('');
 const selectedTags = ref<string[]>([]);
-const selectedEmotion = ref<string | null>(null);
-const customTags = ref<Array<{ id: string; name: string; emoji: string; custom: boolean }>>([]);
+const selectedEmotion = ref<Emotion | null>(null);
 const isPublic = ref(false);
-const versions = ref<any[]>([]);
-const currentVersionNumber = ref(1);
-const currentVersionType = ref('原始版');
+const submitting = ref(false);
+const polishing = ref(false);
+const loadingEditor = ref(false);
+const editorLoadError = ref('');
+const showPolishPreview = ref(false);
+const polishDraft = ref('');
+const polishSource = ref('');
 const polishQuota = ref<PolishQuota | null>(null);
-// 当前编辑的梦境 ID（如果是从版本历史页面进入编辑模式）
-const currentDreamId = ref<string | null>(null);
-
-// 梦境元素标签
-const dreamTags = [
+const savedSnapshot = ref(JSON.stringify(['', [], null, false]));
+let applyingDefaults = false;
+let pageVisible = false;
+interface LocalVersion {
+    content: string;
+    type: 'original' | 'polished' | 'edited';
+    versionNumber: number;
+}
+interface Tag {
+    id: string;
+    name: string;
+    icon?: string;
+    emoji?: string;
+    custom: boolean;
+}
+const versions = ref<LocalVersion[]>([]);
+const currentVersionNumber = ref(1);
+const currentVersionType = ref<LocalVersion['type']>('original');
+const customTags = ref<Tag[]>([]);
+const dreamTags: Tag[] = [
     { id: 'running', name: '追逐', icon: '/static/icons/running.svg', custom: false },
     { id: 'flying', name: '飞行', icon: '/static/icons/plane.svg', custom: false },
     { id: 'exam', name: '考试', icon: '/static/icons/exam.svg', custom: false },
@@ -246,456 +309,379 @@ const dreamTags = [
     { id: 'lost', name: '迷路', icon: '/static/icons/map.svg', custom: false },
     { id: 'death', name: '死亡', icon: '/static/icons/death.svg', custom: false }
 ];
-
-// 所有标签（包含自定义）
-const allDreamTags = computed(() => {
-    return [...dreamTags, ...customTags.value];
-});
-
-// 情绪选项 - 覆盖人类情绪大类
-const emotions = [
-    { id: 'happy', name: '开心', emoji: '😊' },
-    { id: 'sad', name: '悲伤', emoji: '😢' },
-    { id: 'angry', name: '愤怒', emoji: '😡' },
-    { id: 'fear', name: '恐惧', emoji: '😨' },
-    { id: 'surprise', name: '惊讶', emoji: '😮' },
-    { id: 'disgust', name: '厌恶', emoji: '🤢' },
-    { id: 'calm', name: '平静', emoji: '😌' },
-    { id: 'anxious', name: '焦虑', emoji: '😰' },
-    { id: 'confused', name: '困惑', emoji: '😕' },
-    { id: 'excited', name: '兴奋', emoji: '🤩' },
-    { id: 'lonely', name: '孤独', emoji: '😔' },
-    { id: 'shame', name: '羞愧', emoji: '😳' },
-    { id: 'love', name: '温暖', emoji: '🥰' },
-    { id: 'bored', name: '无聊', emoji: '😑' }
+const emotions: { id: Emotion; name: string }[] = [
+    { id: 'happy', name: '开心' },
+    { id: 'sad', name: '悲伤' },
+    { id: 'angry', name: '愤怒' },
+    { id: 'fear', name: '恐惧' },
+    { id: 'surprise', name: '惊讶' },
+    { id: 'disgust', name: '厌恶' },
+    { id: 'calm', name: '平静' },
+    { id: 'anxious', name: '焦虑' },
+    { id: 'confused', name: '困惑' },
+    { id: 'excited', name: '兴奋' },
+    { id: 'lonely', name: '孤独' },
+    { id: 'shame', name: '羞愧' },
+    { id: 'love', name: '温暖' },
+    { id: 'bored', name: '无聊' }
 ];
+const allDreamTags = computed(() => [...dreamTags, ...customTags.value]);
+const emotionLabels = ['情绪（可选）', ...emotions.map((emotion) => emotion.name)];
+const emotionIndex = computed(() => emotions.findIndex((emotion) => emotion.id === selectedEmotion.value) + 1);
+const contentLength = computed(() => dreamContent.value.trim().length);
+const editorUnavailable = computed(() => loadingEditor.value || !!editorLoadError.value);
+const canSubmit = computed(
+    () =>
+        contentLength.value >= 25 &&
+        contentLength.value <= 1000 &&
+        !submitting.value &&
+        !polishing.value &&
+        !editorUnavailable.value
+);
+const canPolish = computed(
+    () => canSubmit.value && !!polishQuota.value && (userStore.isVip || polishQuota.value.remaining > 0)
+);
+const versionLabel = computed(() =>
+    currentVersionType.value === 'polished' ? '润色版' : currentVersionType.value === 'edited' ? '编辑版' : '原始版'
+);
+const snapshot = () => JSON.stringify([dreamContent.value, selectedTags.value, selectedEmotion.value, isPublic.value]);
+const isDirty = computed(() => savedSnapshot.value !== snapshot());
 
-// 计算属性
-const canSubmit = computed(() => {
-    return dreamContent.value.trim().length >= 25;
-});
-
-const canPolish = computed(() => {
-    if (!polishQuota.value) return false;
-    // VIP用户或有剩余配额
-    return dreamContent.value.trim().length >= 25 && (polishQuota.value.isVip || polishQuota.value.remaining > 0);
-});
-
-// 方法
-function toggleTag(tagId: string) {
-    const index = selectedTags.value.indexOf(tagId);
-    if (index > -1) {
-        selectedTags.value.splice(index, 1);
-    } else if (selectedTags.value.length < 3) {
-        selectedTags.value.push(tagId);
-    } else {
-        uni.showToast({ title: '最多选择3个标签', icon: 'none' });
-    }
+function toggleTag(id: string) {
+    if (submitting.value || polishing.value || editorUnavailable.value) return;
+    const index = selectedTags.value.indexOf(id);
+    if (index >= 0) selectedTags.value.splice(index, 1);
+    else if (selectedTags.value.length < 3) selectedTags.value.push(id);
+    else uni.showToast({ title: '最多选择3个标签', icon: 'none' });
 }
-
-function selectEmotion(emotionId: string) {
-    selectedEmotion.value = selectedEmotion.value === emotionId ? null : emotionId;
+function selectEmotion(event: { detail: { value: string | number } }) {
+    if (submitting.value || polishing.value || editorUnavailable.value) return;
+    selectedEmotion.value = emotions[Number(event.detail.value) - 1]?.id || null;
 }
-
-// 显示添加自定义标签对话框
 function showAddTagDialog() {
+    if (submitting.value || polishing.value || editorUnavailable.value) return;
     uni.showModal({
         title: '添加自定义元素',
         editable: true,
-        placeholderText: '请输入梦境元素名称',
+        placeholderText: '请输入1-4个字',
         success: (res) => {
-            if (res.confirm && res.content) {
-                const tagName = res.content.trim();
-                if (tagName.length > 0 && tagName.length <= 4) {
-                    addCustomTag(tagName);
-                } else {
-                    uni.showToast({
-                        title: '标签名称应为1-4个字',
-                        icon: 'none'
-                    });
-                }
-            }
+            if (!res.confirm || submitting.value || polishing.value || editorUnavailable.value) return;
+            const name = res.content?.trim() || '';
+            if (!name || name.length > 4) return uni.showToast({ title: '标签名称应为1-4个字', icon: 'none' });
+            if (allDreamTags.value.some((tag) => tag.name === name || tag.id === name))
+                return uni.showToast({ title: '该元素已存在', icon: 'none' });
+            if (selectedTags.value.length >= 3) return uni.showToast({ title: '最多选择3个标签', icon: 'none' });
+            customTags.value.push({ id: name, name, emoji: '✦', custom: true });
+            selectedTags.value.push(name);
         }
     });
 }
-
-// 添加自定义标签
-function addCustomTag(name: string) {
-    const trimmedName = name.trim();
-    if (!trimmedName) return;
-
-    // 检查是否已存在（包括预设标签和自定义标签）
-    const exists = allDreamTags.value.some((tag) => tag.name === trimmedName || tag.id === trimmedName);
-    if (exists) {
-        uni.showToast({ title: '该元素已存在', icon: 'none' });
-        return;
-    }
-
-    // 添加到自定义标签列表（直接使用名称作为 ID，方便展示）
-    const newTag = {
-        id: trimmedName,
-        name: trimmedName,
-        emoji: '✨',
-        custom: true
-    };
-    customTags.value.push(newTag);
-
-    // 自动选中新添加的标签
-    if (selectedTags.value.length < 3) {
-        selectedTags.value.push(newTag.id);
-    }
-
-    uni.showToast({ title: '添加成功', icon: 'success' });
+function removeCustomTag(id: string) {
+    if (submitting.value || polishing.value || editorUnavailable.value) return;
+    selectedTags.value = selectedTags.value.filter((tag) => tag !== id);
+    customTags.value = customTags.value.filter((tag) => tag.id !== id);
 }
-
-// 删除自定义标签
-function removeCustomTag(tagId: string) {
-    // 从选中列表中移除
-    const selectedIndex = selectedTags.value.indexOf(tagId);
-    if (selectedIndex > -1) {
-        selectedTags.value.splice(selectedIndex, 1);
-    }
-
-    // 从自定义标签列表中移除
-    const customIndex = customTags.value.findIndex((tag) => tag.id === tagId);
-    if (customIndex > -1) {
-        customTags.value.splice(customIndex, 1);
-    }
-}
-
-// 加载配额
 async function loadQuota() {
     try {
-        polishQuota.value = await polishApi.getQuota();
-    } catch (error) {
-        console.error('加载配额失败:', error);
+        polishQuota.value = await polishApi.getQuota({ showLoading: false, showError: false });
+    } catch {
+        polishQuota.value = null;
     }
 }
-
-// AI 润色
-async function handlePolish() {
-    if (!canPolish.value) return;
-
+function handlePolish() {
+    if (!canSubmit.value) return;
+    showPolishPreview.value = true;
+    polishDraft.value = '';
+}
+async function generatePolish() {
+    if (!canPolish.value || polishing.value) return;
+    polishing.value = true;
+    const source = dreamContent.value.trim();
     try {
-        // 润色前保存原始内容（如果还没有版本）
-        const originalContent = dreamContent.value.trim();
-
-        uni.showLoading({ title: '润色中...' });
-
-        // 调用真实 API - showError: false 使用页面自定义的错误处理
-        const response = await polishApi.polishText(originalContent, undefined, { showError: false });
-
-        // 如果是第一次润色，先添加原始版本
-        if (versions.value.length === 0) {
-            versions.value.push({
-                versionId: 'local_v1',
-                type: 'original',
-                content: originalContent,
-                versionNumber: 1
-            });
-        }
-
-        // 添加润色版本
-        const newVersionNumber = versions.value.length + 1;
-        versions.value.push({
-            versionId: `local_v${newVersionNumber}`,
-            type: 'polished',
-            content: response.content,
-            versionNumber: newVersionNumber
-        });
-
-        // 更新内容和版本信息
-        dreamContent.value = response.content;
-        currentVersionNumber.value = newVersionNumber;
-        currentVersionType.value = '润色版';
-
-        // 更新配额
-        if (response.quota) {
-            polishQuota.value = response.quota;
-        }
-
-        uni.hideLoading();
-        uni.showToast({ title: '润色完成', icon: 'success' });
+        const response = await polishApi.polishText(source, undefined, { showLoading: false, showError: false });
+        polishDraft.value = response.content;
+        polishSource.value = source;
+        if (response.quota) polishQuota.value = response.quota;
     } catch (error: any) {
-        uni.hideLoading();
-        const message = error?.message || '润色失败';
-
-        // 判断是否为可重试的错误
-        const isRetryable = isRetryableError(message);
-
-        if (isRetryable) {
-            // 显示重试对话框
-            uni.showModal({
-                title: '润色失败',
-                content: message + '\n\n是否重试？',
-                confirmText: '重试',
-                cancelText: '取消',
-                success: (res) => {
-                    if (res.confirm) {
-                        handlePolish();
-                    }
-                }
-            });
-        } else {
-            uni.showToast({ title: message, icon: 'none' });
-        }
+        uni.showToast({ title: error?.message || '润色失败，请重试', icon: 'none' });
+        await loadQuota();
+    } finally {
+        polishing.value = false;
     }
 }
-
-// 判断是否为可重试的错误
-function isRetryableError(message: string): boolean {
-    const retryableKeywords = ['超时', '稍后重试', '繁忙', '暂时不可用', '连接失败', '返回异常', '响应超时'];
-    return retryableKeywords.some((keyword) => message.includes(keyword));
+function applyPolish() {
+    if (submitting.value || polishing.value || editorUnavailable.value) return;
+    if (!polishDraft.value || dreamContent.value.trim() !== polishSource.value) return;
+    const length = polishDraft.value.trim().length;
+    if (length < 25 || length > 1000)
+        return uni.showToast({ title: '润色内容需为25-1000字，请重新生成', icon: 'none' });
+    if (!versions.value.length)
+        versions.value.push({ content: polishSource.value, type: 'original', versionNumber: 1 });
+    const number = Math.max(...versions.value.map((version) => version.versionNumber)) + 1;
+    versions.value.push({ content: polishDraft.value.trim(), type: 'polished', versionNumber: number });
+    dreamContent.value = polishDraft.value.trim();
+    currentVersionNumber.value = number;
+    currentVersionType.value = 'polished';
+    showPolishPreview.value = false;
 }
-
-// 显示版本选择器
 function showVersionPicker() {
-    const items = versions.value.map((v) => `v${v.versionNumber} - ${v.type === 'polished' ? '润色版' : '原始版'}`);
-
+    if (!versions.value.length || submitting.value || polishing.value || editorUnavailable.value) return;
+    // 切换前保留当前未保存的正文，原始版本始终不覆盖。
+    const current = versions.value.find((version) => version.versionNumber === currentVersionNumber.value);
+    if (current?.content !== dreamContent.value && dreamContent.value.trim()) {
+        const number = Math.max(...versions.value.map((version) => version.versionNumber)) + 1;
+        versions.value.push({ content: dreamContent.value, type: 'edited', versionNumber: number });
+        currentVersionNumber.value = number;
+        currentVersionType.value = 'edited';
+    }
     uni.showActionSheet({
-        itemList: items,
+        itemList: versions.value.map(
+            (version) =>
+                `v${version.versionNumber}（${version.type === 'polished' ? '润色版' : version.type === 'edited' ? '编辑版' : '原始版'}）`
+        ),
         success: (res) => {
-            const selectedVersion = versions.value[res.tapIndex];
-            switchToVersion(selectedVersion);
+            if (submitting.value || polishing.value || editorUnavailable.value) return;
+            const version = versions.value[res.tapIndex];
+            if (!version) return;
+            dreamContent.value = version.content;
+            currentVersionNumber.value = version.versionNumber;
+            currentVersionType.value = version.type;
+            showPolishPreview.value = false;
         }
     });
 }
-
-// 切换版本
-function switchToVersion(version: any) {
-    dreamContent.value = version.content;
-    currentVersionNumber.value = version.versionNumber;
-    currentVersionType.value = version.type === 'polished' ? '润色版' : '原始版';
-
-    uni.showToast({ title: `已切换到 v${version.versionNumber}`, icon: 'success' });
-}
-
-// 切换隐私
-function togglePrivacy() {
-    isPublic.value = !isPublic.value;
+function validContent(): boolean {
+    if (contentLength.value >= 25 && contentLength.value <= 1000) return true;
     uni.showToast({
-        title: isPublic.value ? '已设为公开' : '已设为私密',
+        title: contentLength.value < 25 ? `至少25字，还差${25 - contentLength.value}字` : '梦境不能超过1000字',
         icon: 'none'
     });
+    return false;
 }
-
-async function handleSubmit() {
-    if (!canSubmit.value) {
-        const currentLength = dreamContent.value.trim().length;
-        uni.showToast({
-            title: `至少输入25字哦，还差${25 - currentLength}字`,
-            icon: 'none'
-        });
-        return;
-    }
-
+async function saveDream(analyze: boolean) {
+    if (submitting.value || polishing.value || editorUnavailable.value || !validContent()) return;
+    submitting.value = true;
     try {
-        uni.showLoading({ title: '提交中...' });
-
-        const response = await dreamStore.submitDream({
+        if (isEditMode.value && analyze && hasAnalysis.value) {
+            await userStore.fetchUserInfo();
+            if (!(await confirmPointsConsume(50, userStore.luckyPoints, '重新解析'))) return;
+        }
+        uni.showLoading({ title: '保存中...', mask: true });
+        const input = {
             content: dreamContent.value.trim(),
-            tags: selectedTags.value.length > 0 ? selectedTags.value : undefined,
-            emotion: (selectedEmotion.value || undefined) as Emotion | undefined,
+            tags: [...selectedTags.value],
+            emotion: selectedEmotion.value,
             isPublic: isPublic.value
-        });
-
-        uni.hideLoading();
-
-        // 构建跳转 URL，传递奖励数据
-        let url = `/pages/result/index?dreamId=${response.id}`;
-        if (response.rewards) {
-            const { dreamReward, streakReward, streakDays } = response.rewards;
-            if (dreamReward) url += `&dreamReward=${dreamReward}`;
-            if (streakReward) url += `&streakReward=${streakReward}`;
-            if (streakDays) url += `&streakDays=${streakDays}`;
-        }
-
-        // 跳转到解析结果页（使用 redirectTo 替换当前页面，避免返回时出现空的记录页）
-        uni.redirectTo({ url });
-    } catch (error: any) {
-        uni.hideLoading();
-        uni.showToast({ title: error?.message || '提交失败，请重试', icon: 'none' });
-    }
-}
-
-// 编辑模式：仅保存
-async function handleSaveOnly() {
-    if (!canSubmit.value) {
-        const currentLength = dreamContent.value.trim().length;
-        uni.showToast({
-            title: `至少输入25字哦，还差${25 - currentLength}字`,
-            icon: 'none'
-        });
-        return;
-    }
-    if (!editingDreamId.value) return;
-
-    try {
-        uni.showLoading({ title: '保存中...' });
-
-        await dreamApi.update(editingDreamId.value, {
-            content: dreamContent.value.trim(),
-            reAnalyze: false
-        });
-
-        uni.hideLoading();
-        uni.showToast({ title: '保存成功', icon: 'success' });
-
-        // 跳转回详情页（因为是从 switchTab 跳转过来的，页面栈已清空，不能用 navigateBack）
-        setTimeout(() => {
-            uni.navigateTo({
-                url: `/pages/dream-detail/index?id=${editingDreamId.value}`
-            });
-        }, 1500);
-    } catch (error: any) {
-        uni.hideLoading();
-        uni.showToast({ title: error.message || '保存失败', icon: 'none' });
-    }
-}
-
-// 编辑模式：保存并重新解析
-const REANALYZE_COST = 50;
-
-async function handleSaveAndReanalyze() {
-    if (!canSubmit.value) {
-        const currentLength = dreamContent.value.trim().length;
-        uni.showToast({
-            title: `至少输入25字哦，还差${25 - currentLength}字`,
-            icon: 'none'
-        });
-        return;
-    }
-    if (!editingDreamId.value) return;
-
-    // 刷新用户积分信息
-    await userStore.fetchUserInfo();
-
-    // 确认消耗积分
-    const confirmed = await confirmPointsConsume(REANALYZE_COST, userStore.luckyPoints, '重新解析');
-
-    if (!confirmed) return;
-
-    try {
-        uni.showLoading({ title: '保存中...' });
-
-        const result = await dreamApi.update(editingDreamId.value, {
-            content: dreamContent.value.trim(),
-            reAnalyze: true
-        });
-
-        uni.hideLoading();
-
-        // 显示积分消耗提示
-        if (result.pointsConsumed) {
-            showPointsConsumed(result.pointsConsumed, '重新解析');
-        }
-
-        // 更新用户积分
-        userStore.fetchUserInfo();
-
-        // 跳转到解析结果页
-        setTimeout(() => {
-            uni.redirectTo({
-                url: `/pages/result/index?dreamId=${result.id}`
-            });
-        }, 500);
-    } catch (error: any) {
-        uni.hideLoading();
-
-        // 处理积分不足错误
-        if (error?.code === 30001) {
-            uni.showModal({
-                title: '幸运值不足',
-                content: error.message || `重新解析需要 ${REANALYZE_COST} 幸运值`,
-                confirmText: '去赚取',
-                cancelText: '取消',
-                success: (res) => {
-                    if (res.confirm) {
-                        uni.navigateTo({ url: '/pages/vip/index' });
-                    }
-                }
-            });
+        };
+        const currentVersion = versions.value.find((version) => version.versionNumber === currentVersionNumber.value);
+        const versionType =
+            currentVersion && currentVersion.content.trim() !== input.content ? 'edited' : currentVersionType.value;
+        let id: string;
+        let rewardQuery = '';
+        if (isEditMode.value && editingDreamId.value) {
+            const response = await dreamApi.update(editingDreamId.value, { ...input, reAnalyze: analyze, versionType });
+            id = response.id;
+            if (response.pointsConsumed) showPointsConsumed(response.pointsConsumed, '重新解析');
+            dreamStore.listFetchedAt = 0;
+            dreamStore.calendarKey = '';
         } else {
-            uni.showToast({ title: error.message || '保存失败', icon: 'none' });
+            const originalContent = versions.value[0]?.content;
+            const response = await dreamStore.submitDream({
+                ...input,
+                versionType,
+                emotion: selectedEmotion.value || undefined,
+                originalContent: originalContent && originalContent !== input.content ? originalContent : undefined
+            });
+            id = response.id;
+            if (response.rewards) {
+                const { dreamReward, streakReward, streakDays } = response.rewards;
+                rewardQuery = `&dreamReward=${dreamReward}&streakReward=${streakReward}&streakDays=${streakDays}`;
+            }
         }
+        savedSnapshot.value = snapshot();
+        resetEditor();
+        void userStore.fetchUserInfo().catch(() => {});
+        uni.navigateTo({
+            url: analyze ? `/pages/result/index?dreamId=${id}${rewardQuery}` : `/pages/dream-detail/index?id=${id}`
+        });
+    } catch (error: any) {
+        uni.showToast({ title: error?.message || '保存失败，请重试', icon: 'none' });
+    } finally {
+        uni.hideLoading();
+        submitting.value = false;
     }
 }
-
-// 应用默认公开设置
+function resetEditor() {
+    dreamContent.value = '';
+    selectedTags.value = [];
+    selectedEmotion.value = null;
+    isPublic.value = false;
+    versions.value = [];
+    customTags.value = [];
+    isEditMode.value = false;
+    editingDreamId.value = null;
+    hasAnalysis.value = false;
+    currentVersionNumber.value = 1;
+    currentVersionType.value = 'original';
+    showPolishPreview.value = false;
+    polishDraft.value = '';
+    polishSource.value = '';
+    editorLoadError.value = '';
+    savedSnapshot.value = snapshot();
+}
+async function confirmLeave(): Promise<boolean> {
+    if (submitting.value || polishing.value || loadingEditor.value) {
+        uni.showToast({ title: '请等待当前操作完成', icon: 'none' });
+        return false;
+    }
+    if (!isDirty.value) return true;
+    const confirmed = await new Promise<boolean>((resolve) =>
+        uni.showModal({
+            title: '还有未保存的梦境',
+            content: '离开会丢弃这次修改，确定离开吗？',
+            confirmText: '离开',
+            cancelText: '继续记录',
+            success: (res) => resolve(res.confirm),
+            fail: () => resolve(false)
+        })
+    );
+    if (confirmed) resetEditor();
+    return confirmed;
+}
+async function handleBack() {
+    if (await confirmLeave()) uni.switchTab({ url: '/pages/index/index' });
+}
+onBackPress(() => {
+    void handleBack();
+    return true;
+});
 async function applyDefaultPublicSetting() {
-    await settingsStore.ensureSettings();
-    isPublic.value = settingsStore.defaultDreamPublic;
-}
-
-onMounted(() => {
-    const systemInfo = uni.getSystemInfoSync();
-    const statusBarHeight = systemInfo.statusBarHeight || 0;
-    navBarHeight.value = statusBarHeight + 44;
-
-    // 从服务端读取默认公开状态
-    applyDefaultPublicSetting();
-
-    // 加载配额
-    loadQuota();
-});
-
-// 处理从版本历史页面或详情页跳转过来的编辑模式
-onShow(() => {
+    if (applyingDefaults || isEditMode.value || isDirty.value || editorUnavailable.value) return;
+    applyingDefaults = true;
     try {
-        // 优先处理从详情页跳转过来的编辑（editingDream）
-        const editingDream = uni.getStorageSync('editingDream');
-        if (editingDream) {
-            // 设置编辑模式（从 storage 读取，因为 switchTab 不支持传参）
-            isEditMode.value = editingDream.isEditMode || false;
-
-            // 加载待编辑的梦境内容
-            dreamContent.value = editingDream.content || '';
-            editingDreamId.value = editingDream.dreamId || null;
-            currentDreamId.value = editingDream.dreamId || null;
-            hasAnalysis.value = editingDream.hasAnalysis || false;
-            isPublic.value = editingDream.isPublic || false;
-
-            // 加载标签
-            if (editingDream.tags && Array.isArray(editingDream.tags)) {
-                selectedTags.value = editingDream.tags;
-            }
-
-            // 加载情绪
-            if (editingDream.emotion) {
-                selectedEmotion.value = editingDream.emotion;
-            }
-
-            // 清除存储，避免重复加载
-            uni.removeStorageSync('editingDream');
-
-            console.log('已加载梦境进行编辑:', editingDream);
-            return;
+        await settingsStore.ensureSettings();
+        if (!isEditMode.value && !isDirty.value && !editorUnavailable.value) {
+            isPublic.value = settingsStore.defaultDreamPublic;
+            savedSnapshot.value = snapshot();
         }
-
-        // 处理从版本历史页面跳转过来的编辑（editingVersion）
-        const editingVersion = uni.getStorageSync('editingVersion');
-        if (editingVersion) {
-            // 加载待编辑的版本内容
-            dreamContent.value = editingVersion.content || '';
-
-            // 保存 dreamId，用于后续跳转到版本历史页面
-            currentDreamId.value = editingVersion.dreamId || null;
-
-            // 清除存储，避免重复加载
-            uni.removeStorageSync('editingVersion');
-
-            console.log('已加载版本进行编辑:', editingVersion);
-            return;
-        }
-
-        // 非编辑模式：重置为新建状态，从服务端读取默认公开状态
-        if (!isEditMode.value) {
-            applyDefaultPublicSetting();
-        }
-    } catch (error) {
-        console.error('加载编辑版本失败:', error);
+    } catch {
+        /* 默认保持私密，用户仍可手动选择。 */
+    } finally {
+        applyingDefaults = false;
     }
+}
+function hydrateEditor(dream: DreamDetail) {
+    isEditMode.value = true;
+    editingDreamId.value = dream.id;
+    dreamContent.value = dream.content;
+    selectedTags.value = [...(dream.tags || [])];
+    customTags.value = selectedTags.value
+        .filter((id) => !dreamTags.some((tag) => tag.id === id))
+        .map((id) => ({ id, name: id, emoji: '✦', custom: true }));
+    selectedEmotion.value = dream.emotion || null;
+    isPublic.value = !!dream.isPublic;
+    hasAnalysis.value = !!(dream.analysis || dream.hasAnalysis);
+    currentVersionType.value =
+        dream.currentVersionType || (dream.content === dream.originalContent ? 'original' : 'edited');
+    versions.value = [{ content: dream.originalContent || dream.content, type: 'original', versionNumber: 1 }];
+    if (dreamContent.value !== versions.value[0].content) {
+        versions.value.push({ content: dreamContent.value, type: currentVersionType.value, versionNumber: 2 });
+        currentVersionNumber.value = 2;
+    } else currentVersionNumber.value = 1;
+    showPolishPreview.value = false;
+    polishDraft.value = '';
+    polishSource.value = '';
+    savedSnapshot.value = snapshot();
+}
+function cancelEditLoad() {
+    if (loadingEditor.value) return;
+    uni.removeStorageSync('editingDream');
+    uni.removeStorageSync('editingVersion');
+    resetEditor();
+    void applyDefaultPublicSetting();
+}
+async function loadEditor() {
+    if (loadingEditor.value || submitting.value || polishing.value) return;
+    const editingDream = uni.getStorageSync('editingDream');
+    const editingVersion = uni.getStorageSync('editingVersion');
+    if (editingDream || editingVersion) {
+        const request = editingDream || editingVersion;
+        if (isDirty.value && !(await confirmLeave())) {
+            uni.removeStorageSync('editingDream');
+            uni.removeStorageSync('editingVersion');
+            return;
+        }
+        loadingEditor.value = true;
+        editorLoadError.value = '';
+        try {
+            const dream = await dreamApi.getById(request.dreamId);
+            // 已保存版本入口继续复用，编辑区只负责选择与润色。
+            const response = await versionApi.getVersions(dream.id);
+            const selectedVersion = editingVersion
+                ? response.versions.find((version) => version.versionId === editingVersion.versionId)
+                : response.versions.find((version) => version.isCurrent);
+            if (editingVersion && !selectedVersion) throw new Error('该版本已不可用，请返回版本历史重新选择');
+            hydrateEditor(dream);
+            if (response.versions.length) {
+                versions.value = response.versions.map((version) => ({
+                    content: version.content,
+                    type: version.type,
+                    versionNumber: version.versionNumber
+                }));
+                if (selectedVersion) {
+                    dreamContent.value = selectedVersion.content;
+                    currentVersionNumber.value = selectedVersion.versionNumber;
+                    currentVersionType.value = selectedVersion.type;
+                }
+            }
+            savedSnapshot.value = snapshot();
+            uni.removeStorageSync('editingDream');
+            uni.removeStorageSync('editingVersion');
+        } catch (error: any) {
+            editorLoadError.value = error?.message || '编辑内容加载失败，请重试';
+        } finally {
+            loadingEditor.value = false;
+        }
+    } else {
+        await applyDefaultPublicSetting();
+    }
+}
+onMounted(() => {
+    navBarHeight.value = (uni.getSystemInfoSync().statusBarHeight || 0) + 44;
 });
+onShow(() => {
+    pageVisible = true;
+    void loadEditor();
+    void loadQuota();
+});
+onHide(() => {
+    pageVisible = false;
+    // #ifdef MP-WEIXIN
+    uni.disableAlertBeforeUnload?.();
+    // #endif
+});
+watch(
+    [dreamContent, selectedTags, selectedEmotion, isPublic],
+    () => {
+        // #ifdef MP-WEIXIN
+        if (pageVisible && typeof uni.enableAlertBeforeUnload === 'function') {
+            if (isDirty.value) uni.enableAlertBeforeUnload({ message: '梦境尚未保存，确定离开吗？' });
+            else uni.disableAlertBeforeUnload();
+        }
+        // #endif
+    },
+    { deep: true }
+);
+// #ifdef H5
+function beforeUnload(event: BeforeUnloadEvent) {
+    if (isDirty.value) {
+        event.preventDefault();
+        event.returnValue = '';
+    }
+}
+window.addEventListener('beforeunload', beforeUnload);
+onUnmounted(() => window.removeEventListener('beforeunload', beforeUnload));
+// #endif
 </script>
 
 <style lang="scss" scoped>
@@ -705,9 +691,9 @@ onShow(() => {
 
 .record-page {
     min-height: 100vh;
-    background: $bg-page;
+    background: #faf8fc;
     padding-bottom: 300rpx;
-    padding-top: calc(v-bind('navBarHeight') * 2rpx);
+    padding-top: v-bind("navBarHeight + 'px'");
     transition: background-color 0.3s ease;
 
     &.dark-mode {
@@ -1340,16 +1326,16 @@ onShow(() => {
 // 底部按钮
 .fixed-bottom {
     position: fixed;
-    bottom: 0;
+    bottom: calc(100rpx + env(safe-area-inset-bottom));
     left: 0;
     right: 0;
     z-index: 100;
     background: #fff;
     padding: 28rpx 40rpx;
-    padding-bottom: calc(28rpx + 100rpx + env(safe-area-inset-bottom));
+    padding-bottom: 28rpx;
     box-shadow: 0 -4rpx 32rpx rgba(107, 78, 255, 0.08);
-    border-top-left-radius: 40rpx;
-    border-top-right-radius: 40rpx;
+    border-top-left-radius: 24rpx;
+    border-top-right-radius: 24rpx;
 }
 
 .submit-btn {
@@ -1415,5 +1401,85 @@ onShow(() => {
     &:active:not(.disabled) {
         transform: scale(0.97);
     }
+}
+.record-intro {
+    display: flex;
+    flex-direction: column;
+    gap: 12rpx;
+    margin: 32rpx;
+    color: #8e839b;
+    font-size: 25rpx;
+}
+.record-intro text:first-child {
+    color: #2d2537;
+    font-size: 42rpx;
+    font-weight: 600;
+}
+.record-settings {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12rpx;
+    margin: 0 32rpx 32rpx;
+}
+.setting-chip {
+    margin: 0;
+    padding: 14rpx 20rpx;
+    border-radius: 14rpx;
+    background: #eee9f4;
+    color: #776787;
+    font-size: 24rpx;
+    line-height: 1.5;
+}
+.setting-chip::after,
+.edit-btn::after {
+    border: none;
+}
+.setting-chip.active {
+    background: #7653af;
+    color: #fff;
+}
+.polish-preview {
+    margin: 24rpx 32rpx;
+    padding: 28rpx;
+    border-radius: 20rpx;
+    background: #fff;
+}
+.preview-title,
+.preview-copy,
+.preview-hint {
+    display: block;
+}
+.preview-title {
+    font-size: 28rpx;
+    font-weight: 600;
+    color: #8966b6;
+}
+.preview-copy {
+    font-size: 28rpx;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    margin: 20rpx 0;
+}
+.preview-hint {
+    color: #8e839b;
+    font-size: 23rpx;
+    line-height: 1.6;
+}
+.preview-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12rpx;
+    margin-top: 24rpx;
+}
+.dark-mode .record-intro text:first-child {
+    color: #eee;
+}
+.dark-mode .setting-chip {
+    background: #302740;
+    color: #bea6eb;
+}
+.dark-mode .polish-preview {
+    background: #1a1a1a;
+    color: #eee;
 }
 </style>
