@@ -187,6 +187,7 @@ pnpm build:mp-weixin
 - [API 接口设计](docs/03-API接口设计.md)
 - [数据库设计](docs/04-数据库设计.md)
 - [前端开发指南](docs/05-前端开发指南.md)
+- [产品升级需求与内容商业化方案](docs/06-产品升级需求与内容商业化方案.md)
 - [生产部署说明](DEPLOY.md)
 
 ## License
