@@ -47,3 +47,6 @@ pnpm-debug.log*
 # Testing
 coverage/
 .nyc_output/
+
+# AI 生成中间产物
+output/
