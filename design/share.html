@@ -4,7 +4,7 @@
         <meta charset="UTF-8" />
         <meta
             name="viewport"
-            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+            content="width=device-width, initial-scale=1.0"
         />
         <title>梦见 - 分享</title>
         <link
@@ -119,6 +119,7 @@
                 cursor: pointer;
             }
         </style>
+        <script src="prototype.js"></script>
     </head>
     <body>
         <div class="app-container">
@@ -134,12 +135,20 @@
                     <div class="poster-content">
                         <div>
                             <div style="font-size: 12px; opacity: 0.8; margin-bottom: 8px">DREAM ANALYSIS</div>
-                            <h2 style="font-size: 20px; margin-bottom: 4px">对自由的渴望与向往</h2>
+                            <h2
+                                id="poster-title"
+                                style="font-size: 20px; margin-bottom: 4px"
+                            >
+                                对自由的渴望与向往
+                            </h2>
                         </div>
 
                         <div class="poster-score">85</div>
 
-                        <div style="font-size: 12px; line-height: 1.6; opacity: 0.9">
+                        <div
+                            id="poster-copy"
+                            style="font-size: 12px; line-height: 1.6; opacity: 0.9"
+                        >
                             "这个梦境反映了你内心对自由的渴望。草地象征着广阔的可能性..."
                         </div>
 
@@ -217,5 +226,13 @@
                 </button>
             </div>
         </div>
+        <script>
+            const dream = DrimDesign.pageDream(location.search);
+            if (dream) {
+                const reading = DrimDesign.readingFor(dream);
+                document.getElementById('poster-title').textContent = reading.theme;
+                document.getElementById('poster-copy').textContent = reading.interpretation.slice(0, 60) + '……';
+            }
+        </script>
     </body>
 </html>

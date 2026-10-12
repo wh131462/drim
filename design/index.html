@@ -4,7 +4,7 @@
         <meta charset="UTF-8" />
         <meta
             name="viewport"
-            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+            content="width=device-width, initial-scale=1.0"
         />
         <title>梦见 - 首页</title>
         <link
@@ -30,21 +30,6 @@
                 background: radial-gradient(circle, rgba(107, 78, 255, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
                 border-radius: 50%;
                 z-index: 0;
-            }
-
-            .streak-badge {
-                display: inline-flex;
-                align-items: center;
-                background: white;
-                color: var(--primary-color);
-                padding: 6px 14px;
-                border-radius: 20px;
-                font-size: var(--font-size-sm);
-                margin-bottom: 24px;
-                box-shadow: 0 4px 12px rgba(107, 78, 255, 0.1);
-                font-weight: 600;
-                position: relative;
-                z-index: 1;
             }
 
             .record-btn-container {
@@ -151,6 +136,7 @@
                 z-index: 1;
             }
         </style>
+        <script src="prototype.js"></script>
     </head>
     <body>
         <div class="app-container">
@@ -158,24 +144,17 @@
             <div class="hero-section">
                 <div class="moon-bg"></div>
 
-                <div class="streak-badge animate-float">
-                    <svg
-                        viewBox="0 0 24 24"
-                        style="width: 14px; height: 14px; fill: currentColor; margin-right: 4px"
-                    >
-                        <path
-                            d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"
-                        />
-                    </svg>
-                    连续记梦 7 天
-                </div>
-
-                <h1 class="text-xxl welcome-text">早安，梦游者</h1>
+                <h1
+                    class="text-xxl welcome-text"
+                    id="greeting"
+                >
+                    你好，梦游者
+                </h1>
                 <p
                     class="text-secondary text-sm"
                     style="margin-top: 8px"
                 >
-                    昨晚做了什么有趣的梦？
+                    梦境里发生了什么故事？
                 </p>
 
                 <div class="record-btn-container">
@@ -196,10 +175,46 @@
                 </div>
             </div>
 
+            <section
+                class="home-shortcuts"
+                aria-label="快速入口"
+            >
+                <a
+                    class="home-shortcut"
+                    href="tarot.html"
+                >
+                    <span class="home-shortcut-icon">✦</span>
+                    <span><strong>今日塔罗</strong><small>抽一张指引牌</small></span>
+                </a>
+                <a
+                    class="home-shortcut"
+                    href="tests.html"
+                >
+                    <span class="home-shortcut-icon">◌</span>
+                    <span><strong>心理测试</strong><small>MBTI / 大五人格</small></span>
+                </a>
+                <a
+                    class="home-shortcut"
+                    href="profile.html"
+                >
+                    <span class="home-shortcut-icon">▣</span>
+                    <span><strong>梦境打卡</strong><small id="home-checkin">连续 7 天，今天待记</small></span>
+                </a>
+                <a
+                    class="home-shortcut"
+                    href="discover.html"
+                >
+                    <span class="home-shortcut-icon">⌕</span>
+                    <span><strong>探索广场</strong><small>看看他人的梦</small></span>
+                </a>
+            </section>
+
             <!-- Yesterday's Review -->
-            <div
+            <a
                 class="card review-card ripple"
-                onclick="window.location.href = 'result.html'"
+                href="dream-detail.html"
+                style="display: block; text-decoration: none"
+                aria-label="查看最近的梦"
             >
                 <div
                     class="flex justify-between items-center"
@@ -214,22 +229,26 @@
                                 d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
                             />
                         </svg>
-                        昨日解析回顾
+                        最近的梦
                     </h3>
                     <span
                         class="text-xs"
                         style="opacity: 0.8"
-                        >2026-01-21</span
+                        id="recent-date"
+                        >2026-10-08</span
                     >
                 </div>
                 <div
                     class="text-sm"
                     style="margin-bottom: 16px; opacity: 0.95; line-height: 1.6; font-weight: 500"
                 >
-                    "我梦见自己在一片草地上奔跑，天空很蓝..."
+                    <span id="recent-content">我梦见自己在一片草地上奔跑，天空很蓝……</span>
                 </div>
                 <div class="flex justify-between items-center">
-                    <div class="flex">
+                    <div
+                        class="flex"
+                        id="recent-tags"
+                    >
                         <span class="tag">飞行</span>
                         <span class="tag">自然</span>
                     </div>
@@ -247,7 +266,7 @@
                         查看详情
                     </div>
                 </div>
-            </div>
+            </a>
 
             <!-- Task Preview -->
             <div class="card ripple">
@@ -259,6 +278,7 @@
                     <span
                         class="text-primary text-xs font-bold bg-primary-light"
                         style="background: #e0d9ff; padding: 4px 8px; border-radius: 4px; color: var(--primary-color)"
+                        id="home-task-status"
                         >进行中</span
                     >
                 </div>
@@ -289,6 +309,7 @@
                     <button
                         class="btn btn-outline btn-sm"
                         style="padding: 6px 16px; border-radius: 16px"
+                        id="home-task"
                     >
                         打卡
                     </button>
@@ -296,15 +317,38 @@
             </div>
 
             <!-- Tab Bar -->
-            <div class="tabbar">
+            <nav
+                class="tabbar"
+                aria-label="主导航"
+            >
                 <a
                     href="index.html"
                     class="tab-item active"
+                    aria-current="page"
                 >
                     <svg viewBox="0 0 24 24">
                         <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
                     </svg>
                     <span>首页</span>
+                </a>
+                <a
+                    href="discover.html"
+                    class="tab-item"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <circle
+                            cx="11"
+                            cy="11"
+                            r="8"
+                        />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                    <span>发现</span>
                 </a>
                 <a
                     href="record.html"
@@ -328,7 +372,55 @@
                     </svg>
                     <span>我的</span>
                 </a>
-            </div>
+            </nav>
         </div>
+        <script>
+            const now = new Date();
+            const hour = Number(
+                new Intl.DateTimeFormat('zh-CN', {
+                    timeZone: 'Asia/Shanghai',
+                    hour: 'numeric',
+                    hourCycle: 'h23'
+                }).format(now)
+            );
+            document.getElementById('greeting').textContent =
+                `${hour < 6 ? '夜深了' : hour < 12 ? '早上好' : hour < 18 ? '下午好' : '晚上好'}，梦游者`;
+            document.getElementById('recent-date').textContent = DrimDesign.shanghaiDate(Date.now() - 86400000);
+            const dream = DrimDesign.readDream();
+            if (dream) {
+                const recentTags = document.getElementById('recent-tags');
+                recentTags.replaceChildren();
+                dream.tags.forEach((tag) => {
+                    const badge = document.createElement('span');
+                    badge.className = 'tag';
+                    badge.textContent = DrimDesign.labelTag(tag);
+                    recentTags.append(badge);
+                });
+                document.getElementById('recent-content').textContent =
+                    dream.content.length > 60 ? dream.content.slice(0, 60) + '……' : dream.content;
+                if (dream.recordedAt && !Number.isNaN(Date.parse(dream.recordedAt)))
+                    document.getElementById('recent-date').textContent = new Intl.DateTimeFormat('sv-SE', {
+                        timeZone: 'Asia/Shanghai'
+                    }).format(new Date(dream.recordedAt));
+                if (dream.recordedAt && DrimDesign.shanghaiDate(dream.recordedAt) === DrimDesign.shanghaiDate())
+                    document.getElementById('home-checkin').textContent = '连续 8 天，今天已记';
+            }
+            const task = document.getElementById('home-task');
+            let done = false;
+            try {
+                done = sessionStorage.getItem('drim-design-task') === DrimDesign.shanghaiDate();
+            } catch {}
+            if (done) {
+                task.textContent = '已完成';
+                task.disabled = true;
+                document.getElementById('home-task-status').textContent = '已完成';
+            }
+            task.addEventListener('click', () => {
+                try {
+                    sessionStorage.setItem('drim-design-task', DrimDesign.shanghaiDate());
+                } catch {}
+                location.href = 'task-complete.html';
+            });
+        </script>
     </body>
 </html>

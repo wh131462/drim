@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+        />
+        <title>心灵书店 - 梦见</title>
+        <link
+            rel="stylesheet"
+            href="styles.css"
+        />
+        <style>
+            .app-container {
+                --primary-color: #547568;
+                --text-main: #303934;
+                --text-secondary: #77807a;
+                --text-light: #8b938d;
+                --border-color: #eceee8;
+                background: #fffefa;
+            }
+            .page-header {
+                padding: 22px 20px 18px;
+                color: var(--text-main);
+            }
+            .page-header h1 {
+                font-size: 22px;
+                font-weight: 600;
+            }
+            .page-header p {
+                margin-top: 6px;
+                color: var(--text-secondary);
+                font-size: 12px;
+            }
+            .back-link {
+                color: var(--text-secondary);
+                text-decoration: none;
+                font-size: 13px;
+                display: inline-flex;
+                gap: 5px;
+                align-items: center;
+                margin-bottom: 12px;
+            }
+            .filter-tabs {
+                display: flex;
+                gap: 24px;
+                margin: 0 20px;
+                border-bottom: 1px solid var(--border-color);
+                overflow-x: auto;
+                scrollbar-width: none;
+            }
+            .filter-tabs::-webkit-scrollbar {
+                display: none;
+            }
+            .filter-chip {
+                flex-shrink: 0;
+                border: 0;
+                border-bottom: 2px solid transparent;
+                background: transparent;
+                color: var(--text-secondary);
+                padding: 10px 0 12px;
+                white-space: nowrap;
+                font-size: 12px;
+                cursor: pointer;
+            }
+            .filter-chip.active {
+                color: var(--text-main);
+                border-color: var(--primary-color);
+                font-weight: 600;
+            }
+            .book-list {
+                padding: 0 20px 30px;
+                display: grid;
+            }
+            .book-card {
+                display: flex;
+                gap: 16px;
+                padding: 22px 0;
+                border-bottom: 1px solid var(--border-color);
+            }
+            .book-card:last-child {
+                border-bottom: 0;
+            }
+            .book-cover {
+                display: block;
+                flex-shrink: 0;
+                align-self: flex-start;
+                width: 80px;
+                height: 120px;
+                object-fit: contain;
+            }
+            .book-info {
+                min-width: 0;
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+            }
+            .book-title {
+                color: var(--text-main);
+            }
+            .book-title strong {
+                font-size: 15px;
+                line-height: 1.35;
+            }
+            .favorite {
+                flex-shrink: 0;
+                min-width: 48px;
+                min-height: 32px;
+                border: 0;
+                background: transparent;
+                color: var(--primary-color);
+                font-size: 11px;
+                cursor: pointer;
+                padding: 0;
+            }
+            .favorite.saved {
+                color: var(--text-secondary);
+            }
+            .author {
+                color: var(--text-secondary);
+                font-size: 11px;
+                margin: 3px 0 7px;
+            }
+            .description {
+                color: var(--text-secondary);
+                font-size: 12px;
+                line-height: 1.5;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+            .detail-toggle {
+                align-self: flex-start;
+                min-height: 30px;
+                margin-top: 3px;
+                border: 0;
+                padding: 0;
+                background: transparent;
+                color: var(--primary-color);
+                font-size: 11px;
+                cursor: pointer;
+            }
+            .recommendation {
+                display: none;
+                margin: 2px 0 8px;
+                color: var(--text-secondary);
+                font-size: 11px;
+                line-height: 1.55;
+            }
+            .recommendation strong {
+                font-weight: 500;
+            }
+            .book-card.expanded .recommendation {
+                display: block;
+            }
+            .book-meta {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 4px;
+                align-items: center;
+                justify-content: space-between;
+                margin-top: auto;
+            }
+            .status {
+                color: var(--text-light);
+                font-size: 10px;
+            }
+            .empty {
+                padding: 36px 20px;
+                text-align: center;
+                color: var(--text-light);
+            }
+            .empty p {
+                margin-bottom: 14px;
+            }
+            .storage-note {
+                margin: 0 16px 12px;
+                color: var(--error-color);
+                font-size: 12px;
+            }
+            .hidden {
+                display: none !important;
+            }
+            html[data-theme='dark'] .app-container {
+                --primary-color: #a3b9ac;
+                --text-main: #e5e9e4;
+                --text-secondary: #a7b0a8;
+                --text-light: #859188;
+                --border-color: #343c36;
+                background: #1c211d;
+            }
+            html[data-theme='dark'] .book-card,
+            html[data-theme='dark'] .recommendation,
+            html[data-theme='dark'] .filter-chip,
+            html[data-theme='dark'] .filter-chip.active {
+                background: transparent;
+            }
+            html[data-theme='dark'] .filter-chip {
+                color: var(--text-secondary);
+            }
+            html[data-theme='dark'] .filter-chip.active {
+                color: var(--text-main);
+            }
+            html[data-theme='dark'] .recommendation {
+                color: var(--text-secondary);
+            }
+        </style>
+        <script src="prototype.js"></script>
+    </head>
+    <body>
+        <div class="app-container">
+            <header class="page-header">
+                <a
+                    class="back-link"
+                    href="discover.html"
+                    id="page-back"
+                    >‹ 返回发现</a
+                >
+                <h1
+                    class="text-xxl"
+                    id="page-title"
+                >
+                    心灵书店
+                </h1>
+                <p
+                    class="text-sm"
+                    id="page-subtitle"
+                >
+                    慢慢读，慢慢理解自己
+                </p>
+            </header>
+
+            <div
+                class="filter-tabs"
+                role="group"
+                aria-label="书籍分类"
+            >
+                <button
+                    class="filter-chip active"
+                    type="button"
+                    data-filter="all"
+                    aria-pressed="true"
+                >
+                    全部
+                </button>
+                <button
+                    class="filter-chip"
+                    type="button"
+                    data-filter="dream"
+                    aria-pressed="false"
+                >
+                    梦境与潜意识
+                </button>
+                <button
+                    class="filter-chip"
+                    type="button"
+                    data-filter="emotion"
+                    aria-pressed="false"
+                >
+                    情绪与压力
+                </button>
+                <button
+                    class="filter-chip"
+                    type="button"
+                    data-filter="relationship"
+                    aria-pressed="false"
+                >
+                    关系与成长
+                </button>
+                <button
+                    class="filter-chip"
+                    type="button"
+                    data-filter="saved"
+                    aria-pressed="false"
+                >
+                    我的收藏
+                </button>
+            </div>
+
+            <p
+                class="storage-note hidden"
+                id="storage-note"
+                role="status"
+                aria-live="polite"
+            >
+                当前浏览器无法保存收藏，请检查浏览器的存储权限后重试。
+            </p>
+            <main
+                class="book-list"
+                id="book-list"
+            ></main>
+            <div
+                class="empty hidden"
+                id="empty"
+            >
+                <p id="empty-copy">这个分类还在准备中，换个主题看看吧。</p>
+                <a
+                    class="btn btn-primary btn-sm"
+                    href="books.html"
+                    id="empty-store"
+                    >去书店看看</a
+                >
+                <a
+                    class="btn btn-outline btn-sm"
+                    href="profile.html"
+                    >返回我的</a
+                >
+            </div>
+
+            <nav
+                class="tabbar"
+                aria-label="主导航"
+            >
+                <a
+                    href="index.html"
+                    class="tab-item"
+                >
+                    <svg viewBox="0 0 24 24">
+                        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                    </svg>
+                    <span>首页</span>
+                </a>
+                <a
+                    href="discover.html"
+                    class="tab-item active"
+                    aria-current="page"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <circle
+                            cx="11"
+                            cy="11"
+                            r="8"
+                        />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                    <span>发现</span>
+                </a>
+                <a
+                    href="record.html"
+                    class="tab-item"
+                >
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                        />
+                    </svg>
+                    <span>记梦</span>
+                </a>
+                <a
+                    href="profile.html"
+                    class="tab-item"
+                >
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                        />
+                    </svg>
+                    <span>我的</span>
+                </a>
+            </nav>
+        </div>
+        <script>
+            const books = [
+                {
+                    id: 1,
+                    category: 'dream',
+                    title: '梦的解析',
+                    coverImage: 'assets/books/dream-analysis.jpg',
+                    author: '西格蒙德·弗洛伊德',
+                    tag: '潜意识',
+                    price: '¥49.00',
+                    reason: '如果你想理解梦境中的象征和隐喻，可以从这本书开始了解潜意识如何表达。',
+                    desc: '从梦的象征与线索出发，理解那些在夜里浮现的心事。'
+                },
+                {
+                    id: 2,
+                    category: 'dream',
+                    title: '荣格自传：回忆·梦·思考',
+                    coverImage: 'assets/books/jung-memoir.jpg',
+                    author: '卡尔·古斯塔夫·荣格',
+                    tag: '荣格',
+                    price: '¥58.00',
+                    reason: '如果你常梦见水、飞行或未知空间，这段关于梦与象征的旅程值得延伸阅读。',
+                    desc: '一段将梦、象征与人生经验放在一起阅读的旅程。'
+                },
+                {
+                    id: 3,
+                    category: 'emotion',
+                    title: '当下的力量',
+                    coverImage: 'assets/books/power-of-now.jpg',
+                    author: '埃克哈特·托利',
+                    tag: '情绪',
+                    price: '¥42.00',
+                    reason: '如果你想整理焦虑或反复的思绪，这本书提供了把注意力带回当下的练习。',
+                    desc: '把注意力带回当下，给焦虑的思绪留出呼吸的空间。'
+                },
+                {
+                    id: 4,
+                    category: 'emotion',
+                    title: '也许你该找个人聊聊',
+                    coverImage: 'assets/books/talk-to-someone.jpg',
+                    author: '洛莉·戈特利布',
+                    tag: '疗愈',
+                    price: '¥52.00',
+                    reason: '如果你想温柔地整理情绪，可以从真实故事中看见被理解和改变的可能。',
+                    desc: '在真实故事里看见改变的可能，学会温柔地理解自己。'
+                },
+                {
+                    id: 5,
+                    category: 'relationship',
+                    title: '依恋',
+                    coverImage: 'assets/books/attached.jpg',
+                    author: '阿米尔·莱文 / 瑞秋·赫勒',
+                    tag: '关系',
+                    price: '¥39.00',
+                    reason: '如果你常梦见亲人、争吵或关系拉扯，可以借这本书认识亲密关系中的需要。',
+                    desc: '认识亲密关系中的不同需要，找到更自在的连接方式。'
+                },
+                {
+                    id: 6,
+                    category: 'relationship',
+                    title: '被讨厌的勇气',
+                    coverImage: 'assets/books/courage-to-be-disliked.jpg',
+                    author: '岸见一郎 / 古贺史健',
+                    tag: '成长',
+                    price: '¥45.00',
+                    reason: '如果你想减少对他人目光的顾虑，这本书适合继续探索自由与选择。',
+                    desc: '从阿德勒心理学出发，重新思考自由、关系与人生选择。'
+                }
+            ];
+            const params = new URLSearchParams(location.search);
+            let filter = params.get('saved') === '1' ? 'saved' : params.get('filter') || 'all';
+            if (!['all', 'dream', 'emotion', 'relationship', 'saved'].includes(filter)) filter = 'all';
+            const readSaved = () => {
+                try {
+                    const value = JSON.parse(localStorage.getItem('drim-saved-books') || '[]');
+                    return new Set(
+                        Array.isArray(value) ? value.filter((id) => books.some((book) => book.id === id)) : []
+                    );
+                } catch {
+                    return new Set();
+                }
+            };
+            const saveSaved = (value) => {
+                try {
+                    localStorage.setItem('drim-saved-books', JSON.stringify([...value]));
+                    return true;
+                } catch {
+                    return false;
+                }
+            };
+            let saved = readSaved();
+            const list = document.getElementById('book-list');
+            const render = () => {
+                const shelf = filter === 'saved';
+                document.title = `${shelf ? '我的书架' : '心灵书店'} - 梦见`;
+                document.getElementById('page-title').textContent = shelf ? '我的书架' : '心灵书店';
+                document.getElementById('page-subtitle').textContent = shelf
+                    ? '留住想读的每一本'
+                    : '慢慢读，慢慢理解自己';
+                const back = document.getElementById('page-back');
+                back.href = shelf ? 'profile.html' : 'discover.html';
+                back.textContent = shelf ? '‹ 返回我的' : '‹ 返回发现';
+                document.querySelectorAll('.tabbar .tab-item').forEach((item) => {
+                    const active = item.getAttribute('href') === (shelf ? 'profile.html' : 'discover.html');
+                    item.classList.toggle('active', active);
+                    item.setAttribute('aria-current', active ? 'page' : 'false');
+                });
+                document.querySelectorAll('[data-filter]').forEach((button) => {
+                    const active = button.dataset.filter === filter;
+                    button.classList.toggle('active', active);
+                    button.setAttribute('aria-pressed', active);
+                });
+                const visible = books.filter((book) =>
+                    filter === 'saved' ? saved.has(book.id) : filter === 'all' || book.category === filter
+                );
+                document.getElementById('empty').classList.toggle('hidden', visible.length > 0);
+                document.getElementById('empty-copy').textContent =
+                    filter === 'saved'
+                        ? '还没有收藏的书，先去发现一本适合你的阅读吧。'
+                        : '这个分类还在准备中，换个主题看看吧。';
+                document.getElementById('empty-store').classList.toggle('hidden', !shelf);
+                list.innerHTML = visible
+                    .map(
+                        (book) =>
+                            `<article class="book-card" data-book="${book.id}"><img class="book-cover" src="${book.coverImage}" alt="${book.title}" aria-hidden="true" /><div class="book-info"><div class="book-title"><strong>${book.title}</strong></div><div class="author">${book.author}</div><div class="description">${book.desc}</div><button class="detail-toggle" type="button" data-detail aria-expanded="false">查看推荐理由</button><div class="recommendation"><strong>推荐理由：</strong>${book.reason}</div><div class="book-meta"><span class="status">参考价 ${book.price}</span><button class="favorite ${saved.has(book.id) ? 'saved' : ''}" type="button" data-save="${book.id}" aria-label="${saved.has(book.id) ? '取消收藏' : '收藏'}《${book.title}》" aria-pressed="${saved.has(book.id)}">${saved.has(book.id) ? '已收藏' : '收藏'}</button></div></div></article>`
+                    )
+                    .join('');
+                list.querySelectorAll('[data-save]').forEach((button) =>
+                    button.addEventListener('click', () => {
+                        const id = Number(button.dataset.save);
+                        const nextSaved = new Set(saved);
+                        nextSaved.has(id) ? nextSaved.delete(id) : nextSaved.add(id);
+                        if (!saveSaved(nextSaved)) {
+                            document.getElementById('storage-note').classList.remove('hidden');
+                            return;
+                        }
+                        saved = nextSaved;
+                        document.getElementById('storage-note').classList.add('hidden');
+                        render();
+                    })
+                );
+                list.querySelectorAll('[data-detail]').forEach((button) =>
+                    button.addEventListener('click', () => {
+                        const card = button.closest('.book-card');
+                        const expanded = card.classList.toggle('expanded');
+                        button.setAttribute('aria-expanded', expanded);
+                        button.textContent = expanded ? '收起推荐理由' : '查看推荐理由';
+                    })
+                );
+            };
+            document.querySelectorAll('[data-filter]').forEach((button) =>
+                button.addEventListener('click', () => {
+                    filter = button.dataset.filter;
+                    render();
+                })
+            );
+            render();
+        </script>
+    </body>
+</html>

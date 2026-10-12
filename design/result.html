@@ -4,7 +4,7 @@
         <meta charset="UTF-8" />
         <meta
             name="viewport"
-            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+            content="width=device-width, initial-scale=1.0"
         />
         <title>梦见 - 解析结果</title>
         <link
@@ -14,7 +14,7 @@
         <style>
             .result-header {
                 background: var(--primary-gradient);
-                padding: 20px 24px 70px;
+                padding: 76px 24px 70px;
                 color: white;
                 text-align: center;
                 border-bottom-left-radius: 40px;
@@ -23,6 +23,27 @@
                 z-index: 1;
             }
 
+            .result-content > .card {
+                margin: 0 0 16px;
+            }
+            .result-content .reading-list {
+                margin: 24px 0;
+            }
+            .dream-summary {
+                background: var(--card-background);
+                border-radius: 16px;
+                padding: 16px;
+                margin-bottom: 16px;
+            }
+            .dream-summary p {
+                font-size: 12px;
+                margin-top: 8px;
+                color: var(--text-secondary);
+                overflow-wrap: anywhere;
+            }
+            .dream-summary a {
+                text-decoration: none;
+            }
             .result-content {
                 margin-top: -50px;
                 padding: 0 20px 100px;
@@ -145,6 +166,7 @@
                 padding: 0 20px;
             }
         </style>
+        <script src="prototype.js"></script>
     </head>
     <body>
         <div class="app-container">
@@ -152,8 +174,10 @@
             <div class="navbar navbar-transparent text-white">
                 <button
                     class="btn-icon text-white"
+                    id="result-back"
                     style="position: absolute; left: 16px"
-                    onclick="window.history.back()"
+                    onclick="window.location.href = 'dream-detail.html'"
+                    aria-label="返回梦境详情"
                 >
                     <svg
                         class="icon-svg"
@@ -171,18 +195,37 @@
             </div>
 
             <div class="result-content">
+                <section
+                    class="dream-summary"
+                    id="result-dream-summary"
+                    hidden
+                >
+                    <div class="flex justify-between">
+                        <strong>这场梦</strong
+                        ><a
+                            id="result-edit"
+                            href="record.html?edit=1"
+                            class="text-link"
+                            >编辑记录</a
+                        >
+                    </div>
+                    <p id="result-dream-content"></p>
+                    <p id="result-dream-meta"></p>
+                </section>
                 <div
                     class="card"
-                    style="padding-top: 32px"
+                    style="padding-top: 28px"
                 >
                     <h2
                         class="text-xl font-bold text-center"
+                        id="analysis-title"
                         style="margin-bottom: 20px; color: var(--primary-color)"
                     >
                         对自由的渴望与向往
                     </h2>
                     <div
                         class="text-secondary text-sm"
+                        id="analysis-content"
                         style="line-height: 1.8; text-align: justify"
                     >
                         这个梦境反映了你内心对自由的渴望。草地象征着广阔的可能性，奔跑代表追逐梦想的动力，而飞翔则意味着突破限制、超越自我的愿望。近期你可能在某些方面感到束缚，这个梦是潜意识在提醒你勇敢追求内心真正想要的东西。
@@ -235,6 +278,8 @@
                     >
                         <button
                             class="btn-icon"
+                            id="save-analysis"
+                            aria-pressed="false"
                             style="margin: 0 auto; color: var(--primary-color)"
                         >
                             <svg
@@ -246,8 +291,14 @@
                                     d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
                                 />
                             </svg>
-                            收藏解析
+                            <span id="save-analysis-label">收藏解析</span>
                         </button>
+                        <p
+                            id="analysis-save-status"
+                            class="text-xs text-secondary"
+                            role="status"
+                            aria-live="polite"
+                        ></p>
                     </div>
                 </div>
 
@@ -317,11 +368,46 @@
                             border: none;
                             box-shadow: 0 4px 10px rgba(255, 165, 0, 0.2);
                         "
-                        onclick="window.location.href = 'task-complete.html'"
+                        id="result-task"
                     >
                         完成打卡
                     </button>
                 </div>
+
+                <section
+                    class="reading-list"
+                    aria-labelledby="reading-title"
+                >
+                    <div class="reading-heading">
+                        <div>
+                            <span class="eyebrow">延伸阅读</span>
+                            <h3 id="reading-title">给这场梦的一本书</h3>
+                        </div>
+                        <a
+                            href="books.html"
+                            class="text-link"
+                            >查看书店</a
+                        >
+                    </div>
+                    <a
+                        class="reading-card"
+                        id="reading-link"
+                        href="books.html?filter=dream"
+                    >
+                        <span
+                            class="reading-cover"
+                            aria-hidden="true"
+                            >🌙</span
+                        >
+                        <span class="reading-info">
+                            <strong id="reading-book-title">荣格自传：回忆·梦·思考</strong>
+                            <small id="reading-book-reason"
+                                >你的梦境出现了“飞行”和“自由”，适合从象征与潜意识的角度继续阅读。</small
+                            >
+                            <em id="reading-book-status">即将上架 / 潜意识</em>
+                        </span>
+                    </a>
+                </section>
 
                 <div class="disclaimer">
                     本解析仅供娱乐参考，不构成任何专业建议。<br />请相信科学，理性看待解析结果。
@@ -331,6 +417,7 @@
             <div class="action-bar">
                 <button
                     class="btn btn-outline flex-1"
+                    id="result-share"
                     style="flex: 1"
                     onclick="window.location.href = 'share.html'"
                 >
@@ -354,5 +441,76 @@
                 </button>
             </div>
         </div>
+        <script>
+            // shortcut: fixed demo interpretations show the flow; connect the existing analysis API when implementing the app.
+            const dream = DrimDesign.pageDream(location.search);
+            const reading = DrimDesign.readingFor(dream || { tags: ['flying'] });
+            if (dream) {
+                document.getElementById('result-dream-summary').hidden = false;
+                document.getElementById('result-dream-content').textContent = dream.content;
+                document.getElementById('result-dream-meta').textContent = [
+                    ...dream.tags.map(DrimDesign.labelTag),
+                    DrimDesign.labelEmotion(dream.emotion),
+                    dream.isPublic ? '公开' : '私密'
+                ]
+                    .filter(Boolean)
+                    .join('、');
+                document.getElementById('analysis-title').textContent = reading.theme;
+                document.getElementById('analysis-content').textContent = reading.interpretation;
+            }
+            document.getElementById('reading-link').href = `books.html?filter=${reading.category}`;
+            document.getElementById('reading-book-title').textContent = reading.title;
+            document.getElementById('reading-book-reason').textContent = reading.reason;
+            document.getElementById('reading-book-status').textContent =
+                `即将上架 / ${{ dream: '梦境与潜意识', emotion: '情绪与压力', relationship: '关系与成长', all: '自我理解' }[reading.category]}`;
+            const params = new URLSearchParams(location.search);
+            if (params.get('sample') === '1') {
+                document.getElementById('result-back').onclick = () => {
+                    location.href = `dream-detail.html?sample=1&date=${DrimDesign.shanghaiDate(dream.recordedAt)}`;
+                };
+                document.getElementById('result-edit').hidden = true;
+                document.getElementById('result-share').onclick = () => {
+                    location.href = `share.html?sample=1&date=${DrimDesign.shanghaiDate(dream.recordedAt)}`;
+                };
+            }
+            const saveAnalysis = document.getElementById('save-analysis');
+            let saved = false;
+            try {
+                saved = sessionStorage.getItem('drim-design-saved-analysis') === (dream?.content || 'sample');
+            } catch {}
+            const updateSaved = () => {
+                saveAnalysis.setAttribute('aria-pressed', String(saved));
+                document.getElementById('save-analysis-label').textContent = saved ? '已收藏解析' : '收藏解析';
+            };
+            updateSaved();
+            saveAnalysis.addEventListener('click', () => {
+                const nextSaved = !saved;
+                try {
+                    nextSaved
+                        ? sessionStorage.setItem('drim-design-saved-analysis', dream?.content || 'sample')
+                        : sessionStorage.removeItem('drim-design-saved-analysis');
+                } catch {
+                    document.getElementById('analysis-save-status').textContent =
+                        '当前浏览器无法保存收藏，请启用会话存储后重试。';
+                    return;
+                }
+                saved = nextSaved;
+                document.getElementById('analysis-save-status').textContent = '';
+                updateSaved();
+            });
+            const task = document.getElementById('result-task');
+            try {
+                if (sessionStorage.getItem('drim-design-task') === DrimDesign.shanghaiDate()) {
+                    task.textContent = '今日任务已完成';
+                    task.disabled = true;
+                }
+            } catch {}
+            task.addEventListener('click', () => {
+                try {
+                    sessionStorage.setItem('drim-design-task', DrimDesign.shanghaiDate());
+                } catch {}
+                location.href = 'task-complete.html';
+            });
+        </script>
     </body>
 </html>

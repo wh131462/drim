@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+        />
+        <title>发现 - 梦见</title>
+        <link
+            rel="stylesheet"
+            href="styles.css"
+        />
+        <style>
+            /* Explore Page Specific Styles */
+            .explore-header {
+                background: linear-gradient(135deg, #6b4eff 0%, #9f7aea 100%);
+                padding: 60px 16px 32px;
+                color: white;
+                border-radius: 0 0 24px 24px;
+                margin-bottom: 16px;
+            }
+
+            .search-bar {
+                background: rgba(255, 255, 255, 0.2);
+                backdrop-filter: blur(10px);
+                border-radius: 24px;
+                padding: 12px 20px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-top: 16px;
+            }
+
+            .search-bar input {
+                background: none;
+                border: none;
+                color: white;
+                flex: 1;
+                font-size: 15px;
+            }
+
+            .search-bar input::placeholder {
+                color: rgba(255, 255, 255, 0.7);
+            }
+
+            .filter-tabs {
+                display: flex;
+                gap: 8px;
+                padding: 0 16px 16px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+
+            .filter-tabs::-webkit-scrollbar {
+                display: none;
+            }
+
+            .filter-chip {
+                background: white;
+                border: 1.5px solid #e2e8f0;
+                border-radius: 20px;
+                padding: 8px 16px;
+                font-size: 13px;
+                color: var(--text-secondary);
+                white-space: nowrap;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .filter-chip.active {
+                background: var(--primary-color);
+                border-color: var(--primary-color);
+                color: white;
+            }
+
+            .dream-feed {
+                padding: 0 16px 80px;
+            }
+
+            .public-dream-card {
+                background: white;
+                border-radius: 16px;
+                padding: 20px;
+                margin-bottom: 16px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+                transition: all 0.2s;
+            }
+
+            .public-dream-card:active {
+                transform: scale(0.98);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            }
+
+            .dream-author {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 16px;
+            }
+
+            .author-avatar {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background: var(--primary-light);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+            }
+
+            .author-info {
+                flex: 1;
+            }
+
+            .author-name {
+                font-size: 14px;
+                font-weight: 600;
+                color: var(--text-main);
+            }
+
+            .author-time {
+                font-size: 12px;
+                color: var(--text-light);
+            }
+
+            .dream-content {
+                font-size: 15px;
+                line-height: 1.7;
+                color: var(--text-main);
+                margin-bottom: 16px;
+                max-height: 4.8em;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: -webkit-box;
+                -webkit-line-clamp: 3;
+                -webkit-box-orient: vertical;
+            }
+
+            .dream-tags {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+                margin-bottom: 16px;
+            }
+
+            .tag-chip {
+                background: var(--primary-light);
+                color: var(--primary-color);
+                padding: 4px 12px;
+                border-radius: 12px;
+                font-size: 12px;
+            }
+
+            .dream-stats {
+                display: flex;
+                align-items: center;
+                gap: 20px;
+                padding-top: 16px;
+                border-top: 1px solid #f7fafc;
+            }
+
+            .stat-item {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 13px;
+                color: var(--text-secondary);
+            }
+
+            .random-btn {
+                position: fixed;
+                bottom: 80px;
+                right: max(20px, calc((100vw - 420px) / 2 + 20px));
+                border: none;
+                width: 56px;
+                height: 56px;
+                background: linear-gradient(135deg, #6b4eff 0%, #9f7aea 100%);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 8px 20px rgba(107, 78, 255, 0.4);
+                cursor: pointer;
+                transition: all 0.3s;
+                z-index: 10;
+            }
+
+            .random-btn:active {
+                transform: scale(0.9) rotate(180deg);
+            }
+
+            .empty-state {
+                text-align: center;
+                padding: 60px 40px;
+            }
+
+            .empty-icon {
+                font-size: 64px;
+                margin-bottom: 16px;
+                opacity: 0.3;
+            }
+
+            .empty-text {
+                color: var(--text-light);
+                font-size: 14px;
+            }
+            .search-bar input {
+                min-width: 0;
+                outline-color: white;
+            }
+            .feed-heading {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 4px 16px 16px;
+            }
+            .feed-heading h2 {
+                font-size: 17px;
+            }
+            .dream-open {
+                background: none;
+                border: 0;
+                color: inherit;
+                width: 100%;
+                text-align: left;
+                font: inherit;
+                cursor: pointer;
+            }
+            .like-btn {
+                background: none;
+                border: 0;
+                padding: 6px 2px;
+                font: inherit;
+                cursor: pointer;
+            }
+            .like-btn[aria-pressed='true'] {
+                color: var(--primary-color);
+            }
+            #feed-empty button {
+                margin-top: 16px;
+            }
+            #public-detail {
+                width: min(360px, calc(100% - 32px));
+                margin: auto;
+                border: 0;
+                border-radius: 24px;
+                padding: 28px;
+                color: var(--text-main);
+                background: var(--card-background);
+                box-shadow: var(--shadow-lg);
+            }
+            #public-detail::backdrop {
+                background: rgba(20, 16, 40, 0.55);
+            }
+            #public-detail h2 {
+                font-size: 20px;
+                margin: 8px 28px 8px 0;
+            }
+            #public-content {
+                margin: 20px 0;
+                font-size: 15px;
+                line-height: 1.9;
+            }
+            .public-author {
+                font-size: 12px;
+            }
+            button.author-name {
+                border: 0;
+                padding: 4px 0;
+                background: none;
+                font: inherit;
+                font-weight: 600;
+                color: var(--text-main);
+                text-align: left;
+                cursor: pointer;
+            }
+            #public-profile-dreams {
+                display: grid;
+                gap: 10px;
+                margin-top: 20px;
+            }
+            #public-profile-dreams button {
+                text-align: left;
+            }
+            .dialog-close {
+                position: absolute;
+                top: 12px;
+                right: 14px;
+                font-size: 24px;
+            }
+        </style>
+        <script src="prototype.js"></script>
+    </head>
+    <body>
+        <div class="app-container">
+            <!-- Header -->
+            <div class="explore-header">
+                <h1 class="text-xxl font-bold">发现你的梦境世界</h1>
+                <p
+                    class="text-sm"
+                    style="margin-top: 8px; opacity: 0.9"
+                >
+                    探索梦境、塔罗与自我理解
+                </p>
+
+                <div class="search-bar">
+                    <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <circle
+                            cx="8.5"
+                            cy="8.5"
+                            r="5.5"
+                        />
+                        <path d="M12.5 12.5L16 16" />
+                    </svg>
+                    <input
+                        type="text"
+                        placeholder="搜索梦境内容..."
+                        id="dream-search"
+                        aria-label="搜索公开梦境"
+                    />
+                </div>
+            </div>
+
+            <section
+                class="discover-shortcuts"
+                aria-label="发现更多内容"
+            >
+                <a
+                    class="discover-shortcut"
+                    href="tarot.html"
+                >
+                    <span class="shortcut-icon">✦</span>
+                    <span><strong>今日塔罗</strong><small>抽一张指引牌</small></span>
+                    <span class="shortcut-arrow">›</span>
+                </a>
+                <a
+                    class="discover-shortcut"
+                    href="tests.html"
+                >
+                    <span class="shortcut-icon">◌</span>
+                    <span><strong>心理测试</strong><small>认识自己的偏好</small></span>
+                    <span class="shortcut-arrow">›</span>
+                </a>
+                <a
+                    class="discover-shortcut"
+                    href="books.html"
+                >
+                    <span class="shortcut-icon">▤</span>
+                    <span><strong>心灵书店</strong><small>给这场梦一本书</small></span>
+                    <span class="shortcut-arrow">›</span>
+                </a>
+            </section>
+
+            <div class="feed-heading">
+                <h2>探索广场</h2>
+                <span
+                    id="feed-count"
+                    class="text-secondary text-xs"
+                    >3 场公开梦境</span
+                >
+            </div>
+            <div
+                class="filter-tabs"
+                role="group"
+                aria-label="梦境主题"
+            >
+                <button
+                    class="filter-chip active"
+                    data-filter="全部"
+                    aria-pressed="true"
+                >
+                    全部
+                </button>
+                <button
+                    class="filter-chip"
+                    data-filter="追逐"
+                    aria-pressed="false"
+                >
+                    追逐
+                </button>
+                <button
+                    class="filter-chip"
+                    data-filter="飞行"
+                    aria-pressed="false"
+                >
+                    飞行
+                </button>
+                <button
+                    class="filter-chip"
+                    data-filter="水"
+                    aria-pressed="false"
+                >
+                    水
+                </button>
+                <button
+                    class="filter-chip"
+                    data-filter="动物"
+                    aria-pressed="false"
+                >
+                    动物
+                </button>
+                <button
+                    class="filter-chip"
+                    data-filter="亲人"
+                    aria-pressed="false"
+                >
+                    亲人
+                </button>
+                <button
+                    class="filter-chip"
+                    data-filter="开心"
+                    aria-pressed="false"
+                >
+                    开心
+                </button>
+                <button
+                    class="filter-chip"
+                    data-filter="恐惧"
+                    aria-pressed="false"
+                >
+                    恐惧
+                </button>
+            </div>
+            <div
+                class="dream-feed"
+                id="dream-feed"
+            ></div>
+            <div
+                id="feed-empty"
+                class="empty-state"
+                hidden
+            >
+                <p>还没有找到这样的梦境</p>
+                <button
+                    class="btn btn-outline btn-sm"
+                    id="reset-feed"
+                >
+                    查看全部梦境
+                </button>
+            </div>
+            <button
+                class="random-btn"
+                id="random-dream"
+                aria-label="随机看一场梦"
+            >
+                <svg
+                    width="28"
+                    height="28"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="white"
+                    stroke-width="2.5"
+                >
+                    <polyline points="23 4 23 10 17 10" />
+                    <polyline points="1 20 1 14 7 14" />
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                </svg>
+            </button>
+            <dialog id="public-detail">
+                <form method="dialog">
+                    <button
+                        class="btn-icon dialog-close"
+                        aria-label="关闭弹窗"
+                    >
+                        ×
+                    </button>
+                </form>
+                <p
+                    class="text-primary text-xs"
+                    id="public-kind"
+                >
+                    公开梦境
+                </p>
+                <h2 id="public-title"></h2>
+                <p
+                    class="public-author text-secondary"
+                    id="public-author"
+                ></p>
+                <p id="public-content"></p>
+                <p
+                    class="text-primary text-xs"
+                    id="public-tags"
+                ></p>
+                <div
+                    id="public-profile-dreams"
+                    hidden
+                ></div>
+            </dialog>
+
+            <!-- Tab Bar -->
+            <nav
+                class="tabbar"
+                aria-label="主导航"
+            >
+                <a
+                    href="index.html"
+                    class="tab-item"
+                >
+                    <svg viewBox="0 0 24 24">
+                        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                    </svg>
+                    <span>首页</span>
+                </a>
+                <a
+                    href="discover.html"
+                    class="tab-item active"
+                    aria-current="page"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <circle
+                            cx="11"
+                            cy="11"
+                            r="8"
+                        />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                    <span>发现</span>
+                </a>
+                <a
+                    href="record.html"
+                    class="tab-item"
+                >
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                        />
+                    </svg>
+                    <span>记梦</span>
+                </a>
+                <a
+                    href="profile.html"
+                    class="tab-item"
+                >
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                        />
+                    </svg>
+                    <span>我的</span>
+                </a>
+            </nav>
+        </div>
+        <script>
+            const publicDreams = [
+                {
+                    id: 1,
+                    author: '梦想家',
+                    avatar: '🌙',
+                    title: '在草原上自由飞行',
+                    time: '2小时前',
+                    content:
+                        '我梦见自己站在一片广袤的草原上，头顶是湛蓝的天空，白云轻轻飘过。突然，我发现自己可以飞起来，像鸟儿一样自由翱翔。越过山丘时，风轻轻掠过脸颊，远处的湖水映着蓝天，醒来后心里仍然很轻松。',
+                    tags: ['飞行', '开心'],
+                    likes: 24,
+                    views: 156
+                },
+                {
+                    id: 2,
+                    author: '追梦人',
+                    avatar: '⭐',
+                    title: '回到童年的家',
+                    time: '5小时前',
+                    content:
+                        '我梦见自己回到了童年的家，阳光透过窗户洒进来，妈妈在厨房做饭的香味飘过来，一切都是那么温暖和熟悉。门前的树长高了，家人仍然坐在熟悉的桌边，我走过去和他们一起吃饭。',
+                    tags: ['亲人', '开心'],
+                    likes: 18,
+                    views: 89
+                },
+                {
+                    id: 3,
+                    author: '夜行者',
+                    avatar: '🌟',
+                    title: '海边的第一缕阳光',
+                    time: '1天前',
+                    content:
+                        '在梦里我站在海边看日出，海浪一层一层地涌上来，天空渐渐从深蓝变成粉红色，太阳从海平面慢慢升起。脚下的沙子很柔软，海风带着咸味，我安静地看了很久。',
+                    tags: ['水', '开心'],
+                    likes: 32,
+                    views: 203
+                }
+            ];
+            let filter = '全部';
+            const search = document.getElementById('dream-search');
+            const liked = new Set();
+            try {
+                const saved = JSON.parse(sessionStorage.getItem('drim-design-likes') || '[]');
+                if (Array.isArray(saved))
+                    saved.filter((id) => publicDreams.some((dream) => dream.id === id)).forEach((id) => liked.add(id));
+            } catch {}
+            const matchesDream = (dream) =>
+                (filter === '全部' || dream.tags.includes(filter)) &&
+                `${dream.content}${dream.author}${dream.tags.join('')}`.includes(search.value.trim());
+            const showDream = (id) => {
+                const dream = publicDreams.find((item) => item.id === id);
+                if (!dream) return;
+                document.getElementById('public-kind').textContent = '公开梦境';
+                document.getElementById('public-title').textContent = dream.title;
+                document.getElementById('public-author').textContent =
+                    `${dream.avatar} ${dream.author} / ${dream.time}`;
+                document.getElementById('public-content').textContent = dream.content;
+                document.getElementById('public-content').hidden = false;
+                document.getElementById('public-tags').textContent = dream.tags.join('、');
+                document.getElementById('public-tags').hidden = false;
+                document.getElementById('public-profile-dreams').hidden = true;
+                const dialog = document.getElementById('public-detail');
+                if (!dialog.open) dialog.showModal();
+            };
+            const showAuthor = (id) => {
+                const author = publicDreams.find((item) => item.id === id);
+                if (!author) return;
+                const dreams = publicDreams.filter((item) => item.author === author.author);
+                document.getElementById('public-kind').textContent = '公开档案';
+                document.getElementById('public-title').textContent = `${author.avatar} ${author.author}`;
+                document.getElementById('public-author').textContent = `${dreams.length} 场公开梦境`;
+                document.getElementById('public-content').hidden = true;
+                document.getElementById('public-tags').hidden = true;
+                const list = document.getElementById('public-profile-dreams');
+                list.replaceChildren();
+                dreams.forEach((dream) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'btn btn-outline btn-block';
+                    button.textContent = dream.title;
+                    button.addEventListener('click', () => showDream(dream.id));
+                    list.append(button);
+                });
+                list.hidden = false;
+                const dialog = document.getElementById('public-detail');
+                if (!dialog.open) dialog.showModal();
+            };
+            const renderFeed = () => {
+                const visible = publicDreams.filter(matchesDream);
+                document.getElementById('feed-count').textContent = `${visible.length} 场公开梦境`;
+                document.getElementById('feed-empty').hidden = visible.length > 0;
+                document.getElementById('dream-feed').innerHTML = visible
+                    .map(
+                        (dream) =>
+                            `<article class="public-dream-card"><div class="dream-author"><div class="author-avatar" aria-hidden="true">${dream.avatar}</div><div class="author-info"><button class="author-name" data-author="${dream.id}"></button><div class="author-time">${dream.time}</div></div></div><button class="dream-open" data-open="${dream.id}" aria-label="查看梦境：${dream.title}"><p class="dream-content">${dream.content}</p><div class="dream-tags">${dream.tags.map((tag) => `<span class="tag-chip">${tag}</span>`).join('')}</div></button><div class="dream-stats"><button class="stat-item like-btn" data-like="${dream.id}" aria-pressed="${liked.has(dream.id)}" aria-label="${liked.has(dream.id) ? '取消点赞' : '点赞'}${dream.title}"><span aria-hidden="true">${liked.has(dream.id) ? '♥' : '♡'}</span> ${dream.likes + Number(liked.has(dream.id))}</button><span class="stat-item">浏览 ${dream.views}</span></div></article>`
+                    )
+                    .join('');
+                document.querySelectorAll('[data-author]').forEach((button) => {
+                    const dream = publicDreams.find((item) => item.id === Number(button.dataset.author));
+                    button.textContent = dream.author;
+                    button.setAttribute('aria-label', `查看${dream.author}的公开档案`);
+                    button.addEventListener('click', () => showAuthor(dream.id));
+                });
+                document
+                    .querySelectorAll('[data-open]')
+                    .forEach((button) =>
+                        button.addEventListener('click', () => showDream(Number(button.dataset.open)))
+                    );
+                document.querySelectorAll('[data-like]').forEach((button) =>
+                    button.addEventListener('click', () => {
+                        const id = Number(button.dataset.like);
+                        liked.has(id) ? liked.delete(id) : liked.add(id);
+                        try {
+                            sessionStorage.setItem('drim-design-likes', JSON.stringify([...liked]));
+                        } catch {}
+                        renderFeed();
+                    })
+                );
+                document.querySelectorAll('[data-filter]').forEach((button) => {
+                    const active = button.dataset.filter === filter;
+                    button.classList.toggle('active', active);
+                    button.setAttribute('aria-pressed', String(active));
+                });
+            };
+            document.querySelectorAll('[data-filter]').forEach((button) =>
+                button.addEventListener('click', () => {
+                    filter = button.dataset.filter;
+                    renderFeed();
+                })
+            );
+            search.addEventListener('input', renderFeed);
+            document.getElementById('reset-feed').addEventListener('click', () => {
+                filter = '全部';
+                search.value = '';
+                renderFeed();
+            });
+            document
+                .getElementById('random-dream')
+                .addEventListener('click', () =>
+                    showDream(publicDreams[Math.floor(Math.random() * publicDreams.length)].id)
+                );
+            renderFeed();
+        </script>
+    </body>
+</html>

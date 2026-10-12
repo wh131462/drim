@@ -4,7 +4,7 @@
         <meta charset="UTF-8" />
         <meta
             name="viewport"
-            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+            content="width=device-width, initial-scale=1.0"
         />
         <title>梦见 - 我的</title>
         <link
@@ -12,422 +12,618 @@
             href="styles.css"
         />
         <style>
-            .profile-header {
-                background: white;
-                padding: 30px 24px 24px;
-                display: flex;
-                align-items: center;
-                margin-bottom: 12px;
-                position: relative;
+            .profile-intro {
+                padding: 28px 24px 20px;
+                background: linear-gradient(155deg, #eee9ff, #f8f9fd);
             }
 
-            .profile-header::after {
-                content: '';
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                height: 1px;
-                background: linear-gradient(90deg, transparent, #e2e8f0 20%, #e2e8f0 80%, transparent);
+            .profile-intro h1 {
+                font-size: 28px;
+                letter-spacing: -0.04em;
+            }
+
+            .profile-intro p {
+                margin-top: 5px;
+                color: var(--text-secondary);
+                font-size: 13px;
+            }
+
+            .profile-header {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                margin: 0 16px 16px;
+                padding: 20px;
+                background: var(--card-background);
+                border-radius: 20px;
             }
 
             .avatar {
-                width: 72px;
-                height: 72px;
+                flex: 0 0 58px;
+                height: 58px;
                 border-radius: 50%;
-                background: #edf2f7;
-                margin-right: 20px;
-                border: 3px solid white;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                background: var(--primary-light);
                 overflow: hidden;
-                position: relative;
             }
 
             .avatar svg {
                 width: 100%;
                 height: 100%;
-                fill: #cbd5e0;
+                fill: #ad9bdf;
                 transform: scale(1.1) translateY(4px);
+            }
+
+            .user-info {
+                min-width: 0;
+            }
+            .user-name {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+            .user-id {
+                margin-top: 4px;
+                font-size: 11px;
+                color: var(--text-light);
+            }
+            .user-points {
+                margin-top: 7px;
+                font-size: 12px;
+                color: var(--primary-color);
+            }
+            .user-points strong {
+                font-variant-numeric: tabular-nums;
             }
 
             .vip-badge {
                 background: var(--vip-gradient);
-                color: #ffd700;
+                color: #ffe19a;
                 font-size: 10px;
-                padding: 4px 10px;
-                border-radius: 12px;
-                margin-left: 8px;
+                padding: 3px 8px;
+                border-radius: 8px;
                 font-weight: 700;
-                letter-spacing: 0.5px;
-                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-                display: inline-flex;
+                text-decoration: none;
+            }
+
+            .checkin-card {
+                display: flex;
                 align-items: center;
-                gap: 4px;
+                gap: 14px;
+                margin: 0 16px 16px;
+                padding: 20px;
+                background: #eee9ff;
+                border-radius: 20px;
+            }
+
+            .checkin-card svg {
+                flex: 0 0 32px;
+                color: var(--primary-color);
+            }
+            .checkin-copy {
+                flex: 1;
+                min-width: 0;
+            }
+            .checkin-copy h2 {
+                font-size: 15px;
+            }
+            .checkin-copy p {
+                margin-top: 4px;
+                font-size: 11px;
+                color: var(--text-secondary);
+            }
+            .checkin-card .btn {
+                flex-shrink: 0;
+                padding: 10px 14px;
+                font-size: 12px;
+                text-decoration: none;
             }
 
             .stats-grid {
                 display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 16px;
-                padding: 0 20px;
-                margin-bottom: 24px;
-            }
-
-            .stat-item {
-                background: white;
-                border-radius: 16px;
-                padding: 16px 12px;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                margin: 0 16px 16px;
+                padding: 20px 8px;
+                background: var(--card-background);
+                border-radius: 20px;
                 text-align: center;
-                box-shadow: var(--shadow-sm);
-                transition: transform 0.2s;
             }
 
-            .stat-item:active {
-                transform: scale(0.98);
+            .stat-item + .stat-item {
+                border-left: 1px solid var(--border-color);
             }
-
             .stat-value {
-                font-size: 24px;
-                font-weight: 800;
-                color: var(--text-main);
-                margin-bottom: 4px;
-                font-family: 'DIN Alternate', sans-serif;
+                font-size: 25px;
+                font-weight: 750;
+                font-variant-numeric: tabular-nums;
             }
-
             .stat-label {
+                margin-top: 4px;
                 font-size: 11px;
                 color: var(--text-secondary);
-                font-weight: 500;
             }
-
-            .calendar-grid {
-                display: grid;
-                grid-template-columns: repeat(7, 1fr);
-                gap: 10px;
-                text-align: center;
-                margin-top: 20px;
+            .calendar-card {
+                margin: 0 16px 16px;
+                padding: 20px;
             }
-
-            .calendar-day {
-                font-size: 12px;
-                color: var(--text-secondary);
-                aspect-ratio: 1;
+            .calendar-heading {
                 display: flex;
                 align-items: center;
-                justify-content: center;
+                justify-content: space-between;
+                gap: 8px;
+            }
+            .calendar-heading h2 {
+                font-size: 16px;
+            }
+            .month-controls {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+            .month-label {
+                min-width: 88px;
+                text-align: center;
+                font-size: 12px;
+                font-weight: 600;
+            }
+            .month-arrow {
+                display: grid;
+                place-items: center;
+                width: 30px;
+                height: 32px;
+                padding: 0;
+                border: 0;
+                border-radius: 8px;
+                background: none;
+                color: var(--primary-color);
+                font-size: 22px;
+                cursor: pointer;
+            }
+            .month-arrow:hover {
+                background: var(--primary-light);
+            }
+            .calendar-grid {
+                display: grid;
+                grid-template-columns: repeat(7, minmax(0, 1fr));
+                gap: 5px;
+                text-align: center;
+                margin-top: 16px;
+            }
+            .calendar-weekday {
+                padding: 4px 0 8px;
+                font-size: 11px;
+                color: var(--text-light);
+            }
+            .calendar-day {
+                display: grid;
+                place-items: center;
+                aspect-ratio: 1;
                 border-radius: 10px;
+                font-size: 12px;
+                color: var(--text-secondary);
+                text-decoration: none;
                 position: relative;
-                transition: all 0.2s;
+                font-variant-numeric: tabular-nums;
             }
-
-            .calendar-day.active {
-                background: var(--primary-color);
-                color: white;
-                box-shadow: 0 4px 10px rgba(107, 78, 255, 0.3);
-            }
-
-            .calendar-day.has-dream:not(.active) {
-                background: #f0f4ff;
+            .calendar-day.has-dream {
+                background: #eee9ff;
                 color: var(--primary-color);
                 font-weight: 600;
             }
-
             .calendar-day.has-dream::after {
                 content: '';
                 position: absolute;
-                bottom: 6px;
-                width: 4px;
-                height: 4px;
-                background: currentColor;
+                bottom: 4px;
+                width: 3px;
+                height: 3px;
                 border-radius: 50%;
-                opacity: 0.6;
+                background: currentColor;
             }
-
+            .calendar-day.today {
+                outline: 1px solid var(--primary-color);
+                outline-offset: -1px;
+                color: var(--primary-color);
+                font-weight: 700;
+            }
+            .calendar-day.has-dream:hover {
+                background: var(--primary-color);
+                color: white;
+            }
+            .calendar-summary {
+                margin-top: 16px;
+                font-size: 11px;
+                color: var(--text-secondary);
+            }
+            .calendar-legend {
+                display: flex;
+                gap: 16px;
+                align-items: center;
+                margin-top: 8px;
+                font-size: 10px;
+                color: var(--text-light);
+            }
+            .calendar-legend span {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+            }
+            .legend-recorded {
+                width: 9px;
+                height: 9px;
+                border-radius: 3px;
+                background: #ded4ff;
+            }
+            .legend-today {
+                width: 9px;
+                height: 9px;
+                border-radius: 3px;
+                border: 1px solid var(--primary-color);
+            }
             .menu-list {
-                background: white;
-                margin: 20px;
-                border-radius: var(--radius-lg);
-                box-shadow: var(--shadow-sm);
+                background: var(--card-background);
+                margin: 0 16px;
+                border-radius: 20px;
                 overflow: hidden;
             }
-
             .menu-item {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
                 padding: 18px 20px;
-                border-bottom: 1px solid #f7fafc;
-                font-size: 15px;
-                cursor: pointer;
-                transition: background 0.2s;
+                border-bottom: 1px solid var(--border-color);
+                font-size: 14px;
+                color: var(--text-main);
+                text-decoration: none;
             }
-
-            .menu-item:active {
-                background: #f9fafb;
+            .menu-item:hover {
+                background: #f5f2ff;
             }
-
             .menu-item:last-child {
-                border-bottom: none;
+                border-bottom: 0;
             }
-
             .menu-icon {
                 width: 20px;
                 height: 20px;
                 fill: currentColor;
                 opacity: 0.8;
             }
+            .menu-chevron {
+                width: 16px;
+                height: 16px;
+                fill: var(--text-light);
+            }
+            .profile-header a:focus-visible,
+            .checkin-card a:focus-visible,
+            .menu-item:focus-visible,
+            .month-arrow:focus-visible,
+            .calendar-day:focus-visible {
+                outline: 2px solid var(--primary-color);
+                outline-offset: 3px;
+            }
+
+            @media (max-width: 340px) {
+                .profile-intro {
+                    padding-left: 16px;
+                    padding-right: 16px;
+                }
+                .profile-header,
+                .checkin-card {
+                    padding: 16px;
+                    gap: 10px;
+                }
+                .checkin-card svg {
+                    flex-basis: 26px;
+                    width: 26px;
+                }
+                .checkin-card .btn {
+                    padding: 9px 10px;
+                    font-size: 11px;
+                }
+                .calendar-card {
+                    padding: 16px 12px;
+                }
+                .calendar-heading h2 {
+                    font-size: 15px;
+                }
+                .month-controls {
+                    gap: 0;
+                }
+                .month-label {
+                    min-width: 82px;
+                }
+                .month-arrow {
+                    width: 24px;
+                }
+                .calendar-grid {
+                    gap: 4px;
+                }
+            }
         </style>
+        <script src="prototype.js"></script>
     </head>
     <body>
         <div
             class="app-container"
             style="padding-bottom: 100px"
         >
-            <!-- Navbar -->
-            <div class="navbar">我的</div>
+            <header class="profile-intro">
+                <h1>我的</h1>
+                <p>你的潜意识档案</p>
+            </header>
 
-            <div class="profile-header">
-                <div class="avatar">
+            <section
+                class="profile-header"
+                aria-label="用户资料"
+            >
+                <div
+                    class="avatar"
+                    aria-hidden="true"
+                >
                     <svg viewBox="0 0 24 24">
                         <path
                             d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
                         />
                     </svg>
                 </div>
-                <div>
-                    <div class="flex items-center">
-                        <span class="text-xl font-bold">梦游者</span>
-                        <span class="vip-badge">
-                            <svg
-                                style="width: 10px; height: 10px; fill: currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                                />
-                            </svg>
-                            VIP
-                        </span>
+                <div class="user-info">
+                    <div class="user-name">
+                        <span class="text-lg font-bold">梦游者</span>
+                        <a
+                            class="vip-badge"
+                            href="vip.html"
+                            aria-label="查看 VIP 权益"
+                            >VIP</a
+                        >
                     </div>
-                    <div
-                        class="text-xs text-light"
-                        style="margin-top: 6px"
-                    >
-                        ID: user_123456
-                    </div>
+                    <p class="user-id">ID: user_123456</p>
+                    <p class="user-points">幸运值 <strong>120</strong></p>
                 </div>
-            </div>
+            </section>
 
-            <div class="stats-grid">
-                <div class="stat-item ripple">
-                    <div class="stat-value">15</div>
-                    <div class="stat-label">记梦总数</div>
+            <section
+                class="checkin-card"
+                aria-labelledby="checkin-title"
+            >
+                <svg
+                    width="32"
+                    height="32"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    aria-hidden="true"
+                >
+                    <path d="M21 12.8A9 9 0 0 1 11.2 3 9 9 0 1 0 21 12.8Z" />
+                </svg>
+                <div class="checkin-copy">
+                    <h2 id="checkin-title">今天还没有记梦</h2>
+                    <p id="checkin-message">留住醒来时的那一点记忆</p>
                 </div>
-                <div class="stat-item ripple">
+                <a
+                    class="btn btn-primary"
+                    id="checkin-action"
+                    href="record.html"
+                    >去记梦</a
+                >
+            </section>
+
+            <section
+                class="stats-grid"
+                aria-label="梦境统计"
+            >
+                <div class="stat-item">
                     <div
                         class="stat-value"
-                        style="color: var(--primary-color)"
+                        id="total-count"
+                    >
+                        15
+                    </div>
+                    <div class="stat-label">记梦总数</div>
+                </div>
+                <div class="stat-item">
+                    <div
+                        class="stat-value text-primary"
+                        id="month-count"
+                    >
+                        7
+                    </div>
+                    <div class="stat-label">本月打卡</div>
+                </div>
+                <div class="stat-item">
+                    <div
+                        class="stat-value"
+                        id="streak-count"
                     >
                         7
                     </div>
                     <div class="stat-label">连续打卡</div>
                 </div>
-                <div class="stat-item ripple">
-                    <div
-                        class="stat-value"
-                        style="color: #faad14"
-                    >
-                        120
-                    </div>
-                    <div class="stat-label">幸运值</div>
-                </div>
-            </div>
+            </section>
 
-            <div
-                class="card"
-                style="margin-top: 0; border-radius: 20px"
+            <section
+                class="card calendar-card"
+                aria-labelledby="calendar-title"
             >
-                <div class="flex justify-between items-center">
-                    <h3 class="text-lg font-bold">梦境日历</h3>
-                    <span
-                        class="text-xs font-bold text-primary bg-primary-light"
-                        style="padding: 4px 10px; border-radius: 12px; background: rgba(107, 78, 255, 0.1)"
-                        >2026年1月</span
-                    >
-                </div>
-                <div class="calendar-grid">
-                    <div
-                        class="calendar-day text-xs text-light"
-                        style="font-weight: 500"
-                    >
-                        日
+                <div class="calendar-heading">
+                    <h2 id="calendar-title">梦境日历</h2>
+                    <div class="month-controls">
+                        <button
+                            class="month-arrow"
+                            id="previous-month"
+                            type="button"
+                            aria-label="上个月"
+                        >
+                            ‹
+                        </button>
+                        <span
+                            class="month-label"
+                            id="calendar-month"
+                            aria-live="polite"
+                            >2026年10月</span
+                        >
+                        <button
+                            class="month-arrow"
+                            id="next-month"
+                            type="button"
+                            aria-label="下个月"
+                        >
+                            ›
+                        </button>
                     </div>
-                    <div
-                        class="calendar-day text-xs text-light"
-                        style="font-weight: 500"
-                    >
-                        一
-                    </div>
-                    <div
-                        class="calendar-day text-xs text-light"
-                        style="font-weight: 500"
-                    >
-                        二
-                    </div>
-                    <div
-                        class="calendar-day text-xs text-light"
-                        style="font-weight: 500"
-                    >
-                        三
-                    </div>
-                    <div
-                        class="calendar-day text-xs text-light"
-                        style="font-weight: 500"
-                    >
-                        四
-                    </div>
-                    <div
-                        class="calendar-day text-xs text-light"
-                        style="font-weight: 500"
-                    >
-                        五
-                    </div>
-                    <div
-                        class="calendar-day text-xs text-light"
-                        style="font-weight: 500"
-                    >
-                        六
-                    </div>
-
-                    <div class="calendar-day"></div>
-                    <div class="calendar-day"></div>
-                    <div class="calendar-day"></div>
-                    <div class="calendar-day"></div>
-                    <div class="calendar-day has-dream">1</div>
-                    <div class="calendar-day">2</div>
-                    <div class="calendar-day has-dream">3</div>
-
-                    <div class="calendar-day">4</div>
-                    <div class="calendar-day">5</div>
-                    <div class="calendar-day">6</div>
-                    <div
-                        class="calendar-day has-dream"
-                        onclick="window.location.href = 'dream-detail.html'"
-                    >
-                        7
-                    </div>
-                    <div class="calendar-day">8</div>
-                    <div class="calendar-day">9</div>
-                    <div class="calendar-day">10</div>
-
-                    <div class="calendar-day">11</div>
-                    <div class="calendar-day">12</div>
-                    <div class="calendar-day">13</div>
-                    <div class="calendar-day">14</div>
-                    <div class="calendar-day">15</div>
-                    <div class="calendar-day">16</div>
-                    <div class="calendar-day">17</div>
-
-                    <div class="calendar-day">18</div>
-                    <div class="calendar-day">19</div>
-                    <div
-                        class="calendar-day has-dream"
-                        onclick="window.location.href = 'dream-detail.html'"
-                    >
-                        20
-                    </div>
-                    <div
-                        class="calendar-day active has-dream"
-                        onclick="window.location.href = 'dream-detail.html'"
-                    >
-                        21
-                    </div>
-                    <div class="calendar-day">22</div>
-                    <div class="calendar-day">23</div>
-                    <div class="calendar-day">24</div>
-                </div>
-            </div>
-
-            <div class="menu-list">
-                <div
-                    class="menu-item"
-                    onclick="window.location.href = 'vip.html'"
-                >
-                    <div class="flex items-center gap-sm">
-                        <div style="background: #fff7e6; padding: 6px; border-radius: 8px">
-                            <svg
-                                class="menu-icon"
-                                style="color: #faad14"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                                />
-                            </svg>
-                        </div>
-                        <span style="font-weight: 500">会员中心</span>
-                    </div>
-                    <svg
-                        style="width: 16px; height: 16px; fill: #cbd5e0"
-                        viewBox="0 0 24 24"
-                    >
-                        <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
-                    </svg>
                 </div>
                 <div
-                    class="menu-item"
-                    onclick="window.location.href = 'achievements.html'"
-                >
-                    <div class="flex items-center gap-sm">
-                        <div style="background: #e6fffb; padding: 6px; border-radius: 8px">
-                            <svg
-                                class="menu-icon"
-                                style="color: #13c2c2"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-1c0-2.33 4.67-3.5 7-3.5s7 1.17 7 3.5v1z"
-                                />
-                            </svg>
-                        </div>
-                        <span style="font-weight: 500">我的成就</span>
-                    </div>
-                    <svg
-                        style="width: 16px; height: 16px; fill: #cbd5e0"
-                        viewBox="0 0 24 24"
-                    >
-                        <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
-                    </svg>
-                </div>
+                    class="calendar-grid"
+                    id="calendar-days"
+                    aria-label="2026年10月梦境记录"
+                ></div>
+                <p
+                    class="calendar-summary"
+                    id="calendar-summary"
+                    aria-live="polite"
+                ></p>
                 <div
-                    class="menu-item"
-                    onclick="window.location.href = 'settings.html'"
+                    class="calendar-legend"
+                    aria-hidden="true"
                 >
-                    <div class="flex items-center gap-sm">
-                        <div style="background: #f0f0f0; padding: 6px; border-radius: 8px">
-                            <svg
-                                class="menu-icon"
-                                style="color: #595959"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L3.16 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.58 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"
-                                />
-                            </svg>
-                        </div>
-                        <span style="font-weight: 500">设置</span>
-                    </div>
-                    <svg
-                        style="width: 16px; height: 16px; fill: #cbd5e0"
-                        viewBox="0 0 24 24"
-                    >
-                        <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
-                    </svg>
+                    <span><i class="legend-recorded"></i>已记梦</span>
+                    <span><i class="legend-today"></i>今天</span>
                 </div>
-            </div>
+            </section>
+
+            <nav
+                class="menu-list"
+                aria-label="个人功能"
+            >
+                <a
+                    class="menu-item"
+                    href="books.html?saved=1"
+                >
+                    <span class="flex items-center gap-sm">
+                        <svg
+                            class="menu-icon"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.5"
+                            aria-hidden="true"
+                            style="fill: none; color: var(--primary-color)"
+                        >
+                            <path
+                                d="M3 4h6a3 3 0 0 1 3 3v14a4 4 0 0 0-4-3H3V4Zm18 0h-6a3 3 0 0 0-3 3v14a4 4 0 0 1 4-3h5V4Z"
+                            />
+                        </svg>
+                        <span>我的书架</span>
+                    </span>
+                    <svg
+                        class="menu-chevron"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path
+                            d="m9 6 6 6-6 6"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        />
+                    </svg>
+                </a>
+                <a
+                    class="menu-item"
+                    href="vip.html"
+                >
+                    <span class="flex items-center gap-sm">
+                        <svg
+                            class="menu-icon"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                            style="color: var(--primary-color)"
+                        >
+                            <path
+                                d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                            />
+                        </svg>
+                        <span>会员中心</span>
+                    </span>
+                    <svg
+                        class="menu-chevron"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path
+                            d="m9 6 6 6-6 6"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        />
+                    </svg>
+                </a>
+                <a
+                    class="menu-item"
+                    href="achievements.html"
+                >
+                    <span class="flex items-center gap-sm">
+                        <svg
+                            class="menu-icon"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                            style="color: var(--primary-color)"
+                        >
+                            <path
+                                d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-1c0-2.33 4.67-3.5 7-3.5s7 1.17 7 3.5v1z"
+                            />
+                        </svg>
+                        <span>我的成就</span>
+                    </span>
+                    <svg
+                        class="menu-chevron"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path
+                            d="m9 6 6 6-6 6"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        />
+                    </svg>
+                </a>
+                <a
+                    class="menu-item"
+                    href="settings.html"
+                >
+                    <span class="flex items-center gap-sm">
+                        <svg
+                            class="menu-icon"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                            style="color: var(--primary-color)"
+                        >
+                            <path
+                                d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L3.16 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.58 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"
+                            />
+                        </svg>
+                        <span>设置</span>
+                    </span>
+                    <svg
+                        class="menu-chevron"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path
+                            d="m9 6 6 6-6 6"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        />
+                    </svg>
+                </a>
+            </nav>
 
             <!-- Tab Bar -->
-            <div class="tabbar">
+            <nav
+                class="tabbar"
+                aria-label="主导航"
+            >
                 <a
                     href="index.html"
                     class="tab-item"
@@ -436,6 +632,25 @@
                         <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
                     </svg>
                     <span>首页</span>
+                </a>
+                <a
+                    href="discover.html"
+                    class="tab-item"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <circle
+                            cx="11"
+                            cy="11"
+                            r="8"
+                        />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                    <span>发现</span>
                 </a>
                 <a
                     href="record.html"
@@ -451,6 +666,7 @@
                 <a
                     href="profile.html"
                     class="tab-item active"
+                    aria-current="page"
                 >
                     <svg viewBox="0 0 24 24">
                         <path
@@ -459,7 +675,116 @@
                     </svg>
                     <span>我的</span>
                 </a>
-            </div>
+            </nav>
         </div>
+        <script>
+            // shortcut: 历史日历是相对今天的演示记录，接入账号后替换为梦境日历接口。
+            const shanghaiDate = (date = new Date()) =>
+                new Intl.DateTimeFormat('en-CA', {
+                    timeZone: 'Asia/Shanghai',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                }).format(date);
+            const todayKey = shanghaiDate();
+            const [todayYear, todayMonth, todayDay] = todayKey.split('-').map(Number);
+            const todayDate = new Date(Date.UTC(todayYear, todayMonth - 1, todayDay));
+            const currentMonthKey = `${todayYear}-${todayMonth}`;
+            const recordedDays = {};
+            const addRecordedDate = (date) => {
+                const key = `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}`;
+                if (!recordedDays[key]) recordedDays[key] = [];
+                const day = date.getUTCDate();
+                if (!recordedDays[key].includes(day)) recordedDays[key].push(day);
+            };
+            for (let offset = 1; offset <= 7; offset++) {
+                const date = new Date(todayDate);
+                date.setUTCDate(date.getUTCDate() - offset);
+                addRecordedDate(date);
+            }
+            for (const day of [1, 4, 7, 10, 13, 16, 19, 21]) {
+                addRecordedDate(new Date(Date.UTC(todayYear, todayMonth - 2, day)));
+            }
+            let recordedToday = false;
+            try {
+                const savedDream = JSON.parse(sessionStorage.getItem('drim-design-dream') || 'null');
+                if (
+                    savedDream &&
+                    typeof savedDream.content === 'string' &&
+                    savedDream.content.trim() &&
+                    savedDream.content.length <= 1000 &&
+                    typeof savedDream.recordedAt === 'string' &&
+                    shanghaiDate(new Date(savedDream.recordedAt)) === todayKey
+                ) {
+                    recordedToday = true;
+                    addRecordedDate(todayDate);
+                    document.getElementById('checkin-title').textContent = '今天已经记梦';
+                    document.getElementById('checkin-message').textContent = '你的梦境已收入潜意识档案';
+                    document.getElementById('checkin-action').textContent = '回看梦境';
+                    document.getElementById('checkin-action').href = 'dream-detail.html';
+                }
+            } catch (error) {
+                // 原型存储不可用或数据损坏时保留静态示例。
+            }
+            document.getElementById('total-count').textContent = String(
+                Object.values(recordedDays).reduce((total, days) => total + days.length, 0)
+            );
+            document.getElementById('month-count').textContent = String((recordedDays[currentMonthKey] || []).length);
+            document.getElementById('streak-count').textContent = recordedToday ? '8' : '7';
+            let calendarMonth = new Date(Date.UTC(todayYear, todayMonth - 1, 1));
+
+            function renderCalendar() {
+                const year = calendarMonth.getUTCFullYear();
+                const month = calendarMonth.getUTCMonth();
+                const title = `${year}年${month + 1}月`;
+                const recorded = recordedDays[`${year}-${month + 1}`] || [];
+                const grid = document.getElementById('calendar-days');
+                grid.replaceChildren();
+                grid.setAttribute('aria-label', `${title}梦境记录`);
+                document.getElementById('calendar-month').textContent = title;
+                document.getElementById('calendar-summary').textContent =
+                    `${month + 1}月已记录 ${recorded.length} 天，点击标记日期回看梦境`;
+
+                for (const weekday of ['日', '一', '二', '三', '四', '五', '六']) {
+                    const label = document.createElement('span');
+                    label.className = 'calendar-weekday';
+                    label.textContent = weekday;
+                    grid.append(label);
+                }
+                for (let blank = 0; blank < calendarMonth.getUTCDay(); blank++) {
+                    const cell = document.createElement('span');
+                    cell.setAttribute('aria-hidden', 'true');
+                    grid.append(cell);
+                }
+                for (let day = 1; day <= new Date(Date.UTC(year, month + 1, 0)).getUTCDate(); day++) {
+                    const hasDream = recorded.includes(day);
+                    const today = year === todayYear && month === todayMonth - 1 && day === todayDay;
+                    const cell = document.createElement(hasDream ? 'a' : 'span');
+                    cell.className = `calendar-day${hasDream ? ' has-dream' : ''}${today ? ' today' : ''}`;
+                    cell.textContent = day;
+                    cell.setAttribute(
+                        'aria-label',
+                        `${month + 1}月${day}日${today ? '，今天' : ''}${hasDream ? '，查看梦境' : '，未记录'}`
+                    );
+                    if (hasDream) {
+                        const date = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                        cell.href =
+                            today && recordedToday ? 'dream-detail.html' : `dream-detail.html?sample=1&date=${date}`;
+                    }
+                    if (today) cell.setAttribute('aria-current', 'date');
+                    grid.append(cell);
+                }
+            }
+
+            document.getElementById('previous-month').addEventListener('click', () => {
+                calendarMonth.setUTCMonth(calendarMonth.getUTCMonth() - 1);
+                renderCalendar();
+            });
+            document.getElementById('next-month').addEventListener('click', () => {
+                calendarMonth.setUTCMonth(calendarMonth.getUTCMonth() + 1);
+                renderCalendar();
+            });
+            renderCalendar();
+        </script>
     </body>
 </html>

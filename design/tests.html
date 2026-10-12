@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+        />
+        <title>心理测试 - 梦见</title>
+        <link
+            rel="stylesheet"
+            href="styles.css"
+        />
+        <style>
+            .page-header {
+                padding: 34px 20px 28px;
+                color: white;
+                background: var(--primary-gradient);
+                border-radius: 0 0 28px 28px;
+            }
+            .page-header p {
+                margin-top: 6px;
+                opacity: 0.82;
+            }
+            .back-link {
+                color: rgba(255, 255, 255, 0.82);
+                text-decoration: none;
+                font-size: 13px;
+                display: inline-flex;
+                gap: 5px;
+                align-items: center;
+                margin-bottom: 22px;
+            }
+            .test-picker {
+                display: flex;
+                gap: 12px;
+                padding: 16px;
+                overflow-x: auto;
+            }
+            .test-option {
+                min-width: 150px;
+                padding: 16px;
+                text-align: left;
+                border: 1px solid var(--border-color);
+                background: white;
+                border-radius: 16px;
+                cursor: pointer;
+                color: var(--text-main);
+            }
+            .test-option.active {
+                border: 2px solid var(--primary-color);
+                padding: 15px;
+                box-shadow: 0 6px 18px rgba(107, 78, 255, 0.12);
+            }
+            .test-option .emoji {
+                font-size: 25px;
+                display: block;
+                margin-bottom: 8px;
+            }
+            .test-option small {
+                display: block;
+                color: var(--text-secondary);
+                margin-top: 3px;
+                line-height: 1.45;
+            }
+            .quiz {
+                margin: 0 16px 24px;
+                padding: 20px;
+                background: white;
+                border-radius: var(--radius-lg);
+                box-shadow: var(--shadow-sm);
+            }
+            .progress-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                color: var(--text-secondary);
+                font-size: 12px;
+                margin-bottom: 10px;
+            }
+            .progress {
+                height: 6px;
+                border-radius: 10px;
+                background: #eeeaff;
+                overflow: hidden;
+                margin-bottom: 24px;
+            }
+            .progress span {
+                display: block;
+                height: 100%;
+                width: 12.5%;
+                background: var(--primary-gradient);
+                border-radius: inherit;
+                transition: width 0.25s ease;
+            }
+            .quiz-actions {
+                min-height: 28px;
+                margin-bottom: 8px;
+            }
+            .question {
+                font-size: 18px;
+                line-height: 1.5;
+                font-weight: 700;
+                margin-bottom: 18px;
+            }
+            .answers {
+                display: grid;
+                gap: 10px;
+            }
+            .answer {
+                display: flex;
+                align-items: flex-start;
+                gap: 10px;
+                padding: 14px;
+                text-align: left;
+                color: var(--text-main);
+                background: #fafaff;
+                border: 1px solid var(--border-color);
+                border-radius: 13px;
+                cursor: pointer;
+                line-height: 1.45;
+            }
+            .answer:hover,
+            .answer:focus {
+                border-color: var(--primary-color);
+                background: #f5f2ff;
+                outline: none;
+            }
+            .answer.selected {
+                border-color: var(--primary-color);
+                background: #f5f2ff;
+            }
+            .answer .letter {
+                flex: 0 0 24px;
+                height: 24px;
+                border-radius: 50%;
+                color: var(--primary-color);
+                background: var(--primary-light);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+                font-weight: 700;
+            }
+            .result {
+                text-align: center;
+                padding: 12px 4px 8px;
+            }
+            .result-badge {
+                width: 82px;
+                height: 82px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 4px auto 16px;
+                background: var(--primary-light);
+                border-radius: 50%;
+                font-size: 34px;
+            }
+            .result h2 {
+                color: var(--primary-color);
+                margin-bottom: 6px;
+            }
+            .result p {
+                color: var(--text-secondary);
+                line-height: 1.7;
+                font-size: 13px;
+            }
+            .result .traits {
+                display: flex;
+                justify-content: center;
+                gap: 8px;
+                flex-wrap: wrap;
+                margin: 18px 0;
+            }
+            .trait {
+                color: var(--primary-color);
+                background: #f1eeff;
+                border-radius: 99px;
+                padding: 5px 10px;
+                font-size: 12px;
+            }
+            .hidden {
+                display: none !important;
+            }
+        </style>
+        <script src="prototype.js"></script>
+    </head>
+    <body>
+        <div class="app-container">
+            <header class="page-header">
+                <a
+                    class="back-link"
+                    href="discover.html"
+                    >‹ 返回发现</a
+                >
+                <h1 class="text-xxl">认识自己</h1>
+                <p class="text-sm">用几分钟，听见内心的答案</p>
+            </header>
+
+            <div
+                class="test-picker"
+                aria-label="测试类型"
+            >
+                <button
+                    class="test-option active"
+                    type="button"
+                    data-test="mbti"
+                >
+                    <span class="emoji">🧭</span><strong>MBTI 快速测试</strong><small>8 道题，发现你的性格偏好</small>
+                </button>
+                <button
+                    class="test-option"
+                    type="button"
+                    data-test="big5"
+                >
+                    <span class="emoji">🌿</span><strong>大五人格</strong><small>5 道题，了解你的性格维度</small>
+                </button>
+            </div>
+
+            <section
+                class="quiz"
+                id="quiz-panel"
+            >
+                <div class="progress-row">
+                    <span id="progress-label">第 1 题 / 共 8 题</span><span id="progress-percent">13%</span>
+                </div>
+                <div class="progress"><span id="progress-bar"></span></div>
+                <div class="quiz-actions">
+                    <button
+                        class="btn btn-outline btn-sm hidden"
+                        id="previous"
+                        type="button"
+                    >
+                        上一题
+                    </button>
+                </div>
+                <div
+                    class="question"
+                    id="question"
+                ></div>
+                <div
+                    class="answers"
+                    id="answers"
+                ></div>
+            </section>
+
+            <section
+                class="quiz hidden"
+                id="result-panel"
+            >
+                <div class="result">
+                    <div class="result-badge">✨</div>
+                    <h2 id="result-title">温柔的探索者</h2>
+                    <p id="result-copy">
+                        你善于感受细微的情绪，也愿意为重要的人和事保留空间。你的直觉是理解世界的一盏小灯。
+                    </p>
+                    <div
+                        class="traits"
+                        id="result-traits"
+                    ></div>
+                    <button
+                        class="btn btn-outline btn-block"
+                        id="restart"
+                        type="button"
+                    >
+                        重新测试
+                    </button>
+                </div>
+            </section>
+
+            <nav
+                class="tabbar"
+                aria-label="主导航"
+            >
+                <a
+                    href="index.html"
+                    class="tab-item"
+                >
+                    <svg viewBox="0 0 24 24">
+                        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                    </svg>
+                    <span>首页</span>
+                </a>
+                <a
+                    href="discover.html"
+                    class="tab-item active"
+                    aria-current="page"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <circle
+                            cx="11"
+                            cy="11"
+                            r="8"
+                        />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                    <span>发现</span>
+                </a>
+                <a
+                    href="record.html"
+                    class="tab-item"
+                >
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                        />
+                    </svg>
+                    <span>记梦</span>
+                </a>
+                <a
+                    href="profile.html"
+                    class="tab-item"
+                >
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                        />
+                    </svg>
+                    <span>我的</span>
+                </a>
+            </nav>
+        </div>
+        <script>
+            const questionSets = {
+                mbti: [
+                    {
+                        text: '周末突然空下来，你更想？',
+                        dimension: 'EI',
+                        options: ['约朋友出门，临时发现新的地方', '留在家里，按自己的节奏充电']
+                    },
+                    {
+                        text: '面对一个新决定，你通常先相信？',
+                        dimension: 'SN',
+                        options: ['事实、经验和可执行的细节', '直觉、可能性和内心的感觉']
+                    },
+                    {
+                        text: '团队出现分歧时，你会优先考虑？',
+                        dimension: 'TF',
+                        options: ['哪种方案最符合逻辑和目标', '每个人的感受以及关系的平衡']
+                    },
+                    {
+                        text: '面对计划外的变化，你更倾向于？',
+                        dimension: 'JP',
+                        options: ['先整理计划，再按步骤推进', '快速调整，保持开放和灵活']
+                    },
+                    {
+                        text: '你更容易从哪里获得能量？',
+                        dimension: 'EI',
+                        options: ['和人交流，分享即时的想法', '独处整理，按自己的节奏恢复']
+                    },
+                    {
+                        text: '面对复杂信息时，你更关注？',
+                        dimension: 'SN',
+                        options: ['事实、经验和可执行的细节', '可能性、联想和整体方向']
+                    },
+                    {
+                        text: '别人意见与你不同时，你会先？',
+                        dimension: 'TF',
+                        options: ['分析逻辑，判断是否合理', '理解感受，照顾关系氛围']
+                    },
+                    {
+                        text: '安排一天的行程时，你更喜欢？',
+                        dimension: 'JP',
+                        options: ['提前计划，按步骤完成', '保留弹性，边走边决定']
+                    }
+                ],
+                big5: [
+                    {
+                        text: '遇到新鲜事物时，你通常会？',
+                        options: ['主动尝试，享受新体验', '先观察熟悉，再决定是否加入']
+                    },
+                    { text: '需要完成一项任务时，你会？', options: ['列好步骤，按计划推进', '抓住重点，边做边调整'] },
+                    {
+                        text: '在一群陌生人中，你更常？',
+                        options: ['主动开启话题，很快融入', '等待自然的交流，慢慢熟悉']
+                    },
+                    {
+                        text: '朋友遇到烦恼向你倾诉，你会？',
+                        options: ['先陪伴和倾听他的感受', '帮他梳理问题，寻找解决办法']
+                    },
+                    {
+                        text: '计划有变化时，你更常？',
+                        options: ['平静调整，很快回到自己的节奏', '感到不安，需要一些时间缓和']
+                    }
+                ]
+            };
+            let activeTest = 'mbti';
+            let questions = questionSets[activeTest];
+            let current = 0;
+            let answers = [];
+            const questionEl = document.getElementById('question');
+            const answersEl = document.getElementById('answers');
+            const previousButton = document.getElementById('previous');
+            const renderQuestion = () => {
+                const item = questions[current];
+                document.getElementById('progress-label').textContent =
+                    `第 ${current + 1} 题 / 共 ${questions.length} 题`;
+                const percent = Math.round(((current + 1) / questions.length) * 100);
+                document.getElementById('progress-percent').textContent = `${percent}%`;
+                document.getElementById('progress-bar').style.width = `${percent}%`;
+                previousButton.classList.toggle('hidden', current === 0);
+                questionEl.textContent = item.text;
+                answersEl.innerHTML = item.options
+                    .map(
+                        (option, index) =>
+                            `<button class="answer ${answers[current] === index ? 'selected' : ''}" type="button" data-answer="${index}"><span class="letter">${index ? 'B' : 'A'}</span><span>${option}</span></button>`
+                    )
+                    .join('');
+                answersEl
+                    .querySelectorAll('[data-answer]')
+                    .forEach((button) => button.addEventListener('click', () => choose(Number(button.dataset.answer))));
+            };
+            const choose = (answer) => {
+                answers[current] = answer;
+                current += 1;
+                if (current < questions.length) renderQuestion();
+                else showResult();
+            };
+            const showResult = () => {
+                document.getElementById('quiz-panel').classList.add('hidden');
+                document.getElementById('result-panel').classList.remove('hidden');
+                if (activeTest === 'mbti') {
+                    const scores = { EI: 0, SN: 0, TF: 0, JP: 0 };
+                    questions.forEach((item, index) => {
+                        scores[item.dimension] += answers[index] === 0 ? 1 : -1;
+                    });
+                    const type = ['EI', 'SN', 'TF', 'JP'].map((key) => (scores[key] >= 0 ? key[0] : key[1])).join('');
+                    const meanings = {
+                        E: '从互动中获得能量',
+                        I: '在独处中恢复能量',
+                        S: '重视经验和细节',
+                        N: '关注联想和可能性',
+                        T: '优先分析逻辑',
+                        F: '重视感受和关系',
+                        J: '喜欢安排和计划',
+                        P: '保留灵活和空间'
+                    };
+                    document.getElementById('result-title').textContent = `${type}：你的性格偏好`;
+                    document.getElementById('result-copy').textContent =
+                        `你的快速结果偏向 ${type}。${[...type].map((letter) => meanings[letter]).join('，')}。这份简版结果适合作为自我观察的起点。`;
+                    document.getElementById('result-traits').innerHTML = [...type]
+                        .map((letter) => `<span class="trait">${meanings[letter]}</span>`)
+                        .join('');
+                } else {
+                    const dimensions = ['开放性', '尽责性', '外向性', '宜人性', '情绪稳定性'];
+                    document.getElementById('result-title').textContent = '你的五维画像';
+                    document.getElementById('result-copy').textContent =
+                        '认识这些倾向，能帮助你选择更适合自己的生活方式。每个维度的高低都是不同的节奏，没有好坏之分。';
+                    document.getElementById('result-traits').innerHTML = dimensions
+                        .map(
+                            (name, index) =>
+                                `<span class="trait">${name}：${answers[index] === 0 ? '偏高' : '偏低'}</span>`
+                        )
+                        .join('');
+                }
+            };
+            previousButton.addEventListener('click', () => {
+                if (current > 0) {
+                    current -= 1;
+                    renderQuestion();
+                }
+            });
+            document.getElementById('restart').addEventListener('click', () => {
+                current = 0;
+                answers = [];
+                document.getElementById('result-panel').classList.add('hidden');
+                document.getElementById('quiz-panel').classList.remove('hidden');
+                renderQuestion();
+            });
+            document.querySelectorAll('[data-test]').forEach((button) =>
+                button.addEventListener('click', () => {
+                    activeTest = button.dataset.test;
+                    questions = questionSets[activeTest];
+                    current = 0;
+                    answers = [];
+                    document
+                        .querySelectorAll('[data-test]')
+                        .forEach((item) => item.classList.toggle('active', item === button));
+                    document.getElementById('result-panel').classList.add('hidden');
+                    document.getElementById('quiz-panel').classList.remove('hidden');
+                    renderQuestion();
+                })
+            );
+            renderQuestion();
+        </script>
+    </body>
+</html>
