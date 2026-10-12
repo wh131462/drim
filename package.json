@@ -9,6 +9,7 @@
         "build:h5": "uni build",
         "build:mp-weixin": "uni build -p mp-weixin",
         "type-check": "vue-tsc --noEmit",
+        "test:frontend": "jest --runInBand --config jest.frontend.config.cjs",
         "prepare": "husky",
         "server:dev": "pnpm --filter drim-server dev",
         "server:build": "pnpm --filter drim-server build",

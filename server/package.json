@@ -14,6 +14,7 @@
         "db:migrate": "prisma migrate dev",
         "db:seed": "ts-node -r tsconfig-paths/register prisma/seed.ts",
         "db:studio": "prisma studio",
+        "test": "jest --runInBand",
         "docker:up": "docker compose up -d",
         "docker:down": "docker compose down",
         "docker:start": "docker compose up mysql -d",
@@ -102,6 +103,9 @@
             "**/*.(t|j)s"
         ],
         "coverageDirectory": "../coverage",
-        "testEnvironment": "node"
+        "testEnvironment": "node",
+        "moduleNameMapper": {
+            "^@/(.*)$": "<rootDir>/$1"
+        }
     }
 }
