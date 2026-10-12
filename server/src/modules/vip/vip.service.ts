@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { isVipActive } from '@/common/utils/vip';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -20,29 +21,31 @@ export class VipService {
             orderBy: { sortOrder: 'asc' }
         });
 
+        const isVip = isVipActive(user);
+
         return {
-            isVip: user?.isVip || false,
-            expireAt: user?.vipExpireAt?.toISOString() || null,
+            isVip,
+            expireAt: isVip ? user!.vipExpireAt!.toISOString() : null,
             benefits: [
                 {
                     key: 'no_ad',
                     name: '免广告查看解析',
-                    enabled: user?.isVip || false
+                    enabled: isVip
                 },
                 {
                     key: 'unlimited_history',
                     name: '无限历史记录',
-                    enabled: user?.isVip || false
+                    enabled: isVip
                 },
                 {
                     key: 'free_reanalyze',
                     name: '免费重新解析',
-                    enabled: user?.isVip || false
+                    enabled: isVip
                 },
                 {
                     key: 'premium_themes',
                     name: '高级解析主题',
-                    enabled: user?.isVip || false
+                    enabled: isVip
                 }
             ],
             plans: plans.map((plan) => ({
@@ -148,9 +151,9 @@ export class VipService {
         });
 
         let vipExpireAt: Date;
-        if (user?.isVip && user.vipExpireAt && user.vipExpireAt > new Date()) {
+        if (isVipActive(user)) {
             // 续费，在原有基础上延长
-            vipExpireAt = new Date(user.vipExpireAt);
+            vipExpireAt = new Date(user!.vipExpireAt!);
         } else {
             // 新开，从现在开始
             vipExpireAt = new Date();

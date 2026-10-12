@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { isVipActive } from '@/common/utils/vip';
 import { AchievementService, AchievementConditionType } from '../achievement/achievement.service';
 import { GetPublicDreamsDto, ViewDreamDto, GetUserPublicDreamsDto } from './dto';
 
@@ -480,6 +481,7 @@ export class ExploreService {
                 nickname: true,
                 avatar: true,
                 isVip: true,
+                vipExpireAt: true,
                 consecutiveDays: true,
                 createdAt: true,
                 preference: {
@@ -527,7 +529,7 @@ export class ExploreService {
             id: user.id,
             nickname: user.nickname,
             avatar: user.avatar,
-            isVip: user.isVip,
+            isVip: isVipActive(user),
             consecutiveDays: user.consecutiveDays,
             publicDreamCount,
             totalLikes: totalLikes._sum.likeCount || 0,

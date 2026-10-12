@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { isVipActive } from '@/common/utils/vip';
 import { ExchangeRecordsQueryDto } from './dto/exchange.dto';
 import { OrderStatus } from '@prisma/client';
 
@@ -67,8 +68,7 @@ export class PrivilegeService {
         }
 
         // 检查特权是否已过期
-        const now = new Date();
-        const hasPrivilege = user.isVip && user.vipExpireAt && user.vipExpireAt > now;
+        const hasPrivilege = isVipActive(user);
 
         return {
             hasPrivilege,
@@ -119,19 +119,6 @@ export class PrivilegeService {
      * 积分兑换权益
      */
     async exchange(userId: string, itemId: string) {
-        const user = await this.prisma.user.findUnique({
-            where: { id: userId },
-            select: {
-                luckyPoints: true,
-                isVip: true,
-                vipExpireAt: true
-            }
-        });
-
-        if (!user) {
-            throw new NotFoundException('用户不存在');
-        }
-
         // 从硬编码常量获取兑换项目
         const plan = this.getPlanById(itemId);
 
@@ -141,29 +128,26 @@ export class PrivilegeService {
 
         const pointsNeeded = plan.price;
 
-        // 检查积分是否足够
-        if (user.luckyPoints < pointsNeeded) {
-            throw new BadRequestException('积分不足');
-        }
-
-        // 计算新的特权过期时间
-        let privilegeExpireAt: Date;
-        const now = new Date();
-
-        if (user.isVip && user.vipExpireAt && user.vipExpireAt > now) {
-            // 续期：在原有过期时间基础上延长
-            privilegeExpireAt = new Date(user.vipExpireAt);
-        } else {
-            // 新开：从现在开始
-            privilegeExpireAt = new Date();
-        }
-        privilegeExpireAt.setDate(privilegeExpireAt.getDate() + plan.durationDays);
-
         // 生成兑换订单号
         const orderNo = `EX${Date.now()}${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
         // 事务处理
         const result = await this.prisma.$transaction(async (tx) => {
+            const charged = await tx.user.updateMany({
+                where: { id: userId, luckyPoints: { gte: pointsNeeded } },
+                data: { luckyPoints: { decrement: pointsNeeded } }
+            });
+            const user = await tx.user.findUnique({
+                where: { id: userId },
+                select: { luckyPoints: true, isVip: true, vipExpireAt: true }
+            });
+            if (!user) throw new NotFoundException('用户不存在');
+            if (charged.count !== 1) throw new BadRequestException('积分不足');
+
+            const now = new Date();
+            const privilegeExpireAt = isVipActive(user, now.getTime()) ? new Date(user.vipExpireAt!) : now;
+            privilegeExpireAt.setDate(privilegeExpireAt.getDate() + plan.durationDays);
+
             // 创建兑换记录（保存权益名称，期限从硬编码常量获取）
             const order = await tx.order.create({
                 data: {
@@ -181,12 +165,10 @@ export class PrivilegeService {
                 }
             });
 
-            // 扣除积分
-            const newPoints = user.luckyPoints - pointsNeeded;
+            const newPoints = user.luckyPoints;
             await tx.user.update({
                 where: { id: userId },
                 data: {
-                    luckyPoints: newPoints,
                     isVip: true,
                     vipExpireAt: privilegeExpireAt
                 }
@@ -205,7 +187,7 @@ export class PrivilegeService {
                 }
             });
 
-            return { order, newPoints };
+            return { order, newPoints, privilegeExpireAt };
         });
 
         return {
@@ -215,7 +197,7 @@ export class PrivilegeService {
             duration: `${plan.durationDays}天`,
             pointsConsumed: pointsNeeded,
             remainingPoints: result.newPoints,
-            privilegeExpireAt: privilegeExpireAt.toISOString()
+            privilegeExpireAt: result.privilegeExpireAt.toISOString()
         };
     }
 

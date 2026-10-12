@@ -7,6 +7,7 @@ import {
     forwardRef
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { isVipActive } from '@/common/utils/vip';
 import { AiService } from '@/shared/ai/ai.service';
 import { AchievementService, AchievementConditionType } from '../achievement/achievement.service';
 import { PolishDreamDto } from './dto';
@@ -53,7 +54,7 @@ export class PolishService {
         }
 
         // 检查配额
-        const isVip = dream.user.isVip && dream.user.vipExpireAt && dream.user.vipExpireAt > new Date();
+        const isVip = isVipActive(dream.user);
 
         if (!isVip) {
             // 非 VIP 用户检查配额
@@ -198,7 +199,7 @@ ${content}
             }
         });
 
-        const isVip = user?.isVip && user?.vipExpireAt && user.vipExpireAt > new Date();
+        const isVip = isVipActive(user);
 
         if (!isVip) {
             // 非 VIP 用户检查配额
@@ -250,7 +251,7 @@ ${content}
             }
         });
 
-        const isVip = user?.isVip && user?.vipExpireAt && user.vipExpireAt > new Date();
+        const isVip = isVipActive(user);
 
         return {
             date: quota.date.toISOString(),
