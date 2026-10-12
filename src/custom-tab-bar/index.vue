@@ -4,7 +4,7 @@
         :class="{ 'dark-mode': userStore.isDarkMode }"
         :style="{ paddingBottom: safeAreaBottom + 'px' }"
     >
-        <view
+        <button
             v-for="(item, index) in tabList"
             :key="index"
             class="tab-item"
@@ -17,7 +17,7 @@
                 mode="aspectFit"
             />
             <text class="tab-text">{{ item.text }}</text>
-        </view>
+        </button>
     </view>
 </template>
 
@@ -28,6 +28,7 @@ import { useUserStore } from '@/stores';
 
 interface Props {
     selected?: number;
+    beforeSwitch?: (url: string) => Promise<boolean>;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -66,7 +67,7 @@ const tabList = [
     },
     {
         pagePath: '/pages/explore/index',
-        text: '探索',
+        text: '发现',
         iconPath: '/static/icons/search.svg',
         selectedIconPath: '/static/icons/search.svg'
     },
@@ -84,8 +85,18 @@ const tabList = [
     }
 ];
 
-function switchTab(index: number) {
+async function switchTab(index: number) {
+    if (index === selectedIndex.value) return;
     const item = tabList[index];
+    if (props.beforeSwitch) {
+        try {
+            const canSwitch = await props.beforeSwitch(item.pagePath);
+            if (!canSwitch) return;
+        } catch (error) {
+            console.error('切换页面前检查失败:', error);
+            return;
+        }
+    }
     uni.switchTab({
         url: item.pagePath
     });
@@ -166,15 +177,25 @@ export default {
 
 .tab-item {
     flex: 1;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 8rpx;
+    line-height: 1.4;
     transition: all 0.2s;
 
     &:active {
         background: rgba(0, 0, 0, 0.02);
+    }
+
+    &::after {
+        border: 0;
     }
 }
 

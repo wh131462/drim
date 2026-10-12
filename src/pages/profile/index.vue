@@ -45,6 +45,26 @@
                     </view>
                 </view>
                 <text class="user-id">ID: {{ userStore.userInfo?.id || '未登录' }}</text>
+                <text class="user-points">幸运值 {{ userStore.luckyPoints }}</text>
+            </view>
+        </view>
+
+        <!-- 今日打卡 -->
+        <view class="checkin-card">
+            <image
+                class="checkin-icon"
+                src="/static/icons/moon.svg"
+                mode="aspectFit"
+            />
+            <view class="checkin-copy">
+                <text class="checkin-title">{{ checkinTitle }}</text>
+                <text class="checkin-message">{{ checkinMessage }}</text>
+            </view>
+            <view
+                class="checkin-action"
+                @tap="handleCheckinAction"
+            >
+                <text>{{ !thisMonthLoaded && thisMonthError ? '重试' : hasTodayDream ? '回看梦境' : '去记梦' }}</text>
             </view>
         </view>
 
@@ -58,12 +78,12 @@
                 <text class="stat-label">记梦总数</text>
             </view>
             <view class="stat-item">
-                <text class="stat-value primary">{{ userStore.consecutiveDays || 0 }}</text>
-                <text class="stat-label">连续打卡</text>
+                <text class="stat-value primary">{{ thisMonthLoaded ? monthDreamCount : '—' }}</text>
+                <text class="stat-label">本月打卡</text>
             </view>
             <view class="stat-item">
-                <text class="stat-value gold">{{ userStore.luckyPoints || 0 }}</text>
-                <text class="stat-label">幸运值</text>
+                <text class="stat-value">{{ userStore.consecutiveDays || 0 }}</text>
+                <text class="stat-label">连续打卡</text>
             </view>
         </view>
 
@@ -101,7 +121,23 @@
                     </view>
                 </view>
             </view>
-            <view class="calendar-grid">
+            <view
+                v-if="calendarLoading"
+                class="calendar-state"
+            >
+                <text>正在加载日历…</text>
+            </view>
+            <view
+                v-else-if="calendarError"
+                class="calendar-state calendar-error"
+                @tap="loadCalendar"
+            >
+                <text>日历加载失败，点击重试</text>
+            </view>
+            <view
+                v-if="!calendarLoading && !calendarError"
+                class="calendar-grid"
+            >
                 <!-- 星期头 -->
                 <view class="calendar-day weekday">日</view>
                 <view class="calendar-day weekday">一</view>
@@ -132,9 +168,13 @@
                 </view>
             </view>
             <!-- 月度统计 -->
-            <view class="calendar-stats">
+            <view
+                v-if="!calendarLoading && !calendarError"
+                class="calendar-stats"
+            >
                 <text class="stats-text"
-                    >本月记梦 {{ monthDreamCount }} 天<text v-if="monthDreamTotal > monthDreamCount"
+                    >{{ currentMonth }}月记梦 {{ calendarDreamCount }} 天<text
+                        v-if="monthDreamTotal > calendarDreamCount"
                         >，共 {{ monthDreamTotal }} 个梦</text
                     ></text
                 >
@@ -150,6 +190,26 @@
 
         <!-- 菜单列表 -->
         <view class="menu-list">
+            <view
+                class="menu-item"
+                @tap="goToBookshelf"
+            >
+                <view class="menu-left">
+                    <view class="menu-icon-wrapper cyan">
+                        <image
+                            class="menu-icon"
+                            src="/static/icons/book.svg"
+                            mode="aspectFit"
+                        />
+                    </view>
+                    <text class="menu-text">我的书架</text>
+                </view>
+                <image
+                    class="menu-arrow"
+                    src="/static/icons/arrow-right.svg"
+                    mode="aspectFit"
+                />
+            </view>
             <view
                 class="menu-item"
                 @tap="goToVip"
@@ -213,7 +273,7 @@
         </view>
 
         <!-- 自定义 TabBar -->
-        <custom-tab-bar :selected="2" />
+        <custom-tab-bar :selected="3" />
 
         <!-- 用户资料编辑弹窗 -->
         <user-profile-modal
@@ -229,6 +289,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useUserStore, useDreamStore } from '@/stores';
+import { dreamApi } from '@/api';
+import type { CalendarRecord } from '@/types/dream';
 import CustomTabBar from '@/custom-tab-bar/index.vue';
 import UserProfileModal from '@/components/UserProfileModal/index.vue';
 import { onShow } from '@dcloudio/uni-app';
@@ -244,21 +306,47 @@ const showProfileModal = ref(false);
 const currentYear = ref(new Date().getFullYear());
 const currentMonth = ref(new Date().getMonth() + 1);
 const calendarLoading = ref(false);
+const calendarError = ref(false);
+const calendarRecords = ref<CalendarRecord[]>([]);
+const thisMonthRecords = ref<CalendarRecord[]>([]);
+const thisMonthLoaded = ref(false);
+const thisMonthError = ref(false);
+const today = ref(new Date());
+let calendarRequestId = 0;
+let thisMonthRequestId = 0;
+
+const todayDate = computed(() => {
+    const now = today.value;
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+});
+
+const todayRecord = computed(() => thisMonthRecords.value.find((record) => record.date === todayDate.value));
+const hasTodayDream = computed(() =>
+    thisMonthLoaded.value ? !!todayRecord.value?.hasDream : dreamStore.hasTodayDream
+);
+const checkinTitle = computed(() => {
+    if (hasTodayDream.value) return '今天已经记梦';
+    if (thisMonthLoaded.value) return '今天还没有记梦';
+    return thisMonthError.value ? '打卡状态暂不可用' : '正在加载打卡状态';
+});
+const checkinMessage = computed(() => (hasTodayDream.value ? '你的梦境已收入潜意识档案' : '留住醒来时的那一点记忆'));
 
 // 判断是否为当前月份
 const isCurrentMonth = computed(() => {
-    const now = new Date();
+    const now = today.value;
     return currentYear.value === now.getFullYear() && currentMonth.value === now.getMonth() + 1;
 });
 
 // 当月记梦天数
 const monthDreamCount = computed(() => {
-    return dreamStore.calendar.filter((r) => r.hasDream).length;
+    return thisMonthRecords.value.filter((r) => r.hasDream).length;
 });
+
+const calendarDreamCount = computed(() => calendarRecords.value.filter((r) => r.hasDream).length);
 
 // 当月梦境总数
 const monthDreamTotal = computed(() => {
-    return dreamStore.calendar.reduce((sum, r) => sum + (r.dreamCount || 0), 0);
+    return calendarRecords.value.reduce((sum, r) => sum + (r.dreamCount || 0), 0);
 });
 
 // 计算日历数据
@@ -282,28 +370,26 @@ const calendarDays = computed(() => {
 
 // 方法
 function isToday(day: number): boolean {
-    const today = new Date();
+    const now = today.value;
     return (
-        today.getFullYear() === currentYear.value &&
-        today.getMonth() + 1 === currentMonth.value &&
-        today.getDate() === day
+        now.getFullYear() === currentYear.value && now.getMonth() + 1 === currentMonth.value && now.getDate() === day
     );
 }
 
 function hasDream(day: number): boolean {
     const dateStr = `${currentYear.value}-${String(currentMonth.value).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return dreamStore.calendar.some((r) => r.date === dateStr && r.hasDream);
+    return calendarRecords.value.some((r) => r.date === dateStr && r.hasDream);
 }
 
 function getDreamCount(day: number): number {
     const dateStr = `${currentYear.value}-${String(currentMonth.value).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const record = dreamStore.calendar.find((r) => r.date === dateStr);
+    const record = calendarRecords.value.find((r) => r.date === dateStr);
     return record?.dreamCount || 0;
 }
 
 function handleDayClick(day: number) {
     const dateStr = `${currentYear.value}-${String(currentMonth.value).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const record = dreamStore.calendar.find((r) => r.date === dateStr);
+    const record = calendarRecords.value.find((r) => r.date === dateStr);
 
     if (!record?.hasDream) return;
 
@@ -335,16 +421,72 @@ function goToSettings() {
     uni.navigateTo({ url: '/pages/settings/index' });
 }
 
-async function loadCalendar(force = false) {
-    calendarLoading.value = true;
-    try {
-        if (force) {
-            await dreamStore.fetchCalendar(currentYear.value, currentMonth.value);
-        } else {
-            await dreamStore.ensureCalendar(currentYear.value, currentMonth.value);
+function goToBookshelf() {
+    uni.navigateTo({ url: '/pages/books/index?mode=shelf' });
+}
+
+function handleCheckinAction() {
+    if (!thisMonthLoaded.value && thisMonthError.value) {
+        if (isCurrentMonth.value) loadCalendar();
+        else loadThisMonth();
+        return;
+    }
+    if (hasTodayDream.value) {
+        const record = todayRecord.value;
+        if (record?.dreamCount && record.dreamCount > 1) {
+            uni.navigateTo({ url: `/pages/dream-list/index?date=${todayDate.value}` });
+            return;
         }
+        const dreamId = record?.dreamId || dreamStore.todayDream?.id;
+        if (dreamId) {
+            uni.navigateTo({ url: `/pages/dream-detail/index?id=${dreamId}` });
+            return;
+        }
+    }
+    uni.switchTab({ url: '/pages/record/index' });
+}
+
+async function loadCalendar() {
+    const requestId = ++calendarRequestId;
+    const year = currentYear.value;
+    const month = currentMonth.value;
+    const now = new Date();
+    const isThisMonth = year === now.getFullYear() && month === now.getMonth() + 1;
+    const monthRequestId = isThisMonth ? ++thisMonthRequestId : 0;
+    calendarLoading.value = true;
+    calendarError.value = false;
+    calendarRecords.value = [];
+    try {
+        const { records } = await dreamApi.getCalendar(year, month);
+        if (isThisMonth && monthRequestId === thisMonthRequestId) {
+            thisMonthRecords.value = records;
+            thisMonthLoaded.value = true;
+            thisMonthError.value = false;
+        }
+        if (requestId === calendarRequestId) {
+            calendarRecords.value = records;
+        }
+    } catch (error) {
+        if (requestId === calendarRequestId) calendarError.value = true;
+        if (isThisMonth && monthRequestId === thisMonthRequestId) thisMonthError.value = true;
+        console.error('获取日历数据失败:', error);
     } finally {
-        calendarLoading.value = false;
+        if (requestId === calendarRequestId) calendarLoading.value = false;
+    }
+}
+
+async function loadThisMonth() {
+    const requestId = ++thisMonthRequestId;
+    const now = new Date();
+    try {
+        const { records } = await dreamApi.getCalendar(now.getFullYear(), now.getMonth() + 1);
+        if (requestId !== thisMonthRequestId) return;
+        thisMonthRecords.value = records;
+        thisMonthLoaded.value = true;
+        thisMonthError.value = false;
+    } catch (error) {
+        if (requestId === thisMonthRequestId) thisMonthError.value = true;
+        console.error('获取本月打卡失败:', error);
     }
 }
 
@@ -390,7 +532,7 @@ function handleAvatarClick() {
 
 function onProfileComplete() {
     // 资料更新完成，刷新用户信息
-    userStore.fetchUserInfo();
+    void userStore.fetchUserInfo().catch((error) => console.warn('资料更新后用户信息刷新失败:', error));
 }
 
 // 生命周期
@@ -398,14 +540,15 @@ onMounted(() => {
     // 获取状态栏高度
     const systemInfo = uni.getSystemInfoSync();
     statusBarHeight.value = systemInfo.statusBarHeight || 0;
-
-    loadCalendar();
 });
 
 // 页面显示时智能加载数据
 onShow(() => {
+    if (today.value.toDateString() !== new Date().toDateString()) thisMonthLoaded.value = false;
+    today.value = new Date();
     loadCalendar();
-    userStore.ensureUserInfo();
+    if (!isCurrentMonth.value) loadThisMonth();
+    void userStore.ensureUserInfo().catch((error) => console.warn('个人页用户信息刷新失败:', error));
 });
 </script>
 
@@ -418,7 +561,7 @@ onShow(() => {
     min-height: 100vh;
     background: $bg-page;
     padding-bottom: 200rpx;
-    padding-top: calc(v-bind('statusBarHeight') * 2rpx);
+    padding-top: calc(v-bind('statusBarHeight') * 2rpx + 32rpx);
     transition: background-color 0.3s ease;
 
     &.dark-mode {
@@ -426,20 +569,25 @@ onShow(() => {
 
         .profile-header {
             background: $dark-bg-card;
+        }
 
-            &::before {
-                background: $dark-bg-card;
-            }
+        .checkin-title {
+            color: $dark-text-primary;
+        }
 
-            &::after {
-                background: linear-gradient(
-                    90deg,
-                    transparent,
-                    $dark-border-color 20%,
-                    $dark-border-color 80%,
-                    transparent
-                );
-            }
+        .checkin-card {
+            background: rgba(107, 78, 255, 0.2);
+        }
+
+        .checkin-message,
+        .calendar-state,
+        .user-points {
+            color: $dark-text-secondary;
+        }
+
+        .checkin-action {
+            background: $dark-primary-color;
+            color: #fff;
         }
 
         .avatar {
@@ -465,9 +613,13 @@ onShow(() => {
             color: $dark-text-placeholder;
         }
 
-        .stat-item {
+        .stats-grid {
             background: $dark-bg-card;
             box-shadow: $dark-shadow-sm;
+        }
+
+        .stat-item + .stat-item {
+            border-left-color: $dark-border-color;
         }
 
         .stat-value {
@@ -584,48 +736,23 @@ onShow(() => {
 // 用户头部
 .profile-header {
     background: #fff;
-    padding: 48rpx;
-    // 顶部 padding = 状态栏高度 + 负边距补偿 + 原始间距
-    padding-top: calc(v-bind('statusBarHeight') * 2rpx + v-bind('statusBarHeight') * 2rpx + 60rpx);
-    padding-top: calc(constant(safe-area-inset-top) + v-bind('statusBarHeight') * 2rpx + 60rpx);
-    padding-top: calc(env(safe-area-inset-top) + v-bind('statusBarHeight') * 2rpx + 60rpx);
+    padding: 32rpx;
     display: flex;
     align-items: center;
-    margin-bottom: 24rpx;
+    margin: 0 40rpx 32rpx;
+    border-radius: 32rpx;
     position: relative;
-    margin-top: calc(-1 * v-bind('statusBarHeight') * 2rpx);
     overflow: hidden;
-
-    // 确保背景延伸到顶部
-    &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: calc(v-bind('statusBarHeight') * 2rpx);
-        background: inherit;
-        z-index: -1;
-    }
-
-    &::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 2rpx;
-        background: linear-gradient(90deg, transparent, #e2e8f0 20%, #e2e8f0 80%, transparent);
-    }
 }
 
 .avatar {
-    width: 144rpx;
-    height: 144rpx;
+    flex: 0 0 112rpx;
+    width: 112rpx;
+    height: 112rpx;
     border-radius: 50%;
     background: #edf2f7;
-    margin-right: 40rpx;
-    border: 6rpx solid #fff;
+    margin-right: 24rpx;
+    border: 4rpx solid #fff;
     box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.08);
     overflow: hidden;
     display: flex;
@@ -682,15 +809,17 @@ onShow(() => {
 
 .user-info {
     flex: 1;
+    min-width: 0;
 }
 
 .user-name-row {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .username {
-    font-size: 40rpx;
+    font-size: 34rpx;
     font-weight: 700;
     color: $text-primary;
 }
@@ -719,31 +848,90 @@ onShow(() => {
 }
 
 .user-id {
+    display: block;
     font-size: 24rpx;
     color: $text-placeholder;
     margin-top: 12rpx;
+    overflow-wrap: anywhere;
+}
+
+.user-points {
+    display: block;
+    margin-top: 10rpx;
+    font-size: 24rpx;
+    color: $primary-color;
+}
+
+.checkin-card {
+    display: flex;
+    align-items: center;
+    gap: 20rpx;
+    margin: 0 40rpx 32rpx;
+    padding: 32rpx;
+    background: #eee9ff;
+    border-radius: 32rpx;
+}
+
+.checkin-icon {
+    width: 64rpx;
+    height: 64rpx;
+    flex: 0 0 64rpx;
+    filter: invert(36%) sepia(65%) saturate(1308%) hue-rotate(223deg) brightness(93%) contrast(95%);
+}
+
+.checkin-copy {
+    min-width: 0;
+    flex: 1;
+}
+
+.checkin-title,
+.checkin-message {
+    display: block;
+}
+
+.checkin-title {
+    font-size: 30rpx;
+    font-weight: 700;
+    color: $text-primary;
+}
+
+.checkin-message {
+    margin-top: 8rpx;
+    font-size: 22rpx;
+    color: $text-secondary;
+}
+
+.checkin-action {
+    flex-shrink: 0;
+    padding: 16rpx 22rpx;
+    border-radius: 18rpx;
+    background: $primary-color;
+    color: #fff;
+    font-size: 23rpx;
+    font-weight: 600;
 }
 
 // 数据统计
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 32rpx;
-    padding: 0 40rpx;
-    margin-bottom: 48rpx;
+    padding: 32rpx 8rpx;
+    margin: 0 40rpx 32rpx;
+    border-radius: 32rpx;
+    background: #fff;
 }
 
 .stat-item {
-    background: #fff;
-    border-radius: 32rpx;
-    padding: 32rpx 24rpx;
     text-align: center;
-    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
     transition: transform 0.2s;
 
     &:active {
         transform: scale(0.98);
     }
+}
+
+.stat-item + .stat-item {
+    border-left: 2rpx solid #eeeaf3;
 }
 
 .stat-value {
@@ -752,6 +940,7 @@ onShow(() => {
     font-weight: 800;
     color: $text-primary;
     margin-bottom: 8rpx;
+    font-variant-numeric: tabular-nums;
 
     &.primary {
         color: $primary-color;
@@ -771,9 +960,9 @@ onShow(() => {
 // 日历卡片
 .card {
     background: #fff;
-    margin: 0 40rpx 40rpx;
-    border-radius: 40rpx;
-    padding: 40rpx;
+    margin: 0 40rpx 32rpx;
+    border-radius: 32rpx;
+    padding: 32rpx;
     box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
 }
 
@@ -785,7 +974,7 @@ onShow(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 40rpx;
+    margin-bottom: 24rpx;
 }
 
 .card-title {
@@ -797,7 +986,7 @@ onShow(() => {
 .month-nav {
     display: flex;
     align-items: center;
-    gap: 16rpx;
+    gap: 8rpx;
 }
 
 .nav-btn {
@@ -837,9 +1026,9 @@ onShow(() => {
     font-weight: 700;
     color: $primary-color;
     background: rgba(107, 78, 255, 0.1);
-    padding: 8rpx 24rpx;
+    padding: 8rpx 12rpx;
     border-radius: 24rpx;
-    min-width: 160rpx;
+    min-width: 140rpx;
     text-align: center;
     transition: all 0.2s;
 
@@ -851,8 +1040,19 @@ onShow(() => {
 .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 20rpx;
+    gap: 12rpx;
     text-align: center;
+}
+
+.calendar-state {
+    padding: 36rpx 0;
+    text-align: center;
+    font-size: 24rpx;
+    color: $text-secondary;
+}
+
+.calendar-error {
+    color: $primary-color;
 }
 
 .calendar-day {

@@ -10,7 +10,28 @@
         {
             "path": "pages/explore/index",
             "style": {
-                "navigationBarTitleText": "探索",
+                "navigationBarTitleText": "发现",
+                "navigationStyle": "custom"
+            }
+        },
+        {
+            "path": "pages/tarot/index",
+            "style": {
+                "navigationBarTitleText": "今日塔罗",
+                "navigationStyle": "custom"
+            }
+        },
+        {
+            "path": "pages/tests/index",
+            "style": {
+                "navigationBarTitleText": "心理测试",
+                "navigationStyle": "custom"
+            }
+        },
+        {
+            "path": "pages/books/index",
+            "style": {
+                "navigationBarTitleText": "心灵书店",
                 "navigationStyle": "custom"
             }
         },
@@ -132,7 +153,7 @@
             },
             {
                 "pagePath": "pages/explore/index",
-                "text": "探索"
+                "text": "发现"
             },
             {
                 "pagePath": "pages/record/index",

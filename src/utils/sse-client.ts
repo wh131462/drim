@@ -191,8 +191,11 @@ function createMPSSEClient(url: string, options: SSEClientOptions): () => void {
         }
     });
 
-    // 监听 chunk 数据
-    requestTask.onChunkReceived?.((res: { data: ArrayBuffer }) => {
+    // 监听 chunk 数据（旧版 uni 类型未声明该微信扩展）
+    const chunkTask = requestTask as UniApp.RequestTask & {
+        onChunkReceived?: (callback: (res: { data: ArrayBuffer }) => void) => void;
+    };
+    chunkTask.onChunkReceived?.((res: { data: ArrayBuffer }) => {
         if (aborted) return;
 
         // 解析 ArrayBuffer 为文本

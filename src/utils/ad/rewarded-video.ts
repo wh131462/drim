@@ -28,7 +28,7 @@ export interface AdStatus {
 }
 
 class RewardedVideoAdService {
-    private adInstances: Map<RewardedAdType, WechatMiniprogram.RewardedVideoAd> = new Map();
+    private adInstances: Map<RewardedAdType, UniNamespace.RewardedVideoAdContext> = new Map();
     private loadingStatus: Map<RewardedAdType, boolean> = new Map();
 
     /**
@@ -48,7 +48,7 @@ class RewardedVideoAdService {
     /**
      * 获取或创建广告实例
      */
-    private getAdInstance(type: RewardedAdType): WechatMiniprogram.RewardedVideoAd | null {
+    private getAdInstance(type: RewardedAdType): UniNamespace.RewardedVideoAdContext | null {
         if (!isWeixinMiniProgram()) {
             console.warn('[Ad] 非微信小程序环境，广告不可用');
             return null;
@@ -68,7 +68,7 @@ class RewardedVideoAdService {
 
         try {
             // #ifdef MP-WEIXIN
-            const ad = wx.createRewardedVideoAd({ adUnitId });
+            const ad = uni.createRewardedVideoAd({ adUnitId });
 
             // 监听加载事件
             ad.onLoad(() => {
@@ -202,7 +202,7 @@ class RewardedVideoAdService {
                     uni.hideLoading();
                     return ad.show();
                 })
-                .catch((err) => {
+                .catch((err: { errMsg?: string; errCode?: number }) => {
                     uni.hideLoading();
 
                     if (resolved) return;

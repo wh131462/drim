@@ -5,7 +5,7 @@
 
 import type { User, UserStats } from '@/types/user';
 import type { Dream, DreamDetail } from '@/types/dream';
-import type { AnalysisResult } from '@/types/analysis';
+import type { Analysis as AnalysisResult } from '@/types/analysis';
 import type { VipInfo } from '@/types/vip';
 
 // Mock 用户数据
@@ -14,18 +14,23 @@ export const mockUser: User = {
     openId: 'mock_openid',
     nickname: '梦游者',
     avatar: '',
+    gender: 0,
     isVip: false,
     vipExpireAt: null,
     luckyPoints: 150,
     consecutiveDays: 3,
     totalDreams: 12,
+    totalTasks: 8,
     createdAt: '2024-01-01T00:00:00.000Z'
 };
 
 export const mockUserStats: UserStats = {
     totalDreams: 12,
+    totalAnalysis: 12,
     totalTasks: 8,
-    consecutiveDays: 3,
+    taskCompletionRate: 0.75,
+    currentStreak: 3,
+    longestStreak: 3,
     luckyPoints: 150,
     achievements: [
         { id: 'first_dream', name: '梦境初探', icon: '🌟', unlockedAt: '2024-01-01' },
@@ -40,34 +45,30 @@ export const mockDreams: Dream[] = [
         content: '我梦见自己在一片星空下飞翔，周围是无尽的星星，感觉非常自由和平静。突然我看到远处有一座发光的城堡...',
         tags: ['flying', 'star'],
         emotion: 'happy',
-        wordCount: 56,
         status: 'analyzed',
-        createdAt: new Date().toISOString(),
-        analysis: {
-            theme: '追寻自由与梦想',
-            fortuneScore: 85
-        }
+        hasAnalysis: true,
+        analysisId: 'analysis_001',
+        fortuneScore: 85,
+        createdAt: new Date().toISOString()
     },
     {
         id: 'dream_002',
         content: '我在一个陌生的城市迷路了，周围的建筑都很高大，街道上没有人。我一直在寻找回家的路...',
         tags: ['city', 'lost'],
-        emotion: 'anxious',
-        wordCount: 42,
+        emotion: 'fear',
         status: 'analyzed',
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-        analysis: {
-            theme: '寻找人生方向',
-            fortuneScore: 65
-        }
+        hasAnalysis: true,
+        analysisId: 'analysis_002',
+        fortuneScore: 65,
+        createdAt: new Date(Date.now() - 86400000).toISOString()
     },
     {
         id: 'dream_003',
         content: '我梦见和家人一起在海边度假，阳光很温暖，海水很蓝。我们一起堆沙堡，笑声不断...',
         tags: ['family', 'beach'],
-        emotion: 'peaceful',
-        wordCount: 38,
+        emotion: 'happy',
         status: 'pending',
+        hasAnalysis: false,
         createdAt: new Date(Date.now() - 172800000).toISOString()
     }
 ];
@@ -79,8 +80,8 @@ export const mockDreamDetail: DreamDetail = {
         '我梦见自己在一片星空下飞翔，周围是无尽的星星，感觉非常自由和平静。突然我看到远处有一座发光的城堡，我飞了过去，城堡的门自动打开了。里面是一片金色的光芒，非常温暖。',
     tags: ['flying', 'star', 'castle'],
     emotion: 'happy',
-    wordCount: 78,
     status: 'analyzed',
+    hasAnalysis: true,
     createdAt: new Date().toISOString(),
     analysis: {
         id: 'analysis_001',
@@ -95,6 +96,13 @@ export const mockDreamDetail: DreamDetail = {
             love: '单身者可能会遇到心仪的对象，已有伴侣的感情升温',
             health: '精力充沛，适合进行户外运动'
         },
+        task: {
+            id: 'task_001',
+            type: 'action',
+            content: '今天给一位很久没联系的朋友发一条问候消息',
+            rewardPoints: 10
+        },
+        disclaimer: '内容仅供自我探索参考，不构成医疗建议。',
         createdAt: new Date().toISOString()
     }
 };
@@ -117,10 +125,9 @@ export const mockAnalysisResult: AnalysisResult = {
         id: 'task_001',
         type: 'action',
         content: '今天给一位很久没联系的朋友发一条问候消息',
-        rewardPoints: 10,
-        status: 'pending',
-        expireAt: new Date(Date.now() + 86400000).toISOString()
+        rewardPoints: 10
     },
+    disclaimer: '内容仅供自我探索参考，不构成医疗建议。',
     createdAt: new Date().toISOString()
 };
 

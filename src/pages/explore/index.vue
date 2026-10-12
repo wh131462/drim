@@ -16,8 +16,8 @@
             <!-- 头部渐变区域 -->
             <view class="explore-header">
                 <view class="header-content">
-                    <text class="header-title">✨ 探索梦境</text>
-                    <text class="header-subtitle">发现他人的精彩梦境世界</text>
+                    <text class="header-title">发现</text>
+                    <text class="header-subtitle">探索梦境，也认识自己</text>
 
                     <!-- 搜索栏 -->
                     <view class="search-bar">
@@ -31,10 +31,98 @@
                             class="search-input"
                             placeholder="搜索梦境内容..."
                             placeholder-style="color: rgba(255, 255, 255, 0.95)"
+                            confirm-type="search"
+                            aria-label="搜索公开梦境"
                             @confirm="handleSearch"
                         />
+                        <button
+                            class="search-submit"
+                            @tap="handleSearch"
+                        >
+                            搜索
+                        </button>
                     </view>
                 </view>
+            </view>
+
+            <!-- 内容入口：塔罗、测试和书店都归于发现页 -->
+            <view
+                class="discover-shortcuts"
+                aria-label="发现更多内容"
+            >
+                <button
+                    class="discover-shortcut"
+                    @tap="goToTarot"
+                >
+                    <text class="discover-shortcut-icon">✦</text>
+                    <view class="discover-shortcut-copy">
+                        <text class="discover-shortcut-title">今日塔罗</text>
+                        <text class="discover-shortcut-desc">抽一张指引牌</text>
+                    </view>
+                    <text class="discover-shortcut-arrow">›</text>
+                </button>
+                <button
+                    class="discover-shortcut"
+                    @tap="goToTests"
+                >
+                    <text class="discover-shortcut-icon">◌</text>
+                    <view class="discover-shortcut-copy">
+                        <text class="discover-shortcut-title">心理测试</text>
+                        <text class="discover-shortcut-desc">认识自己的偏好</text>
+                    </view>
+                    <text class="discover-shortcut-arrow">›</text>
+                </button>
+                <button
+                    class="discover-shortcut"
+                    @tap="goToBooks"
+                >
+                    <text class="discover-shortcut-icon">▤</text>
+                    <view class="discover-shortcut-copy">
+                        <text class="discover-shortcut-title">心灵书店</text>
+                        <text class="discover-shortcut-desc">给这场梦一本书</text>
+                    </view>
+                    <text class="discover-shortcut-arrow">›</text>
+                </button>
+            </view>
+
+            <view
+                class="content-categories"
+                aria-label="内容分类"
+            >
+                <button
+                    class="content-category active"
+                    aria-current="page"
+                    @tap="selectFilter('all')"
+                >
+                    梦境
+                </button>
+                <button
+                    class="content-category"
+                    @tap="goToTarot"
+                >
+                    塔罗
+                </button>
+                <button
+                    class="content-category"
+                    @tap="goToTests"
+                >
+                    测试
+                </button>
+                <button
+                    class="content-category"
+                    @tap="goToBooks"
+                >
+                    书店
+                </button>
+            </view>
+
+            <view class="feed-heading">
+                <text class="feed-heading-title">探索广场</text>
+                <text
+                    v-if="totalDreams > 0"
+                    class="feed-heading-count"
+                    >{{ totalDreams }} 场公开梦境</text
+                >
             </view>
 
             <!-- 筛选标签 -->
@@ -72,8 +160,8 @@
             <!-- 梦境信息流 -->
             <view class="dream-feed">
                 <template
-                    v-for="(item, index) in mixedList"
-                    :key="item.type === 'ad' ? `ad-${index}` : item.data.id"
+                    v-for="item in mixedList"
+                    :key="item.id"
                 >
                     <!-- 原生广告卡片 -->
                     <view
@@ -85,7 +173,7 @@
                         </view>
                         <!-- #ifdef MP-WEIXIN -->
                         <ad
-                            unit-id="adunit-xxxxxxxx"
+                            :unit-id="adUnitId"
                             ad-type="feeds"
                             ad-theme="white"
                             @error="handleAdError"
@@ -100,7 +188,7 @@
 
                     <!-- 梦境卡片 -->
                     <view
-                        v-else
+                        v-else-if="item.data"
                         class="public-dream-card"
                         @tap="viewDream(item.data.id)"
                     >
@@ -111,7 +199,7 @@
                         >
                             <view class="author-avatar">
                                 <image
-                                    v-if="item.data.author.avatar && !item.data.author.avatarError"
+                                    v-if="item.data.author.avatar && !failedAvatarIds.has(item.data.author.id)"
                                     class="avatar-image"
                                     :src="item.data.author.avatar"
                                     mode="aspectFill"
@@ -175,7 +263,7 @@
 
                 <!-- 空状态 -->
                 <view
-                    v-if="publicDreams.length === 0 && !loading"
+                    v-if="publicDreams.length === 0 && !loading && !loadError"
                     class="empty-state"
                 >
                     <view class="empty-illustration">
@@ -188,6 +276,19 @@
                     </view>
                     <text class="empty-title">梦境之海静悄悄</text>
                     <text class="empty-desc">这里暂时没有公开的梦境\n也许你可以成为第一个分享者？</text>
+                </view>
+
+                <view
+                    v-if="loadError && !loading"
+                    class="feed-error"
+                >
+                    <text>{{ loadError }}</text>
+                    <button
+                        class="retry-button"
+                        @tap="onLoadMore"
+                    >
+                        重新加载
+                    </button>
                 </view>
 
                 <!-- 加载更多 -->
@@ -241,6 +342,7 @@ const userStore = useUserStore();
 
 // 数据
 const searchKeyword = ref('');
+const appliedKeyword = ref('');
 const selectedFilter = ref('all');
 const publicDreams = ref<PublicDream[]>([]);
 const availableTags = ref<TagItem[]>([]);
@@ -249,6 +351,11 @@ const refreshing = ref(false);
 const noMore = ref(false);
 const page = ref(1);
 const pageSize = 10;
+const totalDreams = ref(0);
+const loadError = ref('');
+const failedAvatarIds = ref(new Set<string>());
+const pendingLikes = new Set<string>();
+let requestVersion = 0;
 
 // 广告配置
 const adUnitId = getExploreFeedAdUnitId();
@@ -338,66 +445,91 @@ async function loadTags() {
 // 方法
 function selectFilter(filterId: string) {
     selectedFilter.value = filterId;
-    page.value = 1;
-    publicDreams.value = [];
-    noMore.value = false;
+    resetFeed();
     loadPublicDreams();
 }
 
 function handleSearch() {
-    if (!searchKeyword.value.trim()) {
-        return;
-    }
-    // 重置并重新加载
+    appliedKeyword.value = searchKeyword.value.trim();
+    resetFeed();
+    loadPublicDreams();
+}
+
+function resetFeed() {
+    // 使尚未返回的旧请求失效，避免筛选结果被覆盖
+    requestVersion++;
+    loading.value = false;
+    refreshing.value = false;
     page.value = 1;
     publicDreams.value = [];
     noMore.value = false;
-    loadPublicDreams();
+    totalDreams.value = 0;
+    loadError.value = '';
 }
 
 async function loadPublicDreams() {
     if (loading.value || noMore.value) return;
 
+    const currentRequest = ++requestVersion;
+    const currentPage = page.value;
     loading.value = true;
+    loadError.value = '';
 
     try {
         const response = await exploreApi.getPublicDreams({
-            page: page.value,
+            page: currentPage,
             pageSize,
             tag: selectedFilter.value !== 'all' ? selectedFilter.value : undefined,
-            keyword: searchKeyword.value.trim() || undefined
+            keyword: appliedKeyword.value || undefined
         });
+
+        if (currentRequest !== requestVersion) return;
 
         if (response.list.length < pageSize) {
             noMore.value = true;
         }
 
-        publicDreams.value = page.value === 1 ? response.list : [...publicDreams.value, ...response.list];
+        publicDreams.value = currentPage === 1 ? response.list : [...publicDreams.value, ...response.list];
+        totalDreams.value = response.total;
+        page.value = currentPage + 1;
     } catch (error: any) {
+        if (currentRequest !== requestVersion) return;
+        loadError.value = error.message || '公开梦境加载失败，请重试';
         console.error('加载公开梦境失败:', error);
         uni.showToast({
             title: error.message || '加载失败',
             icon: 'none'
         });
     } finally {
-        loading.value = false;
-        refreshing.value = false;
+        if (currentRequest === requestVersion) {
+            loading.value = false;
+            refreshing.value = false;
+        }
     }
 }
 
 function onPullDownRefresh() {
+    resetFeed();
     refreshing.value = true;
-    page.value = 1;
-    noMore.value = false;
-    publicDreams.value = [];
     loadPublicDreams();
 }
 
 function onLoadMore() {
     if (!noMore.value && !loading.value) {
-        page.value++;
         loadPublicDreams();
     }
+}
+
+function goToTarot() {
+    uni.navigateTo({ url: '/pages/tarot/index' });
+}
+
+function goToTests() {
+    uni.navigateTo({ url: '/pages/tests/index' });
+}
+
+function goToBooks() {
+    uni.navigateTo({ url: '/pages/books/index' });
 }
 
 function viewDream(dreamId: string) {
@@ -439,6 +571,8 @@ async function randomExplore() {
 }
 
 async function toggleLike(dream: PublicDream) {
+    if (pendingLikes.has(dream.id)) return;
+    pendingLikes.add(dream.id);
     try {
         const response = await exploreApi.toggleLike(dream.id);
 
@@ -458,6 +592,8 @@ async function toggleLike(dream: PublicDream) {
             title: error.message || '操作失败',
             icon: 'none'
         });
+    } finally {
+        pendingLikes.delete(dream.id);
     }
 }
 
@@ -487,8 +623,7 @@ function formatTime(dateStr: string): string {
 
 // 处理头像加载错误
 function handleAvatarError(dream: PublicDream) {
-    // 标记该头像加载失败，后续显示默认头像
-    (dream.author as any).avatarError = true;
+    failedAvatarIds.value.add(dream.author.id);
 }
 
 // 获取头像文字（使用昵称首字符）
@@ -564,6 +699,143 @@ onMounted(() => {
     gap: 24rpx;
 }
 
+.search-submit {
+    margin: 0;
+    padding: 8rpx 14rpx;
+    border: 0;
+    border-radius: 16rpx;
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    font-size: 22rpx;
+    line-height: 1.4;
+
+    &::after {
+        border: 0;
+    }
+}
+
+.discover-shortcuts {
+    display: grid;
+    gap: 16rpx;
+    padding: 24rpx 32rpx 8rpx;
+    background: $bg-page;
+}
+
+.discover-shortcut {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 88rpx;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 16rpx 20rpx;
+    border: 0;
+    border-radius: 22rpx;
+    background: #fff;
+    color: inherit;
+    text-align: left;
+    line-height: 1.4;
+    box-shadow: 0 4rpx 16rpx rgba(67, 44, 143, 0.06);
+    transition:
+        transform 0.2s,
+        background-color 0.2s;
+
+    &:active {
+        transform: scale(0.985);
+        background: $primary-light;
+    }
+
+    &::after {
+        border: 0;
+    }
+}
+
+.discover-shortcut-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56rpx;
+    height: 56rpx;
+    margin-right: 16rpx;
+    border-radius: 16rpx;
+    background: $primary-light;
+    color: $primary-color;
+    font-size: 32rpx;
+    flex-shrink: 0;
+}
+
+.discover-shortcut-copy {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.discover-shortcut-title {
+    color: $text-primary;
+    font-size: 26rpx;
+    font-weight: 600;
+}
+
+.discover-shortcut-desc {
+    margin-top: 4rpx;
+    color: $text-secondary;
+    font-size: 20rpx;
+}
+
+.discover-shortcut-arrow {
+    color: $text-placeholder;
+    font-size: 38rpx;
+    line-height: 1;
+}
+
+.content-categories {
+    display: flex;
+    gap: 12rpx;
+    padding: 24rpx 32rpx 8rpx;
+    background: $bg-page;
+}
+
+.content-category {
+    margin: 0;
+    padding: 12rpx 24rpx;
+    border: 0;
+    border-radius: 24rpx;
+    background: transparent;
+    color: $text-secondary;
+    font-size: 24rpx;
+    line-height: 1.4;
+
+    &::after {
+        border: 0;
+    }
+
+    &.active {
+        background: $primary-light;
+        color: $primary-color;
+        font-weight: 600;
+    }
+}
+
+.feed-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 24rpx 32rpx 4rpx;
+    background: $bg-page;
+}
+
+.feed-heading-title {
+    color: $text-primary;
+    font-size: 32rpx;
+    font-weight: 700;
+}
+
+.feed-heading-count {
+    color: $text-placeholder;
+    font-size: 22rpx;
+}
+
 .search-icon {
     width: 40rpx;
     height: 40rpx;
@@ -573,6 +845,7 @@ onMounted(() => {
 
 .search-input {
     flex: 1;
+    min-width: 0;
     font-size: 30rpx;
     color: #fff;
     background: transparent;
@@ -591,7 +864,7 @@ onMounted(() => {
 // 筛选标签容器
 .filter-tabs-container {
     background: $bg-page;
-    padding: 32rpx 0;
+    padding: 24rpx 0;
     flex-shrink: 0;
 }
 
@@ -652,7 +925,31 @@ onMounted(() => {
 .dream-feed {
     padding: 0 32rpx;
     padding-bottom: calc(200rpx + env(safe-area-inset-bottom));
-    min-height: 100vh;
+}
+
+.feed-error {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 20rpx;
+    padding: 48rpx 0;
+    color: $text-secondary;
+    font-size: 26rpx;
+    text-align: center;
+}
+
+.retry-button {
+    padding: 16rpx 32rpx;
+    border: 0;
+    border-radius: 24rpx;
+    background: $primary-light;
+    color: $primary-color;
+    font-size: 24rpx;
+    line-height: 1.4;
+
+    &::after {
+        border: 0;
+    }
 }
 
 // 广告卡片
@@ -1085,8 +1382,39 @@ onMounted(() => {
         background: linear-gradient(135deg, $dark-primary-color 0%, #9f7aea 100%);
     }
 
-    .filter-tabs-container {
+    .filter-tabs-container,
+    .discover-shortcuts,
+    .content-categories,
+    .feed-heading {
         background: $dark-bg-page;
+    }
+
+    .discover-shortcut {
+        background: $dark-bg-card;
+        box-shadow: $dark-shadow-sm;
+    }
+
+    .discover-shortcut-icon,
+    .content-category.active,
+    .retry-button {
+        background: rgba(139, 110, 255, 0.15);
+        color: $dark-primary-color;
+    }
+
+    .discover-shortcut-title,
+    .feed-heading-title {
+        color: $dark-text-primary;
+    }
+
+    .discover-shortcut-desc,
+    .content-category,
+    .feed-error {
+        color: $dark-text-secondary;
+    }
+
+    .discover-shortcut-arrow,
+    .feed-heading-count {
+        color: $dark-text-placeholder;
     }
 
     .ad-card {

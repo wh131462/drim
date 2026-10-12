@@ -7,19 +7,6 @@
         <view class="hero-section">
             <view class="moon-bg"></view>
 
-            <!-- 连续记梦徽章 -->
-            <view
-                class="streak-badge"
-                v-if="userStore.consecutiveDays > 0"
-            >
-                <image
-                    class="streak-icon"
-                    src="/static/icons/fire.svg"
-                    mode="aspectFit"
-                />
-                <text>连续记梦 {{ userStore.consecutiveDays }} 天</text>
-            </view>
-
             <!-- 欢迎语 -->
             <view class="welcome-text">{{ greeting }}，{{ userStore?.nickname }}</view>
             <view class="welcome-desc">{{ welcomeDesc }}</view>
@@ -39,6 +26,53 @@
                     <text class="record-btn-text">记梦</text>
                 </view>
             </view>
+        </view>
+
+        <!-- 快捷入口 -->
+        <view
+            class="home-shortcuts"
+            aria-label="快捷入口"
+        >
+            <button
+                class="home-shortcut"
+                @tap="goToTarot"
+            >
+                <text class="shortcut-icon">✦</text>
+                <view class="shortcut-copy">
+                    <text class="shortcut-title">今日塔罗</text>
+                    <text class="shortcut-desc">抽一张指引牌</text>
+                </view>
+            </button>
+            <button
+                class="home-shortcut"
+                @tap="goToTests"
+            >
+                <text class="shortcut-icon">◌</text>
+                <view class="shortcut-copy">
+                    <text class="shortcut-title">心理测试</text>
+                    <text class="shortcut-desc">MBTI / 大五人格</text>
+                </view>
+            </button>
+            <button
+                class="home-shortcut"
+                @tap="goToCheckin"
+            >
+                <text class="shortcut-icon">▣</text>
+                <view class="shortcut-copy">
+                    <text class="shortcut-title">梦境打卡</text>
+                    <text class="shortcut-desc">{{ checkinSummary }}</text>
+                </view>
+            </button>
+            <button
+                class="home-shortcut"
+                @tap="goToExplore"
+            >
+                <text class="shortcut-icon">⌕</text>
+                <view class="shortcut-copy">
+                    <text class="shortcut-title">探索广场</text>
+                    <text class="shortcut-desc">看看他人的梦</text>
+                </view>
+            </button>
         </view>
 
         <!-- 梦境回顾卡片 -->
@@ -290,6 +324,7 @@ const settingsStore = useSettingsStore();
 const achievementStore = useAchievementStore();
 const taskStore = useTaskStore();
 const statusBarHeight = ref(0);
+const currentTime = ref(new Date());
 
 // 资料填写弹窗
 const showProfileModal = ref(false);
@@ -311,7 +346,7 @@ const welcomeMessages: Record<string, string[]> = {
 
 // 计算属性
 const greeting = computed(() => {
-    const hour = new Date().getHours();
+    const hour = currentTime.value.getHours();
     if (hour >= 5 && hour < 12) return '早安';
     if (hour >= 12 && hour < 14) return '午安';
     if (hour >= 14 && hour < 18) return '下午好';
@@ -321,7 +356,7 @@ const greeting = computed(() => {
 
 // 获取当前时段
 function getTimePeriod(): string {
-    const hour = new Date().getHours();
+    const hour = currentTime.value.getHours();
     if (hour >= 5 && hour < 12) return 'morning';
     if (hour >= 12 && hour < 14) return 'noon';
     if (hour >= 14 && hour < 18) return 'afternoon';
@@ -338,6 +373,7 @@ const welcomeDesc = computed(() => {
 
 // 刷新欢迎语
 function refreshWelcome() {
+    currentTime.value = new Date();
     const period = getTimePeriod();
     const messages = welcomeMessages[period];
     welcomeIndex.value = Math.floor(Math.random() * messages.length);
@@ -350,6 +386,11 @@ const displayDreams = computed(() => {
     // 没有今日梦境时，展示最新一条
     const latest = dreamStore.latestDream;
     return latest ? [latest] : [];
+});
+
+const checkinSummary = computed(() => {
+    const status = dreamStore.todayDreams.length > 0 ? '今天已记' : '今天待记';
+    return userStore.consecutiveDays > 0 ? `连续 ${userStore.consecutiveDays} 天，${status}` : status;
 });
 
 const currentDreamIndex = ref(0);
@@ -386,6 +427,22 @@ function formatDreamDate(date: string) {
 
 function goToRecord() {
     uni.switchTab({ url: '/pages/record/index' });
+}
+
+function goToTarot() {
+    uni.navigateTo({ url: '/pages/tarot/index' });
+}
+
+function goToTests() {
+    uni.navigateTo({ url: '/pages/tests/index' });
+}
+
+function goToCheckin() {
+    uni.switchTab({ url: '/pages/profile/index' });
+}
+
+function goToExplore() {
+    uni.switchTab({ url: '/pages/explore/index' });
 }
 
 function goToDreamDetail(dreamId: string) {
@@ -531,22 +588,29 @@ onShow(async () => {
             background: radial-gradient(circle, rgba(139, 110, 255, 0.05) 0%, rgba(0, 0, 0, 0) 70%);
         }
 
-        .streak-badge {
-            background: $dark-bg-card;
-            box-shadow: 0 8rpx 24rpx rgba(139, 110, 255, 0.2);
-        }
-
-        .streak-icon {
-            // 暗黑模式下转换为浅紫色 (#8B6EFF)
-            filter: brightness(0) saturate(100%) invert(58%) sepia(61%) saturate(4261%) hue-rotate(228deg)
-                brightness(101%) contrast(101%);
-        }
-
         .welcome-text {
             color: $dark-text-primary;
         }
 
         .welcome-desc {
+            color: $dark-text-secondary;
+        }
+
+        .home-shortcut {
+            background: $dark-bg-card;
+            box-shadow: $dark-shadow-sm;
+        }
+
+        .shortcut-icon {
+            background: rgba(139, 110, 255, 0.15);
+            color: $dark-primary-color;
+        }
+
+        .shortcut-title {
+            color: $dark-text-primary;
+        }
+
+        .shortcut-desc {
             color: $dark-text-secondary;
         }
 
@@ -648,28 +712,12 @@ onShow(async () => {
 
 // Hero Section
 .hero-section {
-    padding: 48rpx 48rpx 80rpx;
-    // 顶部 padding = 状态栏高度 + 负边距补偿 + 原始间距
-    padding-top: calc(v-bind('statusBarHeight') * 2rpx + v-bind('statusBarHeight') * 2rpx + 120rpx);
-    padding-top: calc(constant(safe-area-inset-top) + v-bind('statusBarHeight') * 2rpx + 120rpx);
-    padding-top: calc(env(safe-area-inset-top) + v-bind('statusBarHeight') * 2rpx + 120rpx);
+    padding: 48rpx 48rpx 32rpx;
+    padding-top: calc(env(safe-area-inset-top) + v-bind('statusBarHeight') * 2rpx + 96rpx);
     text-align: center;
     background: radial-gradient(circle at 50% -20%, #f3efff 0%, #ffffff 60%);
     position: relative;
     overflow: hidden;
-    margin-top: calc(-1 * v-bind('statusBarHeight') * 2rpx);
-
-    // 确保背景延伸到顶部
-    &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: calc(v-bind('statusBarHeight') * 2rpx);
-        background: inherit;
-        z-index: -1;
-    }
 }
 
 .moon-bg {
@@ -681,44 +729,6 @@ onShow(async () => {
     background: radial-gradient(circle, rgba(107, 78, 255, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
     border-radius: 50%;
     z-index: 0;
-}
-
-// 连续记梦徽章
-.streak-badge {
-    display: inline-flex;
-    align-items: center;
-    background: #fff;
-    color: $primary-color;
-    padding: 12rpx 28rpx;
-    border-radius: 40rpx;
-    font-size: $font-size-sm;
-    margin-bottom: 48rpx;
-    box-shadow: 0 8rpx 24rpx rgba(107, 78, 255, 0.1);
-    font-weight: 600;
-    position: relative;
-    z-index: 1;
-    animation: float 4s ease-in-out infinite;
-}
-
-.streak-icon {
-    width: 28rpx;
-    height: 28rpx;
-    margin-right: 8rpx;
-    // 将黑色 SVG 转换为紫色 (#6B4EFF)
-    filter: brightness(0) saturate(100%) invert(38%) sepia(79%) saturate(2785%) hue-rotate(237deg) brightness(101%)
-        contrast(104%);
-}
-
-@keyframes float {
-    0% {
-        transform: translateY(0rpx);
-    }
-    50% {
-        transform: translateY(-20rpx);
-    }
-    100% {
-        transform: translateY(0rpx);
-    }
 }
 
 // 欢迎语
@@ -741,7 +751,7 @@ onShow(async () => {
 
 // 记梦大按钮
 .record-btn-container {
-    margin: 80rpx 0;
+    margin: 48rpx 0;
     display: flex;
     justify-content: center;
     position: relative;
@@ -805,6 +815,81 @@ onShow(async () => {
 .record-btn-text {
     font-weight: 600;
     font-size: 32rpx;
+}
+
+// 首页四个内容入口
+.home-shortcuts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20rpx;
+    margin: 0 32rpx 32rpx;
+}
+
+.home-shortcut {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 24rpx 20rpx;
+    border: 0;
+    border-radius: 24rpx;
+    background: #fff;
+    color: inherit;
+    text-align: left;
+    line-height: 1.4;
+    box-shadow: 0 6rpx 20rpx rgba(67, 44, 143, 0.08);
+    transition:
+        transform 0.2s,
+        background-color 0.2s;
+
+    &:active {
+        transform: scale(0.97);
+        background: #f8f6ff;
+    }
+
+    &::after {
+        border: 0;
+    }
+}
+
+.shortcut-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64rpx;
+    height: 64rpx;
+    margin-right: 16rpx;
+    border-radius: 20rpx;
+    background: #f0ebff;
+    color: $primary-color;
+    font-size: 34rpx;
+    flex-shrink: 0;
+}
+
+.shortcut-copy {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.shortcut-title {
+    overflow: hidden;
+    color: $text-primary;
+    font-size: 26rpx;
+    font-weight: 600;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.shortcut-desc {
+    overflow: hidden;
+    margin-top: 6rpx;
+    color: $text-secondary;
+    font-size: 20rpx;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 // 卡片通用样式

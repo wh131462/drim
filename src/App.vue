@@ -19,6 +19,9 @@ onLaunch(async () => {
 onShow(async () => {
     console.log('App Show');
 
+    // 前后台切换时立即按过期时间归一化 VIP 状态，不等待用户信息缓存刷新。
+    userStore.refreshVipStatus();
+
     // 从后台恢复时检查登录状态，未登录则重新登录
     if (!userStore.isLoggedIn && !userStore.token) {
         await initLogin();
@@ -43,9 +46,13 @@ async function initLogin() {
                 await userStore.fetchUserInfo();
                 console.log('用户信息已更新');
             } catch (error) {
-                // token失效，重新登录
-                console.log('Token已失效，重新登录');
-                await performLogin();
+                // 只有请求层已清除 token 才重新登录，网络波动继续使用本地会话。
+                if (!userStore.token) {
+                    console.log('Token已失效，重新登录');
+                    await performLogin();
+                } else {
+                    console.warn('用户信息刷新失败，保留本地会话');
+                }
             }
         } else {
             // 没有token，执行登录
