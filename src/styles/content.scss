@@ -1,0 +1,98 @@
+@use './dark.scss' as *;
+.content-page {
+    min-height: 100vh;
+    box-sizing: border-box;
+    background: #faf8fc;
+    color: #29232f;
+    padding: 0 32rpx 64rpx;
+}
+.content-header {
+    padding: 40rpx 0 32rpx;
+    display: flex;
+    flex-direction: column;
+    gap: 16rpx;
+}
+.content-title {
+    font-size: 48rpx;
+    font-weight: 600;
+}
+.content-subtitle,
+.content-note {
+    font-size: 25rpx;
+    line-height: 1.7;
+    color: #857b90;
+}
+.content-note {
+    display: block;
+    padding: 24rpx 0;
+}
+.content-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12rpx;
+    margin-bottom: 32rpx;
+}
+.content-tab {
+    margin: 0;
+    padding: 0 24rpx;
+    line-height: 64rpx;
+    font-size: 25rpx;
+    border-radius: 16rpx;
+    background: #eee9f4;
+    color: #776787;
+}
+.content-tab::after,
+.content-primary::after,
+.content-secondary::after {
+    border: none;
+}
+.content-tab.active {
+    background: #7653af;
+    color: #fff;
+}
+.content-panel {
+    padding: 32rpx;
+    border-radius: 28rpx;
+    background: #fff;
+}
+.content-primary,
+.content-secondary {
+    margin: 24rpx 0 0;
+    border-radius: 18rpx;
+    font-size: 28rpx;
+    line-height: 86rpx;
+}
+.content-primary {
+    background: #7653af;
+    color: #fff;
+}
+.content-secondary {
+    background: #eee9f4;
+    color: #7653af;
+}
+.content-empty {
+    text-align: center;
+    padding: 100rpx 30rpx;
+    line-height: 2;
+    color: #857b90;
+}
+.content-page.dark-mode {
+    background: $dark-bg-page;
+    color: $dark-text-primary;
+}
+.dark-mode .content-panel {
+    background: $dark-bg-card;
+}
+.dark-mode .content-note,
+.dark-mode .content-subtitle {
+    color: $dark-text-secondary;
+}
+.dark-mode .content-tab,
+.dark-mode .content-secondary {
+    background: #302740;
+    color: #bea6eb;
+}
+.dark-mode .content-tab.active {
+    background: #7653af;
+    color: #fff;
+}
