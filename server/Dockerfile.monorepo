@@ -49,6 +49,7 @@ COPY server/prisma ./prisma/
 
 # 复制构建产物
 COPY --from=builder /app/dist ./dist
+COPY server/public ./public/
 
 # 复制启动脚本
 COPY server/scripts/docker-entrypoint.sh ./scripts/

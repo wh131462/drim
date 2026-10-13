@@ -146,9 +146,9 @@
                     <text class="result-task-reward">完成可获得 +{{ analysis.task.rewardPoints }} 幸运值</text>
                 </view>
 
-                <!-- 延伸阅读：按解析主题匹配静态书单 -->
+                <!-- 延伸阅读：由书店接口匹配解析主题 -->
                 <view
-                    v-if="recommendedBooks.length"
+                    v-if="recommendedBooks.length || recommendationsLoading || recommendationsError"
                     class="reading-section"
                 >
                     <view class="reading-section-header">
@@ -159,13 +159,35 @@
                             >查看书店</text
                         >
                     </view>
+                    <text
+                        v-if="recommendationsLoading"
+                        class="reading-status"
+                        >正在加载推荐书籍…</text
+                    >
+                    <button
+                        v-else-if="recommendationsError"
+                        class="reading-retry"
+                        @tap="loadRecommendedBooks"
+                    >
+                        推荐书籍加载失败，点击重试
+                    </button>
+                    <button
+                        v-if="favoritesError"
+                        class="reading-retry"
+                        @tap="refreshFavorites"
+                    >
+                        收藏状态同步失败，点击重试
+                    </button>
                     <BookCard
                         v-for="book in recommendedBooks"
                         :key="book.id"
                         :book="book"
-                        :saved="savedBooks.includes(book.id)"
+                        :saved="booksStore.savedIds.includes(book.id)"
+                        :pending="booksStore.pendingIds.includes(book.id)"
+                        :save-disabled="!booksStore.favoritesReady"
                         :reason="book.reason"
                         @save="saveBook"
+                        @open="openBook"
                     />
                 </view>
 
@@ -199,20 +221,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
-import { useUserStore } from '@/stores';
-import { analysisApi } from '@/api';
+import { useUserStore, useBooksStore } from '@/stores';
+import { analysisApi, booksApi } from '@/api';
 import { dreamApi } from '@/api';
 import { connectAnalysisStream } from '@/utils/sse-client';
 import { confirmPointsConsume, showPointsConsumed } from '@/utils/feedback';
 import NavBar from '@/components/NavBar/index.vue';
 import DreamRewardModal from '@/components/DreamRewardModal/index.vue';
 import BookCard from '@/components/BookCard/index.vue';
-import { recommendBooks } from '@/constants/content';
-import { readSavedBooks, toggleSavedBook } from '@/utils/content';
+import type { Book } from '@/constants/content';
 
 const userStore = useUserStore();
+const booksStore = useBooksStore();
 const loading = ref(true);
 const analysis = ref<any>(null);
 const error = ref<string | null>(null);
@@ -220,10 +242,28 @@ const navBarHeight = ref(0);
 const dreamId = ref('');
 const loadingText = ref('系统正在解析你的梦境...');
 const reanalyzing = ref(false);
-const savedBooks = ref<string[]>([]);
 const dreamContext = ref('');
-const recommendedBooks = computed(() =>
-    recommendBooks(`${dreamContext.value} ${analysis.value?.theme || ''} ${analysis.value?.interpretation || ''}`)
+const recommendedBooks = ref<Book[]>([]);
+const recommendationsLoading = ref(false);
+const recommendationsError = ref(false);
+const favoritesError = ref(false);
+let recommendationVersion = 0;
+const recommendationTopic = computed(() =>
+    !loading.value && analysis.value
+        ? `${analysis.value.theme || ''} ${analysis.value.interpretation || ''} ${dreamContext.value}`
+        : ''
+);
+watch(recommendationTopic, () => {
+    void loadRecommendedBooks();
+});
+watch(
+    () => userStore.token,
+    (_, previous) => {
+        if (!previous) return;
+        recommendationVersion++;
+        recommendedBooks.value = [];
+        recommendationsLoading.value = false;
+    }
 );
 const fortuneTipItems = computed(() =>
     [
@@ -276,7 +316,7 @@ onMounted(async () => {
 });
 
 onShow(() => {
-    savedBooks.value = readSavedBooks();
+    void refreshFavorites();
 });
 
 async function loadDreamContext() {
@@ -285,16 +325,51 @@ async function loadDreamContext() {
         const dream = await dreamApi.getById(dreamId.value);
         dreamContext.value = `${dream.content} ${(dream.tags || []).join(' ')}`;
     } catch {
-        // 公开详情或旧记录无额外上下文时仍展示通用书单。
+        // 无原始梦境权限时仍可用解析主题请求推荐。
     }
 }
 
-function saveBook(id: string) {
+async function saveBook(id: string) {
     try {
-        savedBooks.value = toggleSavedBook(id, savedBooks.value);
-    } catch {
-        uni.showToast({ title: '收藏保存失败，请重试', icon: 'none' });
+        await booksStore.toggleFavorite(id);
+    } catch (err) {
+        uni.showToast({ title: err instanceof Error ? err.message : '收藏保存失败，请重试', icon: 'none' });
     }
+}
+
+async function refreshFavorites() {
+    let token = userStore.token;
+    try {
+        token = await booksStore.ensureSession();
+        await booksStore.loadFavorites(true);
+        if (userStore.token === token) favoritesError.value = false;
+    } catch {
+        if (userStore.token === token) favoritesError.value = true;
+    }
+}
+
+async function loadRecommendedBooks() {
+    const version = ++recommendationVersion;
+    const topic = recommendationTopic.value;
+    recommendedBooks.value = [];
+    recommendationsError.value = false;
+    recommendationsLoading.value = !!topic;
+    if (!topic) return;
+    try {
+        const token = await booksStore.ensureSession();
+        if (version !== recommendationVersion || userStore.token !== token) return;
+        const books = await booksApi.getRecommendations(topic);
+        if (version !== recommendationVersion || userStore.token !== token) return;
+        recommendedBooks.value = books;
+    } catch {
+        if (version === recommendationVersion) recommendationsError.value = true;
+    } finally {
+        if (version === recommendationVersion) recommendationsLoading.value = false;
+    }
+}
+
+function openBook(id: string) {
+    uni.navigateTo({ url: `/pages/books/detail?id=${encodeURIComponent(id)}&source=recommendation` });
 }
 
 function goToBooks() {
@@ -302,6 +377,7 @@ function goToBooks() {
 }
 
 onUnmounted(() => {
+    recommendationVersion++;
     cleanup();
 });
 
@@ -1265,6 +1341,26 @@ async function handleReanalyze() {
 
 .reading-section :deep(.book-card:first-of-type) {
     padding-top: 24rpx;
+}
+
+.reading-status,
+.reading-retry {
+    display: block;
+    padding: 20rpx 0;
+    font-size: 24rpx;
+    line-height: 1.7;
+    color: #747871;
+}
+
+.reading-retry {
+    margin: 0;
+    text-align: left;
+    background: transparent;
+    color: #61796a;
+}
+
+.reading-retry::after {
+    border: 0;
 }
 
 .dark-mode .reading-section {

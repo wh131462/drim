@@ -19,6 +19,8 @@ import { SettingsModule } from './modules/settings/settings.module';
 import { ExportModule } from './modules/export/export.module';
 import { SchedulerModule } from './modules/scheduler/scheduler.module';
 import { HealthModule } from './modules/health/health.module';
+import { TarotModule } from './modules/tarot/tarot.module';
+import { BooksModule } from './modules/books/books.module';
 
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
@@ -52,7 +54,9 @@ import { AppController } from './app.controller';
         SettingsModule,
         ExportModule,
         SchedulerModule,
-        HealthModule
+        HealthModule,
+        TarotModule,
+        BooksModule
     ],
     controllers: [AppController],
     providers: [

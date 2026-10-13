@@ -11,3 +11,4 @@ export { useDreamStore } from './modules/dream';
 export { useSettingsStore } from './modules/settings';
 export { useAchievementStore } from './modules/achievement';
 export { useTaskStore } from './modules/task';
+export { useBooksStore } from './modules/books';

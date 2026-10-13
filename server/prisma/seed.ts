@@ -7,11 +7,13 @@ import { PrismaClient } from '@prisma/client';
 import { seedAchievements } from './seeds/achievements';
 import { seedTestData } from './seeds/test-data';
 import { fixDreamVersions } from './seeds/fix-dream-versions';
+import { seedBooks } from './seeds/books';
 
 const prisma = new PrismaClient();
 
 async function main() {
     console.log('🌱 开始初始化数据...\n');
+    await seedBooks(prisma);
 
     // 注意: 权益套餐数据已移至后端代码硬编码 (privilege.service.ts)
     // 不再从数据库读取，避免编码问题导致乱码

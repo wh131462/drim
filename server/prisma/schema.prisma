@@ -37,6 +37,9 @@ model User {
   adRecords     AdRecord[]
   achievements  UserAchievement[]
   preference    UserPreference?
+  bookFavorites BookFavorite[]
+  bookClicks    BookClick[]
+  tarotDaily    TarotDaily[]
 
   @@index([unionId])
   @@index([createdAt])
@@ -360,4 +363,75 @@ enum VersionType {
   original
   polished
   edited
+}
+
+// 后台维护的书籍目录；删除只标记，保留历史互动。
+model Book {
+  id          String    @id @default(cuid())
+  category    String    @db.VarChar(32)
+  title       String    @db.VarChar(160)
+  author      String    @db.VarChar(120)
+  tag         String    @default("") @db.VarChar(64)
+  price       String    @default("") @db.VarChar(32)
+  coverImage  String    @map("cover_image") @db.VarChar(512)
+  description String    @db.Text
+  reason      String    @db.Text
+  comingSoon  Boolean   @default(false) @map("coming_soon")
+  published   Boolean   @default(false)
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  favorites BookFavorite[]
+  clicks    BookClick[]
+
+  @@index([published, deletedAt, sortOrder])
+  @@index([category, published, deletedAt])
+  @@map("books")
+}
+
+model BookFavorite {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  bookId    String   @map("book_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+  book Book @relation(fields: [bookId], references: [id])
+
+  @@unique([userId, bookId])
+  @@index([bookId, createdAt])
+  @@map("book_favorites")
+}
+
+model BookClick {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  bookId    String   @map("book_id")
+  requestId String   @map("request_id") @db.VarChar(64)
+  source    String   @db.VarChar(24)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+  book Book @relation(fields: [bookId], references: [id])
+
+  @@unique([userId, requestId])
+  @@index([bookId, createdAt])
+  @@index([createdAt])
+  @@map("book_clicks")
+}
+
+model TarotDaily {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  date      String   @db.VarChar(10)
+  cardId    Int      @map("card_id")
+  reversed  Boolean
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, date])
+  @@map("tarot_daily")
 }

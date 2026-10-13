@@ -111,6 +111,16 @@ docker network create proxy
 
 生产部署和配置更新统一从 GitHub Actions 发起。
 
+## 书籍与塔罗资源
+
+本次迁移 `20261012000000_add_books_and_tarot_daily` 新增书籍、收藏、点击事件和每日塔罗记录，包含 7 本初始书籍。生产镜像启动时自动执行 `prisma migrate deploy`；已有目录不会在后续部署时被种子数据覆盖。本地更新代码后需执行 `pnpm db:generate`，再应用数据库迁移。
+
+`/admin` 中的“书籍管理”支持新建、编辑、上下架、排序及删除。删除会保留历史互动记录。书籍列表和详情展示累计点击、北京时间今日及近 7 日点击、当前收藏人数；点击和收藏明细可按书籍、用户、时间筛选。
+
+图片位于 `server/public/books` 和 `server/public/tarot`，镜像中随服务部署，对外地址为 `/assets/books/…` 和 `/assets/tarot/…`。塔罗牌义文件随 Nest 静态资源复制到 `dist/modules/tarot/deck.json`。小程序的 `VITE_API_BASE_URL` 必须指向实际 HTTPS API，微信后台需将图片所在域名加入下载合法域名；使用外部书籍封面时还需配置其图片域名。
+
+每日一牌通过账号和北京时间日期唯一保存；三牌阵由后端进行不放回随机抽牌，当前三牌阵不写入历史。旧版本设备本地收藏没有账号归属，不会自动写入某个用户的书架。
+
 ## 注意事项
 
 - 已存在 MySQL 数据卷时，不要随意修改 `MYSQL_ROOT_PASSWORD`。仅改变容器环境变量不会自动修改数据库中已经生效的密码。

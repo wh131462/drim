@@ -14,3 +14,5 @@ export { exploreApi } from './modules/explore';
 export { polishApi } from './modules/polish';
 export { versionApi } from './modules/version';
 export { achievementApi } from './modules/achievement';
+export { booksApi } from './modules/books';
+export { tarotApi } from './modules/tarot';

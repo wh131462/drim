@@ -33,37 +33,8 @@ function loadTypeScript(relativePath) {
     return module.exports;
 }
 
-const { BOOKS, TEST_SETS, recommendBooks } = loadTypeScript('src/constants/content.ts');
-const { SAVED_BOOKS_KEY, readSavedBooks, toggleSavedBook, testResult } = loadTypeScript('src/utils/content.ts');
-assert.equal(new Set(BOOKS.map((book) => book.id)).size, BOOKS.length);
-for (const [topic, category] of [
-    ['考试 追逐 迷路', 'emotion'],
-    ['亲人 家庭 争吵', 'relationship'],
-    ['飞行 水 死亡', 'dream']
-]) {
-    const recommendations = recommendBooks(topic);
-    assert.ok(recommendations.length >= 1 && recommendations.length <= 2);
-    assert.ok(recommendations.every((book) => book.category === category));
-}
-assert.equal(recommendBooks('没有匹配主题')[0].id, BOOKS[0].id);
-assert.equal(recommendBooks('')[1].id, BOOKS[1].id);
-
-storage.set(SAVED_BOOKS_KEY, [BOOKS[0].id, 'unknown', BOOKS[0].id, null]);
-assert.deepEqual(Array.from(readSavedBooks()), [BOOKS[0].id]);
-let saved = toggleSavedBook(BOOKS[1].id, readSavedBooks());
-assert.deepEqual(Array.from(saved), [BOOKS[0].id, BOOKS[1].id]);
-saved = toggleSavedBook(BOOKS[0].id, saved);
-assert.deepEqual(Array.from(readSavedBooks()), [BOOKS[1].id]);
-assert.equal(toggleSavedBook('unknown', saved), saved);
-storage.set(SAVED_BOOKS_KEY, 'invalid');
-assert.equal(readSavedBooks().length, 0);
-const writeStorage = uni.setStorageSync;
-uni.setStorageSync = () => {
-    throw new Error('storage full');
-};
-assert.throws(() => toggleSavedBook(BOOKS[0].id, saved), /storage full/);
-assert.deepEqual(Array.from(saved), [BOOKS[1].id]);
-uni.setStorageSync = writeStorage;
+const { TEST_SETS } = loadTypeScript('src/constants/content.ts');
+const { testResult } = loadTypeScript('src/utils/content.ts');
 
 assert.equal(TEST_SETS.mbti.length, 8);
 assert.equal(TEST_SETS.big5.length, 5);
@@ -158,11 +129,7 @@ async function checkCalendar() {
 }
 
 checkCalendar()
-    .then(() =>
-        console.log(
-            'Content self-check passed: recommendations, storage, test scoring, routes, and calendar request ordering.'
-        )
-    )
+    .then(() => console.log('Content self-check passed: test scoring, routes, and calendar request ordering.'))
     .catch((error) => {
         console.error(error);
         process.exitCode = 1;

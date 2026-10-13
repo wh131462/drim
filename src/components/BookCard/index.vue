@@ -3,15 +3,34 @@
         class="book-card"
         :class="{ 'dark-mode': userStore.isDarkMode }"
     >
-        <image
-            class="book-jacket"
-            :src="book.coverImage"
-            mode="aspectFit"
-            :alt="`${book.title}封面`"
-            aria-hidden="true"
-        />
+        <button
+            class="book-cover-link"
+            :aria-label="`查看${book.title}`"
+            @tap="$emit('open', book.id)"
+        >
+            <image
+                v-if="!coverFailed"
+                class="book-jacket"
+                :src="book.coverImage"
+                mode="aspectFit"
+                :alt="`${book.title}封面`"
+                aria-hidden="true"
+                @error="coverFailed = true"
+            />
+            <view
+                v-else
+                class="book-cover-fallback"
+                ><text>{{ book.title }}</text></view
+            >
+        </button>
         <view class="book-copy">
-            <text class="book-title">{{ book.title }}</text>
+            <button
+                class="book-title"
+                :aria-label="`查看${book.title}`"
+                @tap="$emit('open', book.id)"
+            >
+                {{ book.title }}
+            </button>
             <text class="book-author">{{ book.author }}</text>
             <text
                 class="book-summary"
@@ -19,15 +38,20 @@
                 >{{ reason || book.description }}</text
             >
             <view class="book-footer">
-                <text class="book-price">{{ book.comingSoon ? '即将上架' : `参考价 ${book.price}` }}</text>
+                <text
+                    v-if="book.comingSoon || book.price"
+                    class="book-price"
+                    >{{ book.comingSoon ? '即将上架' : `参考价 ${book.price}` }}</text
+                >
                 <button
                     class="save-book"
                     :class="{ saved }"
+                    :disabled="pending || saveDisabled"
                     :aria-pressed="saved"
                     :aria-label="`${saved ? '取消收藏' : '收藏'}${book.title}`"
-                    @tap="$emit('save', book.id)"
+                    @tap.stop="$emit('save', book.id)"
                 >
-                    {{ saved ? '已收藏' : '收藏' }}
+                    {{ pending ? '保存中' : saved ? '已收藏' : '收藏' }}
                 </button>
             </view>
         </view>
@@ -35,10 +59,18 @@
 </template>
 <script setup lang="ts">
 import type { Book } from '@/constants/content';
+import { ref, watch } from 'vue';
 import { useUserStore } from '@/stores';
 const userStore = useUserStore();
-defineProps<{ book: Book; saved: boolean; reason?: string }>();
-defineEmits<{ (event: 'save', id: string): void }>();
+const props = defineProps<{ book: Book; saved: boolean; pending?: boolean; saveDisabled?: boolean; reason?: string }>();
+const coverFailed = ref(false);
+watch(
+    () => props.book.coverImage,
+    () => {
+        coverFailed.value = false;
+    }
+);
+defineEmits<{ (event: 'save', id: string): void; (event: 'open', id: string): void }>();
 </script>
 <style lang="scss" scoped>
 .book-card {
@@ -48,12 +80,43 @@ defineEmits<{ (event: 'save', id: string): void }>();
     padding: 28rpx 0;
     border-bottom: 1rpx solid #eeece8;
 }
+.book-cover-link {
+    flex: 0 0 148rpx;
+    margin: 0;
+    padding: 0;
+    width: 148rpx;
+    height: 222rpx;
+    border-radius: 2rpx;
+    background: transparent;
+}
+.book-cover-link::after,
+.book-title::after {
+    border: none;
+}
+.book-cover-link:focus-visible,
+.book-title:focus-visible {
+    outline: 2rpx solid #61796a;
+    outline-offset: 4rpx;
+}
 .book-jacket {
     display: block;
     flex: 0 0 148rpx;
     width: 148rpx;
     height: 222rpx;
     border-radius: 2rpx;
+}
+.book-cover-fallback {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 148rpx;
+    height: 222rpx;
+    padding: 16rpx;
+    background: #f3f3ef;
+    color: #747871;
+    font-size: 23rpx;
+    line-height: 1.6;
 }
 .book-copy {
     flex: 1;
@@ -63,6 +126,11 @@ defineEmits<{ (event: 'save', id: string): void }>();
     flex-direction: column;
 }
 .book-title {
+    margin: 0;
+    padding: 0;
+    text-align: left;
+    border-radius: 0;
+    background: transparent;
     font-size: 29rpx;
     font-weight: 600;
     line-height: 1.5;
@@ -124,8 +192,16 @@ defineEmits<{ (event: 'save', id: string): void }>();
 .save-book:active {
     opacity: 0.65;
 }
+.save-book[disabled] {
+    opacity: 0.5;
+    background: transparent;
+}
 .book-card.dark-mode {
     border-color: #363a35;
+}
+.dark-mode .book-cover-fallback {
+    background: #2c332a;
+    color: #b6beb2;
 }
 .dark-mode .book-title {
     color: #e5e7e1;

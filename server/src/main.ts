@@ -17,6 +17,11 @@ async function bootstrap() {
         prefix: '/uploads/'
     });
 
+    app.useStaticAssets(join(__dirname, '..', 'public'), {
+        prefix: '/assets/',
+        maxAge: '1d'
+    });
+
     // 全局前缀
     app.setGlobalPrefix('api/v1');
 

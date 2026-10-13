@@ -1,5 +1,5 @@
 /**
- * 首版自我探索内容：静态数据，后续可替换为接口数据。
+ * 自我探索内容与书籍接口类型。
  */
 
 export type BookCategory = 'dream' | 'emotion' | 'relationship' | 'growth' | 'personality';
@@ -17,126 +17,7 @@ export interface Book {
     comingSoon?: boolean;
 }
 
-export const BOOKS: Book[] = [
-    {
-        id: 'dream-analysis',
-        category: 'dream',
-        title: '梦的解析',
-        author: '西格蒙德·弗洛伊德',
-        tag: '潜意识',
-        price: '¥49.00',
-        coverImage: '/static/books/dream-analysis.jpg',
-        description: '从梦的象征与线索出发，理解那些在夜里浮现的心事。',
-        reason: '适合从梦境中的象征和隐喻开始了解潜意识如何表达。'
-    },
-    {
-        id: 'jung-memoir',
-        category: 'dream',
-        title: '荣格自传：回忆·梦·思考',
-        author: '卡尔·古斯塔夫·荣格',
-        tag: '荣格',
-        price: '¥58.00',
-        coverImage: '/static/books/jung-memoir.jpg',
-        description: '一段将梦、象征与人生经验放在一起阅读的旅程。',
-        reason: '如果你常梦见水、飞行或未知空间，可以继续探索梦与象征。'
-    },
-    {
-        id: 'power-of-now',
-        category: 'emotion',
-        title: '当下的力量',
-        author: '埃克哈特·托利',
-        tag: '情绪',
-        price: '¥42.00',
-        coverImage: '/static/books/power-of-now.jpg',
-        description: '把注意力带回当下，给焦虑的思绪留出呼吸的空间。',
-        reason: '适合整理焦虑或反复的思绪，练习回到当下。'
-    },
-    {
-        id: 'talk-to-someone',
-        category: 'emotion',
-        title: '也许你该找个人聊聊',
-        author: '洛莉·戈特利布',
-        tag: '情绪',
-        price: '¥52.00',
-        coverImage: '/static/books/talk-to-someone.jpg',
-        description: '在真实故事里看见改变的可能，学会温柔地理解自己。',
-        reason: '适合从真实故事中整理情绪，找到被理解和改变的可能。'
-    },
-    {
-        id: 'attached',
-        category: 'relationship',
-        title: '依恋',
-        author: '阿米尔·莱文 / 瑞秋·赫勒',
-        tag: '关系',
-        price: '¥39.00',
-        coverImage: '/static/books/attached.jpg',
-        description: '认识亲密关系中的不同需要，找到更自在的连接方式。',
-        reason: '如果你常梦见亲人、争吵或关系拉扯，可以认识关系中的需要。'
-    },
-    {
-        id: 'courage-to-be-disliked',
-        category: 'growth',
-        title: '被讨厌的勇气',
-        author: '岸见一郎 / 古贺史健',
-        tag: '成长',
-        price: '¥45.00',
-        coverImage: '/static/books/courage-to-be-disliked.jpg',
-        description: '从阿德勒心理学出发，重新思考自由、关系与人生选择。',
-        reason: '适合继续探索自由、选择，以及如何减少对他人目光的顾虑。'
-    },
-    {
-        id: 'personality-puzzle',
-        category: 'personality',
-        title: '安静：内向性格的竞争力',
-        author: '苏珊·凯恩',
-        tag: '人格',
-        price: '即将上架',
-        coverImage: '/static/books/personality-puzzle.jpg',
-        description: '从不同性格的优势出发，理解自己与他人的沟通方式。',
-        reason: '适合在完成性格测试后，继续理解自己的能量来源和沟通习惯。',
-        comingSoon: true
-    }
-];
-
 export const TAROT_BACK_IMAGE = '/static/tarot/back.jpg';
-
-export const TAROT_CARDS = [
-    {
-        name: '星星',
-        number: 'XVII',
-        image: '/static/tarot/star.jpg',
-        keyword: '希望',
-        reading: '给自己一点时间，保持对未来的信任，新的方向正在变清晰。'
-    },
-    {
-        name: '月亮',
-        number: 'XVIII',
-        image: '/static/tarot/moon.jpg',
-        keyword: '直觉',
-        reading: '先照顾好自己的感受，再分辨哪些担忧来自事实，哪些只是想象。'
-    },
-    {
-        name: '太阳',
-        number: 'XIX',
-        image: '/static/tarot/sun.jpg',
-        keyword: '活力',
-        reading: '把注意力放回正在发生的好事，坦率表达会带来更多能量。'
-    },
-    {
-        name: '节制',
-        number: 'XIV',
-        image: '/static/tarot/temperance.jpg',
-        keyword: '平衡',
-        reading: '不必一次解决所有问题，找到适合自己的节奏就已经在前进。'
-    },
-    {
-        name: '隐者',
-        number: 'IX',
-        image: '/static/tarot/hermit.jpg',
-        keyword: '内省',
-        reading: '独处不是停滞，给自己安静的空间，答案会从经验里浮现。'
-    }
-];
 
 export interface TestQuestion {
     text: string;
@@ -208,19 +89,3 @@ export const BOOK_CATEGORY_LABELS: Record<
     personality: '人格',
     saved: '我的书架'
 };
-
-export function recommendBooks(topic: string): Book[] {
-    const source = topic || '';
-    const matches = source.match(/亲人|家庭|争吵|关系|考试|追逐|迷路|焦虑|压力|飞行|水|死亡|潜意识|梦/g) || [];
-    const category: BookCategory | null = /亲人|家庭|争吵|关系/.test(source)
-        ? 'relationship'
-        : /考试|追逐|迷路|焦虑|压力/.test(source)
-          ? 'emotion'
-          : /飞行|水|死亡|潜意识|梦/.test(source)
-            ? 'dream'
-            : null;
-    const books = (category ? BOOKS.filter((book) => book.category === category) : BOOKS).slice(0, 2);
-    if (!matches.length) return books;
-    const topicLabel = [...new Set(matches)].slice(0, 2).join('、');
-    return books.map((book) => ({ ...book, reason: `你的梦境或解析出现了“${topicLabel}”，${book.reason}` }));
-}

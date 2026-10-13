@@ -36,6 +36,13 @@
             }
         },
         {
+            "path": "pages/books/detail",
+            "style": {
+                "navigationBarTitleText": "书籍详情",
+                "navigationStyle": "custom"
+            }
+        },
+        {
             "path": "pages/record/index",
             "style": {
                 "navigationBarTitleText": "记录梦境",

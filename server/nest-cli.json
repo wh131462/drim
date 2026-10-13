@@ -3,7 +3,7 @@
     "collection": "@nestjs/schematics",
     "sourceRoot": "src",
     "compilerOptions": {
-        "assets": ["admin/components/**/*"],
+        "assets": ["admin/components/**/*", "modules/tarot/*.json"],
         "watchAssets": true
     }
 }

@@ -1,25 +1,6 @@
-import { BOOKS, TEST_SETS } from '@/constants/content';
+import { TEST_SETS } from '@/constants/content';
 
-export const SAVED_BOOKS_KEY = 'drim-saved-books-v1';
 export const TEST_RESULT_KEY = 'drim-test-result-v1';
-
-export function readSavedBooks(): string[] {
-    try {
-        const value: unknown = uni.getStorageSync(SAVED_BOOKS_KEY);
-        return Array.isArray(value)
-            ? [...new Set(value.filter((id): id is string => BOOKS.some((book) => book.id === id)))]
-            : [];
-    } catch {
-        return [];
-    }
-}
-
-export function toggleSavedBook(id: string, saved: string[]): string[] {
-    if (!BOOKS.some((book) => book.id === id)) return saved;
-    const next = saved.includes(id) ? saved.filter((value) => value !== id) : [...saved, id];
-    uni.setStorageSync(SAVED_BOOKS_KEY, next);
-    return next;
-}
 
 export function testResult(
     type: 'mbti' | 'big5',

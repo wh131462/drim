@@ -4,6 +4,7 @@ import { timingSafeEqual } from 'crypto';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { PrismaService } from '@/prisma/prisma.service';
+import { bookInteractionOptions, booksResourceOptions } from './books.resource';
 
 const logger = new Logger('AdminPanel');
 const ADMIN_ROOT_PATH = '/admin';
@@ -91,21 +92,26 @@ export async function setupAdminPanel(app: NestExpressApplication): Promise<bool
 
     // 生产容器以非 root 用户运行，组件打包目录必须可写。
     process.env.ADMIN_JS_TMP_DIR ||= join(tmpdir(), 'drim-adminjs');
-    const [{ default: AdminJS, ComponentLoader }, AdminJSExpress, prismaAdapter, memoryStoreModule, sessionModule] =
-        await Promise.all([
-            dynamicImport('adminjs'),
-            dynamicImport('@adminjs/express'),
-            dynamicImport('@adminjs/prisma'),
-            dynamicImport('memorystore'),
-            dynamicImport('express-session')
-        ]);
+    const [
+        { default: AdminJS, ComponentLoader, ValidationError },
+        AdminJSExpress,
+        prismaAdapter,
+        memoryStoreModule,
+        sessionModule
+    ] = await Promise.all([
+        dynamicImport('adminjs'),
+        dynamicImport('@adminjs/express'),
+        dynamicImport('@adminjs/prisma'),
+        dynamicImport('memorystore'),
+        dynamicImport('express-session')
+    ]);
     const { Database, Resource, getModelByName } = prismaAdapter;
     const prisma = app.get(PrismaService);
     AdminJS.registerAdapter({ Database, Resource });
 
     const componentLoader = new ComponentLoader();
     const dashboardComponent = componentLoader.add('DreamDashboard', join(__dirname, 'components', 'dream-dashboard'));
-    const modelResource = (modelName: string, options: Record<string, unknown>) => ({
+    const modelResource = (modelName: string, options: object) => ({
         resource: { model: getModelByName(modelName), client: prisma },
         options
     });
@@ -121,10 +127,60 @@ export async function setupAdminPanel(app: NestExpressApplication): Promise<bool
             availableLanguages: ['zh-CN'],
             translations: {
                 'zh-CN': {
-                    labels: { Dream: '梦境', User: '用户', Analysis: '解析结果', navigation: '数据查看' },
-                    actions: { list: '列表', show: '查看', filter: '筛选' },
+                    labels: {
+                        Dream: '梦境',
+                        User: '用户',
+                        Analysis: '解析结果',
+                        Book: '书籍目录',
+                        BookFavorite: '当前收藏明细',
+                        BookClick: '点击明细',
+                        navigation: '数据查看'
+                    },
+                    actions: {
+                        list: '列表',
+                        show: '查看',
+                        filter: '筛选',
+                        new: '新增',
+                        edit: '编辑',
+                        delete: '删除',
+                        bulkDelete: '批量删除'
+                    },
                     buttons: { login: '登录', logout: '退出登录', filter: '筛选', applyChanges: '应用' },
-                    messages: { loginWelcome: '使用管理员账号登录。后台默认为只读模式。' }
+                    messages: { loginWelcome: '使用管理员账号登录，维护书籍并查看数据。' },
+                    resources: {
+                        Book: {
+                            properties: {
+                                title: '书名',
+                                author: '作者',
+                                category: '分类',
+                                tag: '标签',
+                                price: '参考价格',
+                                coverImage: '封面地址',
+                                description: '内容简介',
+                                reason: '推荐理由',
+                                comingSoon: '即将上架',
+                                published: '上架',
+                                sortOrder: '排序',
+                                clickCount: '累计点击',
+                                todayClicks: '今日点击',
+                                weekClicks: '近 7 日点击',
+                                favoriteCount: '当前收藏人数',
+                                deletedAt: '删除时间',
+                                createdAt: '创建时间',
+                                updatedAt: '更新时间'
+                            }
+                        },
+                        BookClick: {
+                            properties: {
+                                book: '书籍',
+                                user: '用户',
+                                source: '点击来源',
+                                requestId: '请求标识',
+                                createdAt: '点击时间'
+                            }
+                        },
+                        BookFavorite: { properties: { book: '书籍', user: '用户', createdAt: '收藏时间' } }
+                    }
                 }
             }
         },
@@ -188,6 +244,9 @@ export async function setupAdminPanel(app: NestExpressApplication): Promise<bool
                 properties: { interpretation: { type: 'textarea' }, fortuneTips: { type: 'textarea' } },
                 actions: readOnlyActions
             }),
+            modelResource('Book', booksResourceOptions(prisma, ValidationError)),
+            modelResource('BookClick', { ...bookInteractionOptions.BookClick, actions: readOnlyActions }),
+            modelResource('BookFavorite', { ...bookInteractionOptions.BookFavorite, actions: readOnlyActions }),
             modelResource('User', {
                 navigation: { name: '数据查看', icon: 'User' },
                 titleProperty: 'nickname',
@@ -233,7 +292,7 @@ export async function setupAdminPanel(app: NestExpressApplication): Promise<bool
                 const emailMatches = constantTimeEqual(email, config.email);
                 const passwordMatches = constantTimeEqual(password, config.password);
                 const isValid = emailMatches && passwordMatches;
-                return isValid ? { email: config.email, title: '只读管理员' } : null;
+                return isValid ? { email: config.email, title: '管理员' } : null;
             }
         },
         null,
@@ -253,6 +312,6 @@ export async function setupAdminPanel(app: NestExpressApplication): Promise<bool
     );
 
     app.use(ADMIN_ROOT_PATH, router);
-    logger.log(`只读管理后台已启用：${ADMIN_ROOT_PATH}`);
+    logger.log(`管理后台已启用：${ADMIN_ROOT_PATH}`);
     return true;
 }
