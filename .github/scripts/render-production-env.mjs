@@ -46,7 +46,7 @@ const values = {
     AI_API_FORMAT: process.env.AI_API_FORMAT || 'openai',
     AI_SYSTEM_PROMPT: process.env.AI_SYSTEM_PROMPT || '你是一个专业的梦境解析师，擅长心理学和传统解梦文化。',
     CONTENT_SECURITY_SKIP: process.env.CONTENT_SECURITY_SKIP || 'false',
-    CONTENT_SECURITY_FAIL_SAFE: process.env.CONTENT_SECURITY_FAIL_SAFE || 'true'
+    CONTENT_SECURITY_FAIL_SAFE: process.env.CONTENT_SECURITY_FAIL_SAFE || 'false'
 };
 
 if (values.ADMIN_COOKIE_SECRET.length < 32) {

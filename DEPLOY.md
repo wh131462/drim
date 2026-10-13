@@ -70,10 +70,10 @@ openssl rand -base64 48
 
 ### 内容安全
 
-| Secret                       | 是否必填 | 说明         |
-| ---------------------------- | -------- | ------------ |
-| `CONTENT_SECURITY_SKIP`      | 否       | 默认 `false` |
-| `CONTENT_SECURITY_FAIL_SAFE` | 否       | 默认 `true`  |
+| Secret                       | 是否必填 | 说明                                  |
+| ---------------------------- | -------- | ------------------------------------- |
+| `CONTENT_SECURITY_SKIP`      | 否       | 默认 `false`                          |
+| `CONTENT_SECURITY_FAIL_SAFE` | 否       | 默认 `false`，生产环境禁止设为 `true` |
 
 ## 触发部署
 
