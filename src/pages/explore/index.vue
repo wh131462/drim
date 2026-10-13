@@ -13,11 +13,10 @@
             @scrolltolower="onLoadMore"
             :lower-threshold="100"
         >
-            <!-- 头部渐变区域 -->
+            <!-- 搜索区域 -->
             <view class="explore-header">
                 <view class="header-content">
                     <text class="header-title">发现</text>
-                    <text class="header-subtitle">探索梦境，也认识自己</text>
 
                     <!-- 搜索栏 -->
                     <view class="search-bar">
@@ -30,7 +29,7 @@
                             v-model="searchKeyword"
                             class="search-input"
                             placeholder="搜索梦境内容..."
-                            placeholder-style="color: rgba(255, 255, 255, 0.95)"
+                            placeholder-style="color: #999999"
                             confirm-type="search"
                             aria-label="搜索公开梦境"
                             @confirm="handleSearch"
@@ -45,7 +44,6 @@
                 </view>
             </view>
 
-            <!-- 内容入口：塔罗、测试和书店都归于发现页 -->
             <view
                 class="discover-shortcuts"
                 aria-label="发现更多内容"
@@ -54,112 +52,42 @@
                     class="discover-shortcut"
                     @tap="goToTarot"
                 >
-                    <view
-                        class="discover-shortcut-icon"
-                        aria-hidden="true"
-                    >
-                        <image
-                            class="discover-shortcut-image"
-                            src="/static/icons/shortcut-tarot.svg"
-                            mode="aspectFit"
-                        />
-                    </view>
-                    <view class="discover-shortcut-copy">
-                        <text class="discover-shortcut-title">今日塔罗</text>
-                        <text class="discover-shortcut-desc">抽一张指引牌</text>
-                    </view>
                     <image
-                        class="discover-shortcut-arrow"
-                        src="/static/icons/arrow-right.svg"
+                        class="discover-shortcut-image"
+                        src="/static/icons/shortcut-tarot.svg"
                         mode="aspectFit"
                         aria-hidden="true"
                     />
+                    <text>塔罗</text>
                 </button>
                 <button
                     class="discover-shortcut"
                     @tap="goToTests"
                 >
-                    <view
-                        class="discover-shortcut-icon"
-                        aria-hidden="true"
-                    >
-                        <image
-                            class="discover-shortcut-image"
-                            src="/static/icons/shortcut-psychology.svg"
-                            mode="aspectFit"
-                        />
-                    </view>
-                    <view class="discover-shortcut-copy">
-                        <text class="discover-shortcut-title">心理测试</text>
-                        <text class="discover-shortcut-desc">认识自己的偏好</text>
-                    </view>
                     <image
-                        class="discover-shortcut-arrow"
-                        src="/static/icons/arrow-right.svg"
+                        class="discover-shortcut-image"
+                        src="/static/icons/shortcut-psychology.svg"
                         mode="aspectFit"
                         aria-hidden="true"
                     />
+                    <text>心理测试</text>
                 </button>
                 <button
                     class="discover-shortcut"
                     @tap="goToBooks"
                 >
-                    <view
-                        class="discover-shortcut-icon"
-                        aria-hidden="true"
-                    >
-                        <image
-                            class="discover-shortcut-image"
-                            src="/static/icons/book.svg"
-                            mode="aspectFit"
-                        />
-                    </view>
-                    <view class="discover-shortcut-copy">
-                        <text class="discover-shortcut-title">心灵书店</text>
-                        <text class="discover-shortcut-desc">给这场梦一本书</text>
-                    </view>
                     <image
-                        class="discover-shortcut-arrow"
-                        src="/static/icons/arrow-right.svg"
+                        class="discover-shortcut-image"
+                        src="/static/icons/book.svg"
                         mode="aspectFit"
                         aria-hidden="true"
                     />
-                </button>
-            </view>
-
-            <view
-                class="content-categories"
-                aria-label="内容分类"
-            >
-                <button
-                    class="content-category active"
-                    aria-current="page"
-                    @tap="selectFilter('all')"
-                >
-                    梦境
-                </button>
-                <button
-                    class="content-category"
-                    @tap="goToTarot"
-                >
-                    塔罗
-                </button>
-                <button
-                    class="content-category"
-                    @tap="goToTests"
-                >
-                    测试
-                </button>
-                <button
-                    class="content-category"
-                    @tap="goToBooks"
-                >
-                    书店
+                    <text>书店</text>
                 </button>
             </view>
 
             <view class="feed-heading">
-                <text class="feed-heading-title">探索广场</text>
+                <text class="feed-heading-title">公开梦境</text>
                 <text
                     v-if="totalDreams > 0"
                     class="feed-heading-count"
@@ -680,9 +608,8 @@ onMounted(() => {
 
 // 头部区域
 .explore-header {
-    background: linear-gradient(135deg, $primary-color 0%, #9f7aea 100%);
-    padding: 120rpx 32rpx 64rpx;
-    border-radius: 0 0 48rpx 48rpx;
+    background: $bg-page;
+    padding: 120rpx 32rpx 16rpx;
     flex-shrink: 0;
 }
 
@@ -692,36 +619,29 @@ onMounted(() => {
 }
 
 .header-title {
-    font-size: 48rpx;
-    font-weight: 700;
-    color: #fff;
-    margin-bottom: 16rpx;
-}
-
-.header-subtitle {
-    font-size: 26rpx;
-    color: rgba(255, 255, 255, 0.9);
-    margin-bottom: 32rpx;
+    font-size: 36rpx;
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: 24rpx;
 }
 
 // 搜索栏
 .search-bar {
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(20rpx);
-    border-radius: 48rpx;
-    padding: 24rpx 40rpx;
+    background: #fff;
+    border-radius: 20rpx;
+    padding: 16rpx 24rpx;
     display: flex;
     align-items: center;
-    gap: 24rpx;
+    gap: 16rpx;
 }
 
 .search-submit {
     margin: 0;
-    padding: 8rpx 14rpx;
+    padding: 12rpx 20rpx;
     border: 0;
     border-radius: 16rpx;
-    background: rgba(255, 255, 255, 0.18);
-    color: #fff;
+    background: #f4f0fa;
+    color: $primary-color;
     font-size: 22rpx;
     line-height: 1.4;
 
@@ -731,125 +651,68 @@ onMounted(() => {
 }
 
 .discover-shortcuts {
-    display: grid;
-    gap: 16rpx;
-    padding: 24rpx 32rpx 8rpx;
-    background: $bg-page;
+    display: flex;
+    gap: 8rpx;
+    margin: 16rpx 32rpx;
+    padding: 8rpx;
+    border-radius: 20rpx;
+    background: #fff;
 }
 
 .discover-shortcut {
     display: flex;
+    flex: 1;
     align-items: center;
-    width: 100%;
+    justify-content: center;
+    gap: 12rpx;
+    min-width: 0;
     min-height: 88rpx;
     box-sizing: border-box;
     margin: 0;
-    padding: 16rpx 20rpx;
+    padding: 12rpx 8rpx;
     border: 0;
-    border-radius: 22rpx;
-    background: #fff;
-    color: inherit;
-    text-align: left;
+    border-radius: 12rpx;
+    background: transparent;
+    color: $text-primary;
+    font-size: 24rpx;
+    font-weight: 500;
     line-height: 1.4;
-    box-shadow: 0 4rpx 16rpx rgba(67, 44, 143, 0.06);
-    transition:
-        transform 0.2s,
-        background-color 0.2s;
+    white-space: nowrap;
+    transition: background-color 0.2s;
 
     &:active {
-        transform: scale(0.985);
-        background: $primary-light;
+        background: #f4f0fa;
+    }
+
+    &:focus-visible {
+        outline: 2rpx solid $primary-color;
+        outline-offset: 2rpx;
     }
 
     &::after {
         border: 0;
     }
-}
-
-.discover-shortcut-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 56rpx;
-    height: 56rpx;
-    margin-right: 16rpx;
-    border-radius: 16rpx;
-    background: #f4f0fa;
-    flex-shrink: 0;
 }
 
 .discover-shortcut-image {
     display: block;
-    width: 38rpx;
-    height: 38rpx;
-}
-
-.discover-shortcut-copy {
-    display: flex;
-    flex: 1;
-    min-width: 0;
-    flex-direction: column;
-}
-
-.discover-shortcut-title {
-    color: $text-primary;
-    font-size: 26rpx;
-    font-weight: 600;
-}
-
-.discover-shortcut-desc {
-    margin-top: 4rpx;
-    color: $text-secondary;
-    font-size: 20rpx;
-}
-
-.discover-shortcut-arrow {
-    width: 28rpx;
-    height: 28rpx;
+    width: 36rpx;
+    height: 36rpx;
     flex-shrink: 0;
-    opacity: 0.65;
-}
-
-.content-categories {
-    display: flex;
-    gap: 12rpx;
-    padding: 24rpx 32rpx 8rpx;
-    background: $bg-page;
-}
-
-.content-category {
-    margin: 0;
-    padding: 12rpx 24rpx;
-    border: 0;
-    border-radius: 24rpx;
-    background: transparent;
-    color: $text-secondary;
-    font-size: 24rpx;
-    line-height: 1.4;
-
-    &::after {
-        border: 0;
-    }
-
-    &.active {
-        background: $primary-light;
-        color: $primary-color;
-        font-weight: 600;
-    }
 }
 
 .feed-heading {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    padding: 24rpx 32rpx 4rpx;
+    padding: 16rpx 32rpx 4rpx;
     background: $bg-page;
 }
 
 .feed-heading-title {
     color: $text-primary;
-    font-size: 32rpx;
-    font-weight: 700;
+    font-size: 28rpx;
+    font-weight: 600;
 }
 
 .feed-heading-count {
@@ -858,27 +721,25 @@ onMounted(() => {
 }
 
 .search-icon {
-    width: 40rpx;
-    height: 40rpx;
-    // 将黑色 SVG 转换为白色
-    filter: brightness(0) invert(1);
+    width: 32rpx;
+    height: 32rpx;
+    flex-shrink: 0;
 }
 
 .search-input {
     flex: 1;
     min-width: 0;
-    font-size: 30rpx;
-    color: #fff;
+    font-size: 26rpx;
+    color: $text-primary;
     background: transparent;
-    caret-color: #fff;
+    caret-color: $primary-color;
 
     &::placeholder {
-        color: rgba(255, 255, 255, 0.9);
+        color: $text-placeholder;
     }
 
-    // 确保输入的文字是白色
     &::-webkit-input-placeholder {
-        color: rgba(255, 255, 255, 0.9);
+        color: $text-placeholder;
     }
 }
 
@@ -1410,40 +1271,44 @@ onMounted(() => {
     background: $dark-bg-page;
 
     .explore-header {
-        background: linear-gradient(135deg, $dark-primary-color 0%, #9f7aea 100%);
+        background: $dark-bg-page;
     }
 
     .filter-tabs-container,
-    .discover-shortcuts,
-    .content-categories,
     .feed-heading {
         background: $dark-bg-page;
     }
 
-    .discover-shortcut {
+    .discover-shortcuts,
+    .search-bar {
         background: $dark-bg-card;
-        box-shadow: $dark-shadow-sm;
     }
 
-    .discover-shortcut-icon,
-    .content-category.active,
+    .header-title,
+    .search-input,
+    .discover-shortcut,
+    .feed-heading-title {
+        color: $dark-text-primary;
+    }
+
+    .discover-shortcut:active {
+        background: $dark-primary-light;
+    }
+
     .retry-button {
         background: rgba(139, 110, 255, 0.15);
         color: $dark-primary-color;
     }
 
-    .discover-shortcut-title,
-    .feed-heading-title {
-        color: $dark-text-primary;
+    .search-submit {
+        background: $dark-primary-light;
+        color: $dark-primary-color;
     }
 
-    .discover-shortcut-desc,
-    .content-category,
     .feed-error {
         color: $dark-text-secondary;
     }
 
-    .discover-shortcut-arrow,
     .feed-heading-count {
         color: $dark-text-placeholder;
     }

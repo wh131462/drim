@@ -5,11 +5,7 @@
         :style="{ paddingTop: navHeight + 'px' }"
     >
         <NavBar title="心理测试" />
-        <view class="content-header"
-            ><text class="content-title">认识自己的另一面</text
-            ><text class="content-subtitle">选择更贴近当下的答案，没有正确或错误。</text></view
-        >
-        <view class="content-tabs"
+        <view class="content-tabs test-tabs"
             ><button
                 class="content-tab"
                 :class="{ active: type === 'mbti' }"
@@ -27,14 +23,14 @@
         <view
             v-if="result"
             class="content-panel"
-            ><text class="result-label">{{ type === 'mbti' ? '你的偏好倾向' : '观察结果' }}</text
             ><text class="result-title">{{ result.title }}</text
-            ><text class="content-note">{{ result.description }}</text
+            ><text class="result-description">{{ result.description }}</text
             ><text
                 v-for="trait in result.traits"
                 :key="trait"
                 class="result-trait"
                 >{{ trait }}</text
+            ><text class="content-note">简版结果，仅供自我探索参考。</text
             ><button
                 class="content-primary"
                 @tap="restart"
@@ -44,12 +40,7 @@
                 class="content-secondary"
                 @tap="goToBooks"
             >
-                继续阅读人格书单</button
-            ><button
-                class="content-secondary"
-                @tap="goToExplore"
-            >
-                去探索广场看看
+                人格书单
             </button></view
         >
         <view
@@ -78,7 +69,6 @@
                 上一题
             </button></view
         >
-        <text class="content-note">简短测试仅帮助自我探索，不是专业人格测量或心理诊断。结果只保存在当前设备。</text>
     </view>
 </template>
 <script setup lang="ts">
@@ -155,12 +145,12 @@ function switchTest(value: 'mbti' | 'big5') {
 function goToBooks() {
     uni.navigateTo({ url: '/pages/books/index?category=personality' });
 }
-function goToExplore() {
-    uni.switchTab({ url: '/pages/explore/index' });
-}
 </script>
 <style lang="scss" scoped>
 @use '@/styles/content.scss';
+.test-tabs {
+    margin-top: 32rpx;
+}
 .question-progress {
     display: block;
     margin-bottom: 20rpx;
@@ -193,16 +183,16 @@ function goToExplore() {
     color: #8966b6;
     font-weight: 600;
 }
-.result-label {
-    display: block;
-    font-size: 24rpx;
-    color: #8966b6;
-}
 .result-title {
     display: block;
     font-size: 48rpx;
-    margin-top: 22rpx;
     font-weight: 600;
+}
+.result-description {
+    display: block;
+    margin: 24rpx 0;
+    font-size: 28rpx;
+    line-height: 1.8;
 }
 .result-trait {
     display: block;

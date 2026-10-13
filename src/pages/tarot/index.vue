@@ -43,10 +43,6 @@
             </button>
         </view>
         <template v-else-if="cards.length">
-            <view class="spread-heading">
-                <text>{{ mode === 'daily' ? '今天，留一点时间给自己' : '过去 / 当下 / 方向' }}</text>
-                <text>{{ revealed.length }} / {{ cards.length }}</text>
-            </view>
             <view
                 class="tarot-spread"
                 :class="{ 'three-cards': mode === 'three' }"
@@ -98,9 +94,13 @@
                             </view>
                         </view>
                     </button>
-                    <text class="tarot-position">{{ positionLabel(card) }}</text>
                     <text
-                        v-if="revealed.includes(index)"
+                        v-if="mode === 'three'"
+                        class="tarot-position"
+                        >{{ positionLabel(card) }}</text
+                    >
+                    <text
+                        v-if="revealed.includes(index) && !allRevealed"
                         class="card-label"
                         >{{ card.name }} / {{ card.reversed ? '逆位' : '正位' }}</text
                     >
@@ -113,9 +113,11 @@
                     </button>
                 </view>
             </view>
-            <text class="draw-hint">{{
-                allRevealed ? '把这份启发，带回今天的生活。' : '放慢呼吸，轻触牌面翻开。'
-            }}</text>
+            <text
+                v-if="!allRevealed"
+                class="draw-hint"
+                >轻触牌面翻开</text
+            >
             <view
                 v-if="allRevealed"
                 class="tarot-reading"
@@ -149,7 +151,7 @@
                     class="book-link"
                     @tap="goToBooks"
                 >
-                    <text>看看相关的成长书单</text>
+                    <text>成长书单</text>
                     <image
                         class="book-link-icon"
                         src="/static/icons/arrow-right.svg"
@@ -158,10 +160,6 @@
                     />
                 </button>
             </view>
-            <text class="content-note"
-                >完整 78
-                张传统塔罗牌。每日一牌按北京时间换日，结果随账号保存；三牌阵每次重新洗牌都会重新随机抽取。解读用于自我观察，不预言未来。</text
-            >
         </template>
     </view>
 </template>
@@ -302,14 +300,7 @@ function goToBooks() {
 
 .tarot-modes {
     justify-content: center;
-    margin: 20rpx 0 42rpx;
-}
-.spread-heading {
-    display: flex;
-    justify-content: space-between;
-    gap: 16rpx;
-    color: #857d8a;
-    font-size: 24rpx;
+    margin: 24rpx 0 32rpx;
 }
 .page-state {
     padding: 120rpx 0;
@@ -324,7 +315,7 @@ function goToBooks() {
     display: flex;
     justify-content: center;
     gap: 16rpx;
-    padding: 38rpx 0 22rpx;
+    padding: 16rpx 0 32rpx;
 }
 .card-slot {
     width: 310rpx;
@@ -369,7 +360,6 @@ function goToBooks() {
     border-radius: 10rpx;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
-    box-shadow: 0 8rpx 22rpx rgba(48, 33, 69, 0.12);
 }
 .card-back {
     background: #24243d;
@@ -501,7 +491,6 @@ function goToBooks() {
     color: #c0b3ca;
 }
 .dark-mode .tarot-position,
-.dark-mode .spread-heading,
 .dark-mode .reading-orientation,
 .dark-mode .draw-hint,
 .dark-mode .reading-keyword {
