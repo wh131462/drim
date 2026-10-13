@@ -34,7 +34,12 @@
                 <!-- 中心水晶球 -->
                 <view class="crystal-ball">
                     <view class="crystal-inner">
-                        <text class="crystal-icon">🔮</text>
+                        <image
+                            class="crystal-icon"
+                            src="/static/icons/crystal.svg"
+                            mode="aspectFit"
+                            aria-hidden="true"
+                        />
                     </view>
                     <view class="crystal-glow"></view>
                 </view>
@@ -71,7 +76,12 @@
             v-else-if="error"
             class="error-container"
         >
-            <text class="error-icon">😔</text>
+            <image
+                class="error-icon"
+                src="/static/icons/warning.svg"
+                mode="aspectFit"
+                aria-hidden="true"
+            />
             <text class="error-title">解析遇到问题</text>
             <text class="error-message">{{ error }}</text>
             <view class="error-actions">
@@ -110,7 +120,12 @@
                         v-if="analysis.fortuneTips?.scoreReason"
                         class="score-reason-card"
                     >
-                        <view class="reason-icon">✨</view>
+                        <image
+                            class="reason-icon"
+                            src="/static/icons/sparkle.svg"
+                            mode="aspectFit"
+                            aria-hidden="true"
+                        />
                         <text class="score-reason">{{ analysis.fortuneTips.scoreReason }}</text>
                     </view>
                 </view>
@@ -741,6 +756,10 @@ async function handleReanalyze() {
             color: $dark-text-secondary;
         }
 
+        .error-icon {
+            filter: brightness(1.4);
+        }
+
         .retry-btn {
             background: $dark-primary-color;
         }
@@ -879,7 +898,9 @@ async function handleReanalyze() {
 }
 
 .crystal-icon {
-    font-size: 80rpx;
+    width: 80rpx;
+    height: 80rpx;
+    filter: brightness(0) invert(1);
     animation: float 3s ease-in-out infinite;
 }
 
@@ -1067,7 +1088,8 @@ async function handleReanalyze() {
 }
 
 .error-icon {
-    font-size: 120rpx;
+    width: 96rpx;
+    height: 96rpx;
     margin-bottom: 32rpx;
 }
 
@@ -1224,9 +1246,11 @@ async function handleReanalyze() {
 
 .reason-icon {
     flex-shrink: 0;
-    font-size: 28rpx;
+    width: 28rpx;
+    height: 28rpx;
+    margin-top: 6rpx;
     margin-right: 12rpx;
-    line-height: 1.6;
+    filter: brightness(0) invert(1);
 }
 
 .score-reason {

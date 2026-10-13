@@ -68,8 +68,8 @@ const tabList = [
     {
         pagePath: '/pages/explore/index',
         text: '发现',
-        iconPath: '/static/icons/search.svg',
-        selectedIconPath: '/static/icons/search.svg'
+        iconPath: '/static/icons/shortcut-explore.svg',
+        selectedIconPath: '/static/icons/shortcut-explore.svg'
     },
     {
         pagePath: '/pages/record/index',

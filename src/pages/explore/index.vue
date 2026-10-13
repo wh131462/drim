@@ -54,34 +54,76 @@
                     class="discover-shortcut"
                     @tap="goToTarot"
                 >
-                    <text class="discover-shortcut-icon">✦</text>
+                    <view
+                        class="discover-shortcut-icon"
+                        aria-hidden="true"
+                    >
+                        <image
+                            class="discover-shortcut-image"
+                            src="/static/icons/shortcut-tarot.svg"
+                            mode="aspectFit"
+                        />
+                    </view>
                     <view class="discover-shortcut-copy">
                         <text class="discover-shortcut-title">今日塔罗</text>
                         <text class="discover-shortcut-desc">抽一张指引牌</text>
                     </view>
-                    <text class="discover-shortcut-arrow">›</text>
+                    <image
+                        class="discover-shortcut-arrow"
+                        src="/static/icons/arrow-right.svg"
+                        mode="aspectFit"
+                        aria-hidden="true"
+                    />
                 </button>
                 <button
                     class="discover-shortcut"
                     @tap="goToTests"
                 >
-                    <text class="discover-shortcut-icon">◌</text>
+                    <view
+                        class="discover-shortcut-icon"
+                        aria-hidden="true"
+                    >
+                        <image
+                            class="discover-shortcut-image"
+                            src="/static/icons/shortcut-psychology.svg"
+                            mode="aspectFit"
+                        />
+                    </view>
                     <view class="discover-shortcut-copy">
                         <text class="discover-shortcut-title">心理测试</text>
                         <text class="discover-shortcut-desc">认识自己的偏好</text>
                     </view>
-                    <text class="discover-shortcut-arrow">›</text>
+                    <image
+                        class="discover-shortcut-arrow"
+                        src="/static/icons/arrow-right.svg"
+                        mode="aspectFit"
+                        aria-hidden="true"
+                    />
                 </button>
                 <button
                     class="discover-shortcut"
                     @tap="goToBooks"
                 >
-                    <text class="discover-shortcut-icon">▤</text>
+                    <view
+                        class="discover-shortcut-icon"
+                        aria-hidden="true"
+                    >
+                        <image
+                            class="discover-shortcut-image"
+                            src="/static/icons/book.svg"
+                            mode="aspectFit"
+                        />
+                    </view>
                     <view class="discover-shortcut-copy">
                         <text class="discover-shortcut-title">心灵书店</text>
                         <text class="discover-shortcut-desc">给这场梦一本书</text>
                     </view>
-                    <text class="discover-shortcut-arrow">›</text>
+                    <image
+                        class="discover-shortcut-arrow"
+                        src="/static/icons/arrow-right.svg"
+                        mode="aspectFit"
+                        aria-hidden="true"
+                    />
                 </button>
             </view>
 
@@ -150,7 +192,13 @@
                             :class="{ active: selectedFilter === tagItem.tag }"
                             @tap="selectFilter(tagItem.tag)"
                         >
-                            <text>{{ getTagDisplay(tagItem.tag) }}</text>
+                            <image
+                                class="filter-icon"
+                                :src="getFilterIcon(tagItem.tag)"
+                                mode="aspectFit"
+                                aria-hidden="true"
+                            />
+                            <text>{{ getTagName(tagItem.tag) }}</text>
                             <text class="tag-count">{{ tagItem.count }}</text>
                         </view>
                     </view>
@@ -231,7 +279,7 @@
                                 :key="tag"
                                 class="tag-chip"
                             >
-                                {{ getTagLabel(tag) }}
+                                {{ getTagName(tag) }}
                             </text>
                         </view>
 
@@ -336,7 +384,7 @@ import { exploreApi } from '@/api';
 import type { PublicDream, TagItem } from '@/api/modules/explore';
 import CustomTabBar from '@/custom-tab-bar/index.vue';
 import { insertAdsIntoList, getExploreFeedAdUnitId, isNativeAdAvailable } from '@/utils/ad';
-import { getTagDisplayName, getTagName } from '@/constants/tags';
+import { getTagIcon, getTagName } from '@/constants/tags';
 
 const userStore = useUserStore();
 
@@ -371,65 +419,41 @@ const mixedList = computed(() => {
     });
 });
 
-// 标签映射（包含图标）
-const tagLabels: Record<string, string> = {
-    // 常见主题
-    追逐: '🏃',
-    飞行: '🦅',
-    水: '💧',
-    动物: '🐕',
-    亲人: '👨‍👩‍👧',
-    考试: '📝',
-    迷路: '🗺️',
-    死亡: '💀',
-
-    // 情绪相关
-    开心: '😊',
-    愉悦: '😄',
-    快乐: '😃',
-    恐惧: '😨',
-    害怕: '😱',
-    焦虑: '😰',
-    紧张: '😬',
-    悲伤: '😢',
-    愤怒: '😠',
-    平静: '😌',
-    困惑: '😕',
-
-    // 场景相关
-    自然: '🌳',
-    学校: '🏫',
-    工作: '💼',
-    旅行: '✈️',
-    回忆: '💭',
-    奇幻: '✨',
-    探索: '🔍',
-    冒险: '🗺️',
-
-    // 其他
-    压力: '😓',
-    成长: '🌱',
-    突破: '🚀',
-    温暖: '❤️',
-    思念: '💔',
-    力量: '💪',
-    自由: '🕊️',
-    怀旧: '📷',
-    美好: '🌈',
-    梦幻: '🌙'
+// 中文主题和情绪标签复用同一套图标
+const tagIcons: Record<string, string> = {
+    亲人: 'family',
+    开心: 'happy',
+    愉悦: 'happy',
+    快乐: 'happy',
+    恐惧: 'emotion-fear',
+    害怕: 'emotion-fear',
+    焦虑: 'emotion-anxious',
+    紧张: 'emotion-anxious',
+    悲伤: 'emotion-sad',
+    愤怒: 'fire',
+    平静: 'emotion-calm',
+    困惑: 'emotion-confused',
+    自然: 'nature',
+    学校: 'exam',
+    旅行: 'plane',
+    回忆: 'clock',
+    探索: 'shortcut-explore',
+    冒险: 'map',
+    压力: 'emotion-anxious',
+    成长: 'nature',
+    突破: 'star',
+    温暖: 'heart',
+    思念: 'heart',
+    力量: 'running',
+    自由: 'plane',
+    怀旧: 'clock',
+    美好: 'sparkle',
+    梦幻: 'moon'
 };
 
-// 获取标签显示文本（用于筛选区域）
-function getTagDisplay(tag: string): string {
-    // 优先使用统一的标签工具函数
-    const displayName = getTagDisplayName(tag);
-    // 如果统一函数返回的是 "✨ xxx" 格式，说明是自定义标签
-    // 尝试从本地映射获取图标
-    if (displayName.startsWith('✨')) {
-        const icon = tagLabels[tag] || tagLabels[getTagName(tag)] || '';
-        return icon ? `${icon} ${getTagName(tag)}` : displayName;
-    }
-    return displayName;
+function getFilterIcon(tag: string): string {
+    const icon = tagIcons[getTagName(tag)];
+    return icon ? `/static/icons/${icon}.svg` : getTagIcon(tag);
 }
 
 // 加载可用标签
@@ -597,14 +621,6 @@ async function toggleLike(dream: PublicDream) {
     }
 }
 
-function getTagLabel(tagId: string): string {
-    // 优先使用统一的标签工具函数获取名称
-    const name = getTagName(tagId);
-    // 尝试获取图标
-    const icon = tagLabels[tagId] || tagLabels[name] || '';
-    return icon ? `${icon} ${name}` : name;
-}
-
 function formatTime(dateStr: string): string {
     const date = new Date(dateStr);
     const now = new Date();
@@ -758,10 +774,14 @@ onMounted(() => {
     height: 56rpx;
     margin-right: 16rpx;
     border-radius: 16rpx;
-    background: $primary-light;
-    color: $primary-color;
-    font-size: 32rpx;
+    background: #f4f0fa;
     flex-shrink: 0;
+}
+
+.discover-shortcut-image {
+    display: block;
+    width: 38rpx;
+    height: 38rpx;
 }
 
 .discover-shortcut-copy {
@@ -784,9 +804,10 @@ onMounted(() => {
 }
 
 .discover-shortcut-arrow {
-    color: $text-placeholder;
-    font-size: 38rpx;
-    line-height: 1;
+    width: 28rpx;
+    height: 28rpx;
+    flex-shrink: 0;
+    opacity: 0.65;
 }
 
 .content-categories {
@@ -899,6 +920,10 @@ onMounted(() => {
         border-color: $primary-color;
         color: #fff;
 
+        .filter-icon {
+            filter: brightness(0) invert(1);
+        }
+
         .tag-count {
             background: rgba(255, 255, 255, 0.2);
             color: #fff;
@@ -908,6 +933,12 @@ onMounted(() => {
     &:active {
         transform: scale(0.95);
     }
+}
+
+.filter-icon {
+    width: 28rpx;
+    height: 28rpx;
+    flex-shrink: 0;
 }
 
 .tag-count {

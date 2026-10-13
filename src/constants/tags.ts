@@ -8,21 +8,21 @@ import type { DreamTag } from '@/types/dream';
  * 预设标签列表（带图标）
  */
 export const DREAM_TAGS: DreamTag[] = [
-    { id: 'running', name: '追逐', icon: '🏃' },
-    { id: 'flying', name: '飞行', icon: '🕊️' },
-    { id: 'falling', name: '坠落', icon: '🌀' },
-    { id: 'exam', name: '考试', icon: '📝' },
-    { id: 'family', name: '家人', icon: '👨‍👩‍👧' },
-    { id: 'water', name: '水', icon: '💧' },
-    { id: 'animal', name: '动物', icon: '🐾' },
-    { id: 'lost', name: '迷路', icon: '🗺️' },
-    { id: 'death', name: '死亡', icon: '💀' },
-    { id: 'work', name: '工作', icon: '💼' },
-    { id: 'love', name: '爱情', icon: '❤️' },
-    { id: 'teeth', name: '牙齿', icon: '🦷' },
+    { id: 'running', name: '追逐', icon: '/static/icons/running.svg' },
+    { id: 'flying', name: '飞行', icon: '/static/icons/plane.svg' },
+    { id: 'falling', name: '坠落', icon: '/static/icons/falling.svg' },
+    { id: 'exam', name: '考试', icon: '/static/icons/exam.svg' },
+    { id: 'family', name: '家人', icon: '/static/icons/family.svg' },
+    { id: 'water', name: '水', icon: '/static/icons/water.svg' },
+    { id: 'animal', name: '动物', icon: '/static/icons/animal.svg' },
+    { id: 'lost', name: '迷路', icon: '/static/icons/map.svg' },
+    { id: 'death', name: '死亡', icon: '/static/icons/death.svg' },
+    { id: 'work', name: '工作', icon: '/static/icons/work.svg' },
+    { id: 'love', name: '爱情', icon: '/static/icons/heart.svg' },
+    { id: 'teeth', name: '牙齿', icon: '/static/icons/teeth.svg' },
     // 兼容旧数据
-    { id: 'chase', name: '追逐', icon: '🏃' },
-    { id: 'chased', name: '被追', icon: '🏃' }
+    { id: 'chase', name: '追逐', icon: '/static/icons/running.svg' },
+    { id: 'chased', name: '被追', icon: '/static/icons/running.svg' }
 ];
 
 /**
@@ -40,22 +40,15 @@ export function getTagsByIds(ids: string[]): DreamTag[] {
 }
 
 /**
- * 获取标签的显示名称
- * - 预设标签：返回 "图标 名称" 格式
- * - 自定义标签：返回 "✨ 标签名" 格式（ID 就是名称）
- * - 旧格式自定义标签（custom_xxx）：返回 "✨ 自定义" 格式
+ * 获取标签的显示名称，图标由页面单独渲染
  */
 export function getTagDisplayName(tagId: string): string {
-    const presetTag = getTagById(tagId);
-    if (presetTag) {
-        return presetTag.icon ? `${presetTag.icon} ${presetTag.name}` : presetTag.name;
-    }
-    // 处理旧格式的自定义标签（custom_timestamp）
-    if (tagId.startsWith('custom_')) {
-        return '✨ 自定义';
-    }
-    // 新格式自定义标签：ID 就是名称
-    return `✨ ${tagId}`;
+    return getTagName(tagId);
+}
+
+export function getTagIcon(tagId: string): string {
+    const tag = getTagById(tagId) || DREAM_TAGS.find((item) => item.name === tagId);
+    return tag?.icon || '/static/icons/sparkle.svg';
 }
 
 /**
@@ -87,16 +80,16 @@ export function isPresetTag(tagId: string): boolean {
 export function getFilterTags(): Array<{ id: string; name: string; icon: string }> {
     // 返回主要的预设标签（去除兼容标签）
     return [
-        { id: 'running', name: '追逐', icon: '🏃' },
-        { id: 'flying', name: '飞行', icon: '🕊️' },
-        { id: 'falling', name: '坠落', icon: '🌀' },
-        { id: 'exam', name: '考试', icon: '📝' },
-        { id: 'family', name: '家人', icon: '👨‍👩‍👧' },
-        { id: 'water', name: '水', icon: '💧' },
-        { id: 'animal', name: '动物', icon: '🐾' },
-        { id: 'lost', name: '迷路', icon: '🗺️' },
-        { id: 'death', name: '死亡', icon: '💀' },
-        { id: 'work', name: '工作', icon: '💼' },
-        { id: 'love', name: '爱情', icon: '❤️' }
+        { id: 'running', name: '追逐', icon: '/static/icons/running.svg' },
+        { id: 'flying', name: '飞行', icon: '/static/icons/plane.svg' },
+        { id: 'falling', name: '坠落', icon: '/static/icons/falling.svg' },
+        { id: 'exam', name: '考试', icon: '/static/icons/exam.svg' },
+        { id: 'family', name: '家人', icon: '/static/icons/family.svg' },
+        { id: 'water', name: '水', icon: '/static/icons/water.svg' },
+        { id: 'animal', name: '动物', icon: '/static/icons/animal.svg' },
+        { id: 'lost', name: '迷路', icon: '/static/icons/map.svg' },
+        { id: 'death', name: '死亡', icon: '/static/icons/death.svg' },
+        { id: 'work', name: '工作', icon: '/static/icons/work.svg' },
+        { id: 'love', name: '爱情', icon: '/static/icons/heart.svg' }
     ];
 }

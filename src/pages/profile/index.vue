@@ -1188,18 +1188,10 @@ onShow(() => {
 
     &.gold {
         background: #fff7e6;
-
-        .menu-icon {
-            filter: invert(68%) sepia(58%) saturate(1078%) hue-rotate(359deg) brightness(105%) contrast(101%);
-        }
     }
 
     &.cyan {
         background: #e6fffb;
-
-        .menu-icon {
-            filter: invert(68%) sepia(42%) saturate(5876%) hue-rotate(143deg) brightness(91%) contrast(85%);
-        }
     }
 
     &.gray {

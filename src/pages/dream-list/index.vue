@@ -46,8 +46,14 @@
                     v-if="keyword"
                     class="clear-btn"
                     @tap="clearSearch"
+                    aria-label="清空搜索"
                 >
-                    <text>&times;</text>
+                    <image
+                        class="clear-icon"
+                        src="/static/icons/close.svg"
+                        mode="aspectFit"
+                        aria-hidden="true"
+                    />
                 </view>
             </view>
         </view>
@@ -75,7 +81,13 @@
                         :class="{ active: selectedEmotion === em.id }"
                         @tap="selectEmotion(em.id)"
                     >
-                        <text>{{ em.icon }} {{ em.name }}</text>
+                        <image
+                            class="filter-icon"
+                            :src="em.icon"
+                            mode="aspectFit"
+                            aria-hidden="true"
+                        />
+                        <text>{{ em.name }}</text>
                     </view>
                 </view>
             </scroll-view>
@@ -101,7 +113,13 @@
                         :class="{ active: selectedTag === tag.id }"
                         @tap="selectTag(tag.id)"
                     >
-                        <text>{{ tag.icon }} {{ tag.name }}</text>
+                        <image
+                            class="filter-icon"
+                            :src="tag.icon"
+                            mode="aspectFit"
+                            aria-hidden="true"
+                        />
+                        <text>{{ tag.name }}</text>
                     </view>
                 </view>
             </scroll-view>
@@ -169,8 +187,14 @@
                             <view
                                 v-if="dream.emotion"
                                 class="emotion-badge"
+                                :aria-label="getEmotionName(dream.emotion)"
                             >
-                                <text>{{ getEmotionIcon(dream.emotion) }}</text>
+                                <image
+                                    class="emotion-icon"
+                                    :src="getEmotionIcon(dream.emotion)"
+                                    mode="aspectFit"
+                                    aria-hidden="true"
+                                />
                             </view>
                             <view
                                 v-if="dream.isPublic"
@@ -304,14 +328,14 @@ const navBarHeight = ref(0);
 
 // 情绪选项
 const emotions = [
-    { id: 'happy', name: '开心', icon: '😊' },
-    { id: 'sad', name: '悲伤', icon: '😢' },
-    { id: 'fear', name: '恐惧', icon: '😨' },
-    { id: 'anxious', name: '焦虑', icon: '😰' },
-    { id: 'confused', name: '困惑', icon: '😕' },
-    { id: 'excited', name: '兴奋', icon: '🤩' },
-    { id: 'calm', name: '平静', icon: '😌' },
-    { id: 'love', name: '温暖', icon: '🥰' }
+    { id: 'happy', name: '开心', icon: '/static/icons/happy.svg' },
+    { id: 'sad', name: '悲伤', icon: '/static/icons/emotion-sad.svg' },
+    { id: 'fear', name: '恐惧', icon: '/static/icons/emotion-fear.svg' },
+    { id: 'anxious', name: '焦虑', icon: '/static/icons/emotion-anxious.svg' },
+    { id: 'confused', name: '困惑', icon: '/static/icons/emotion-confused.svg' },
+    { id: 'excited', name: '兴奋', icon: '/static/icons/emotion-excited.svg' },
+    { id: 'calm', name: '平静', icon: '/static/icons/emotion-calm.svg' },
+    { id: 'love', name: '温暖', icon: '/static/icons/heart.svg' }
 ];
 
 // 预设标签选项
@@ -340,7 +364,7 @@ function extractCustomTags(dreamList: Dream[]) {
             customTagList.value.push({
                 id: tagId,
                 name: tagId,
-                icon: '✨'
+                icon: '/static/icons/sparkle.svg'
             });
             existingIds.add(tagId);
         }
@@ -556,7 +580,11 @@ function formatDate(dateStr: string): string {
 
 function getEmotionIcon(emotion: string): string {
     const found = emotions.find((e) => e.id === emotion);
-    return found?.icon || '😶';
+    return found?.icon || '/static/icons/emotion-neutral.svg';
+}
+
+function getEmotionName(emotion: string): string {
+    return emotions.find((item) => item.id === emotion)?.name || '其他情绪';
 }
 
 function getTagName(tagId: string): string {
@@ -645,8 +673,12 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: $text-placeholder;
-    font-size: 32rpx;
+}
+
+.clear-icon {
+    width: 28rpx;
+    height: 28rpx;
+    opacity: 0.7;
 }
 
 // 筛选区域
@@ -669,6 +701,7 @@ onMounted(() => {
 .filter-chip {
     display: inline-flex;
     align-items: center;
+    gap: 8rpx;
     padding: 12rpx 24rpx;
     background: #f5f7fa;
     border-radius: 32rpx;
@@ -681,6 +714,12 @@ onMounted(() => {
         color: $primary-color;
         font-weight: 500;
     }
+}
+
+.filter-icon {
+    width: 28rpx;
+    height: 28rpx;
+    flex-shrink: 0;
 }
 
 // 统计栏
@@ -810,7 +849,16 @@ onMounted(() => {
 }
 
 .emotion-badge {
-    font-size: 28rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32rpx;
+    height: 32rpx;
+}
+
+.emotion-icon {
+    width: 28rpx;
+    height: 28rpx;
 }
 
 .public-badge,
@@ -1011,6 +1059,12 @@ onMounted(() => {
             background: $dark-primary-light;
             color: $dark-primary-color;
         }
+    }
+
+    .filter-icon,
+    .emotion-icon,
+    .clear-icon {
+        filter: brightness(1.4);
     }
 
     .stats-bar {

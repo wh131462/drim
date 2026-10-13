@@ -37,7 +37,16 @@
                 class="home-shortcut"
                 @tap="goToTarot"
             >
-                <text class="shortcut-icon">✦</text>
+                <view
+                    class="shortcut-icon"
+                    aria-hidden="true"
+                >
+                    <image
+                        class="shortcut-icon-image"
+                        src="/static/icons/shortcut-tarot.svg"
+                        mode="aspectFit"
+                    />
+                </view>
                 <view class="shortcut-copy">
                     <text class="shortcut-title">今日塔罗</text>
                     <text class="shortcut-desc">抽一张指引牌</text>
@@ -47,7 +56,16 @@
                 class="home-shortcut"
                 @tap="goToTests"
             >
-                <text class="shortcut-icon">◌</text>
+                <view
+                    class="shortcut-icon"
+                    aria-hidden="true"
+                >
+                    <image
+                        class="shortcut-icon-image"
+                        src="/static/icons/shortcut-psychology.svg"
+                        mode="aspectFit"
+                    />
+                </view>
                 <view class="shortcut-copy">
                     <text class="shortcut-title">心理测试</text>
                     <text class="shortcut-desc">MBTI / 大五人格</text>
@@ -57,7 +75,16 @@
                 class="home-shortcut"
                 @tap="goToCheckin"
             >
-                <text class="shortcut-icon">▣</text>
+                <view
+                    class="shortcut-icon"
+                    aria-hidden="true"
+                >
+                    <image
+                        class="shortcut-icon-image"
+                        src="/static/icons/shortcut-checkin.svg"
+                        mode="aspectFit"
+                    />
+                </view>
                 <view class="shortcut-copy">
                     <text class="shortcut-title">梦境打卡</text>
                     <text class="shortcut-desc">{{ checkinSummary }}</text>
@@ -67,7 +94,16 @@
                 class="home-shortcut"
                 @tap="goToExplore"
             >
-                <text class="shortcut-icon">⌕</text>
+                <view
+                    class="shortcut-icon"
+                    aria-hidden="true"
+                >
+                    <image
+                        class="shortcut-icon-image"
+                        src="/static/icons/shortcut-explore.svg"
+                        mode="aspectFit"
+                    />
+                </view>
                 <view class="shortcut-copy">
                     <text class="shortcut-title">探索广场</text>
                     <text class="shortcut-desc">看看他人的梦</text>
@@ -128,12 +164,19 @@
                         </view>
                         <view class="review-footer">
                             <view class="review-tags">
-                                <text
+                                <view
                                     class="tag"
                                     v-for="(tag, index) in getDreamTags(dream)"
                                     :key="index"
-                                    >{{ tag }}</text
                                 >
+                                    <image
+                                        class="review-tag-icon"
+                                        :src="getTagIcon(tag)"
+                                        mode="aspectFit"
+                                        aria-hidden="true"
+                                    />
+                                    <text>{{ tag }}</text>
+                                </view>
                             </view>
                             <view class="review-action">
                                 <text>查看详情</text>
@@ -179,12 +222,19 @@
                 </view>
                 <view class="review-footer">
                     <view class="review-tags">
-                        <text
+                        <view
                             class="tag"
                             v-for="(tag, index) in getDreamTags(displayDreams[0])"
                             :key="index"
-                            >{{ tag }}</text
                         >
+                            <image
+                                class="review-tag-icon"
+                                :src="getTagIcon(tag)"
+                                mode="aspectFit"
+                                aria-hidden="true"
+                            />
+                            <text>{{ tag }}</text>
+                        </view>
                     </view>
                     <view class="review-action">
                         <text>查看详情</text>
@@ -312,7 +362,7 @@ import { computed, onMounted, ref } from 'vue';
 import { onShow, onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app';
 import { useUserStore, useDreamStore, useSettingsStore, useAchievementStore, useTaskStore } from '@/stores';
 import { getFriendlyDate, isToday, isYesterday } from '@/utils/date';
-import { getTagDisplayName } from '@/constants/tags';
+import { getTagDisplayName, getTagIcon } from '@/constants/tags';
 import type { Dream } from '@/types/dream';
 import CustomTabBar from '@/custom-tab-bar/index.vue';
 import UserProfileModal from '@/components/UserProfileModal/index.vue';
@@ -603,7 +653,6 @@ onShow(async () => {
 
         .shortcut-icon {
             background: rgba(139, 110, 255, 0.15);
-            color: $dark-primary-color;
         }
 
         .shortcut-title {
@@ -861,11 +910,15 @@ onShow(async () => {
     width: 64rpx;
     height: 64rpx;
     margin-right: 16rpx;
-    border-radius: 20rpx;
-    background: #f0ebff;
-    color: $primary-color;
-    font-size: 34rpx;
+    border-radius: 18rpx;
+    background: #f4f0fa;
     flex-shrink: 0;
+}
+
+.shortcut-icon-image {
+    display: block;
+    width: 42rpx;
+    height: 42rpx;
 }
 
 .shortcut-copy {
@@ -1156,6 +1209,9 @@ onShow(async () => {
 }
 
 .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8rpx;
     background: rgba(255, 255, 255, 0.25);
     padding: 8rpx 20rpx;
     border-radius: 12rpx;
@@ -1163,6 +1219,13 @@ onShow(async () => {
     margin-right: 12rpx;
     backdrop-filter: blur(4px);
     font-weight: 500;
+}
+
+.review-tag-icon {
+    width: 24rpx;
+    height: 24rpx;
+    flex-shrink: 0;
+    filter: brightness(0) invert(1);
 }
 
 .review-action {
@@ -1269,6 +1332,7 @@ onShow(async () => {
     width: 28rpx;
     height: 28rpx;
     margin-right: 6rpx;
+    filter: brightness(0) invert(25%);
 }
 
 .reward-value {
@@ -1385,6 +1449,7 @@ onShow(async () => {
     width: 32rpx;
     height: 32rpx;
     margin-right: 8rpx;
+    filter: brightness(0) invert(25%);
 }
 
 .btn-text {

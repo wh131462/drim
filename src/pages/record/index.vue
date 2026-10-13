@@ -113,30 +113,37 @@
                     @tap="toggleTag(tag.id)"
                 >
                     <image
-                        v-if="tag.icon"
                         class="tag-icon"
                         :src="tag.icon"
                         mode="aspectFit"
+                        aria-hidden="true"
                     />
-                    <text
-                        v-else
-                        class="tag-emoji"
-                        >{{ tag.emoji }}</text
-                    >
                     <text class="tag-text">{{ tag.name }}</text>
                     <view
                         v-if="tag.custom"
                         class="tag-remove"
                         @tap.stop="removeCustomTag(tag.id)"
-                        >×</view
+                        :aria-label="`删除${tag.name}标签`"
                     >
+                        <image
+                            class="tag-remove-icon"
+                            src="/static/icons/close.svg"
+                            mode="aspectFit"
+                            aria-hidden="true"
+                        />
+                    </view>
                 </view>
                 <!-- 添加自定义标签按钮 -->
                 <view
                     class="tag-item add-tag-btn"
                     @tap="showAddTagDialog"
                 >
-                    <text class="add-icon">+</text>
+                    <image
+                        class="add-icon"
+                        src="/static/icons/plus.svg"
+                        mode="aspectFit"
+                        aria-hidden="true"
+                    />
                     <text class="tag-text">自定义</text>
                 </view>
             </view>
@@ -155,8 +162,17 @@
                 :value="emotionIndex"
                 :disabled="submitting || editorUnavailable"
                 @change="selectEmotion"
-                ><view class="setting-chip">{{ emotionLabels[emotionIndex] }} ▾</view></picker
             >
+                <view class="setting-chip emotion-picker">
+                    <text>{{ emotionLabels[emotionIndex] }}</text>
+                    <image
+                        class="dropdown-icon"
+                        src="/static/icons/arrow-right.svg"
+                        mode="aspectFit"
+                        aria-hidden="true"
+                    />
+                </view>
+            </picker>
         </view>
         <view
             v-if="showPolishPreview"
@@ -291,8 +307,7 @@ interface LocalVersion {
 interface Tag {
     id: string;
     name: string;
-    icon?: string;
-    emoji?: string;
+    icon: string;
     custom: boolean;
 }
 const versions = ref<LocalVersion[]>([]);
@@ -371,7 +386,7 @@ function showAddTagDialog() {
             if (allDreamTags.value.some((tag) => tag.name === name || tag.id === name))
                 return uni.showToast({ title: '该元素已存在', icon: 'none' });
             if (selectedTags.value.length >= 3) return uni.showToast({ title: '最多选择3个标签', icon: 'none' });
-            customTags.value.push({ id: name, name, emoji: '✦', custom: true });
+            customTags.value.push({ id: name, name, icon: '/static/icons/sparkle.svg', custom: true });
             selectedTags.value.push(name);
         }
     });
@@ -577,7 +592,7 @@ function hydrateEditor(dream: DreamDetail) {
     selectedTags.value = [...(dream.tags || [])];
     customTags.value = selectedTags.value
         .filter((id) => !dreamTags.some((tag) => tag.id === id))
-        .map((id) => ({ id, name: id, emoji: '✦', custom: true }));
+        .map((id) => ({ id, name: id, icon: '/static/icons/sparkle.svg', custom: true }));
     selectedEmotion.value = dream.emotion || null;
     isPublic.value = !!dream.isPublic;
     hasAnalysis.value = !!(dream.analysis || dream.hasAnalysis);
@@ -766,14 +781,13 @@ onUnmounted(() => window.removeEventListener('beforeunload', beforeUnload));
             border-color: $dark-border-color;
             border-style: dashed;
 
-            .add-icon,
             .tag-text {
                 color: $dark-text-secondary;
             }
-        }
 
-        .tag-emoji {
-            filter: grayscale(0);
+            .add-icon {
+                filter: brightness(1.4);
+            }
         }
 
         .tag-remove {
@@ -1129,12 +1143,6 @@ onUnmounted(() => window.removeEventListener('beforeunload', beforeUnload));
     color: $text-primary;
 }
 
-// 自定义标签emoji
-.tag-emoji {
-    font-size: 48rpx;
-    margin-bottom: 12rpx;
-}
-
 // 添加标签按钮
 .add-tag-btn {
     border-style: dashed;
@@ -1149,10 +1157,9 @@ onUnmounted(() => window.removeEventListener('beforeunload', beforeUnload));
 }
 
 .add-icon {
-    font-size: 44rpx;
+    width: 48rpx;
+    height: 48rpx;
     margin-bottom: 12rpx;
-    color: $primary-color;
-    font-weight: 300;
     opacity: 0.7;
 }
 
@@ -1169,19 +1176,27 @@ onUnmounted(() => window.removeEventListener('beforeunload', beforeUnload));
     height: 32rpx;
     border-radius: 50%;
     background: rgba(0, 0, 0, 0.6);
-    color: #fff;
-    font-size: 28rpx;
     display: flex;
     align-items: center;
     justify-content: center;
-    line-height: 1;
-    font-weight: 700;
     transition: all 0.2s;
 
     &:active {
         background: #ff4d4f;
         transform: scale(1.1);
     }
+}
+
+.tag-remove-icon {
+    width: 20rpx;
+    height: 20rpx;
+    filter: brightness(0) invert(1);
+}
+
+.emotion-picker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8rpx;
 }
 
 // 情绪选择

@@ -149,7 +149,13 @@
                     class="book-link"
                     @tap="goToBooks"
                 >
-                    看看相关的成长书单 →
+                    <text>看看相关的成长书单</text>
+                    <image
+                        class="book-link-icon"
+                        src="/static/icons/arrow-right.svg"
+                        mode="aspectFit"
+                        aria-hidden="true"
+                    />
                 </button>
             </view>
             <text class="content-note"
@@ -469,12 +475,19 @@ function goToBooks() {
     margin-top: 12rpx;
 }
 .book-link {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
     margin-top: 16rpx;
     padding: 16rpx 0;
     font-size: 25rpx;
     background: transparent;
     color: #75588d;
+}
+.book-link-icon {
+    width: 28rpx;
+    height: 28rpx;
+    flex-shrink: 0;
 }
 .dark-mode .tarot-reading {
     border-color: #39323f;

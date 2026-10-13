@@ -112,10 +112,17 @@
                                 @error="avatarError = true"
                             />
                             <text
-                                v-else
+                                v-else-if="dream.author.nickname"
                                 class="avatar-text"
                                 >{{ getAvatarText(dream.author.nickname) }}</text
                             >
+                            <image
+                                v-else
+                                class="avatar-placeholder"
+                                src="/static/icons/user.svg"
+                                mode="aspectFit"
+                                aria-hidden="true"
+                            />
                         </view>
                         <view class="author-info">
                             <text class="author-name">{{ dream.author.nickname }}</text>
@@ -159,7 +166,13 @@
                     class="card analysis-card"
                 >
                     <view class="card-header">
-                        <text class="card-title">✨ 梦境解析</text>
+                        <image
+                            class="card-title-icon"
+                            src="/static/icons/sparkle.svg"
+                            mode="aspectFit"
+                            aria-hidden="true"
+                        />
+                        <text class="card-title">梦境解析</text>
                     </view>
 
                     <!-- 运势评分展示 -->
@@ -308,8 +321,14 @@
                     <view
                         class="share-modal-close"
                         @tap="showShareModal = false"
+                        aria-label="关闭分享"
                     >
-                        <text>&times;</text>
+                        <image
+                            class="close-icon"
+                            src="/static/icons/close.svg"
+                            mode="aspectFit"
+                            aria-hidden="true"
+                        />
                     </view>
                 </view>
 
@@ -401,14 +420,14 @@ function getScoreDasharray(score: number): string {
 }
 
 function getScoreLevel(score: number): string {
-    if (score >= 85) return '🌟 大吉大利';
-    if (score >= 75) return '✨ 运势不错';
-    if (score >= 65) return '🌙 平稳安定';
-    return '💫 宜静待时';
+    if (score >= 85) return '大吉大利';
+    if (score >= 75) return '运势不错';
+    if (score >= 65) return '平稳安定';
+    return '宜静待时';
 }
 
 function getAvatarText(nickname: string) {
-    if (!nickname) return '🌙';
+    if (!nickname) return '';
     return nickname.charAt(0).toUpperCase();
 }
 
@@ -847,6 +866,11 @@ onMounted(async () => {
         // 解析卡片
         .card-title {
             color: $dark-text-primary;
+        }
+
+        .card-title-icon,
+        .close-icon {
+            filter: brightness(1.4);
         }
 
         .analysis-text {
@@ -1314,7 +1338,22 @@ onMounted(async () => {
 }
 
 .card-header {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
     margin-bottom: 24rpx;
+}
+
+.card-title-icon {
+    width: 32rpx;
+    height: 32rpx;
+    flex-shrink: 0;
+}
+
+.avatar-placeholder {
+    width: 40rpx;
+    height: 40rpx;
+    filter: brightness(0) invert(1);
 }
 
 .card-title {
@@ -1775,6 +1814,11 @@ onMounted(async () => {
     &:active {
         background: #edf2f7;
     }
+}
+
+.close-icon {
+    width: 32rpx;
+    height: 32rpx;
 }
 
 .share-options {

@@ -38,7 +38,12 @@
                 class="achievement-item"
                 :class="{ unlocked: achievement.unlocked }"
             >
-                <text class="achievement-icon">{{ achievement.icon }}</text>
+                <image
+                    class="achievement-icon"
+                    src="/static/icons/trophy.svg"
+                    mode="aspectFit"
+                    aria-hidden="true"
+                />
                 <text class="achievement-name">{{ achievement.name }}</text>
                 <text class="achievement-date">{{ formatUnlockDate(achievement) }}</text>
                 <view
@@ -150,7 +155,7 @@ onMounted(async () => {
                 box-shadow: 0 4rpx 20rpx rgba($dark-primary-color, 0.15);
 
                 .achievement-icon {
-                    text-shadow: 0 0 20rpx rgba($dark-primary-color, 0.3);
+                    filter: brightness(1.4);
                 }
             }
         }
@@ -304,7 +309,6 @@ onMounted(async () => {
 
         .achievement-icon {
             transform: scale(1.05);
-            text-shadow: 0 4rpx 12rpx rgba($primary-color, 0.2);
         }
     }
 
@@ -314,13 +318,10 @@ onMounted(async () => {
 }
 
 .achievement-icon {
-    font-size: 48rpx;
-    margin-bottom: 16rpx;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    white-space: nowrap;
+    width: 64rpx;
     height: 64rpx;
+    flex-shrink: 0;
+    margin-bottom: 16rpx;
     transition: all 0.3s ease;
 }
 

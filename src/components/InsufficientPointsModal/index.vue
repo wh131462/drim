@@ -10,7 +10,12 @@
         >
             <!-- 图标 -->
             <view class="modal-icon">
-                <text class="icon-emoji">{{ completed ? '🎉' : '😅' }}</text>
+                <image
+                    class="status-icon"
+                    :src="completed ? '/static/icons/celebrate.svg' : '/static/icons/warning.svg'"
+                    mode="aspectFit"
+                    aria-hidden="true"
+                />
             </view>
 
             <!-- 标题 -->
@@ -43,7 +48,12 @@
                         v-if="canWatch()"
                     >
                         <view class="option-left">
-                            <text class="option-icon">🎬</text>
+                            <image
+                                class="option-icon"
+                                src="/static/icons/video.svg"
+                                mode="aspectFit"
+                                aria-hidden="true"
+                            />
                             <view class="option-info">
                                 <text class="option-title">看视频获取积分</text>
                                 <text class="option-desc">今日剩余 {{ adStatus.remaining }} 次</text>
@@ -61,7 +71,12 @@
                         v-else
                     >
                         <view class="option-left">
-                            <text class="option-icon">🎬</text>
+                            <image
+                                class="option-icon"
+                                src="/static/icons/video.svg"
+                                mode="aspectFit"
+                                aria-hidden="true"
+                            />
                             <view class="option-info">
                                 <text class="option-title">今日广告次数已用完</text>
                                 <text class="option-desc">明天再来获取积分吧</text>
@@ -76,14 +91,24 @@
                     @tap="handleGoVip"
                 >
                     <view class="option-left">
-                        <text class="option-icon">👑</text>
+                        <image
+                            class="option-icon"
+                            src="/static/icons/crown.svg"
+                            mode="aspectFit"
+                            aria-hidden="true"
+                        />
                         <view class="option-info">
                             <text class="option-title">开通 VIP</text>
                             <text class="option-desc">无限次解析，无需积分</text>
                         </view>
                     </view>
                     <view class="option-arrow">
-                        <text class="arrow-text">&gt;</text>
+                        <image
+                            class="arrow-icon"
+                            src="/static/icons/arrow-right.svg"
+                            mode="aspectFit"
+                            aria-hidden="true"
+                        />
                     </view>
                 </view>
             </view>
@@ -309,12 +334,14 @@ onMounted(() => {
 
 // 图标
 .modal-icon {
-    text-align: center;
+    display: flex;
+    justify-content: center;
     margin-bottom: 24rpx;
 }
 
-.icon-emoji {
-    font-size: 80rpx;
+.status-icon {
+    width: 80rpx;
+    height: 80rpx;
 }
 
 // 标题
@@ -384,7 +411,9 @@ onMounted(() => {
 }
 
 .option-icon {
-    font-size: 44rpx;
+    width: 44rpx;
+    height: 44rpx;
+    flex-shrink: 0;
 }
 
 .option-info {
@@ -429,9 +458,9 @@ onMounted(() => {
     justify-content: center;
 }
 
-.arrow-text {
-    font-size: 32rpx;
-    color: $text-secondary;
+.arrow-icon {
+    width: 32rpx;
+    height: 32rpx;
 }
 
 // 完成状态
