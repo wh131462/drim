@@ -181,6 +181,8 @@ export function get<T>(url: string, data?: object, options?: Partial<RequestConf
     return request<T>({
         url: finalUrl,
         method: 'GET',
+        // 列表加载和后台刷新不应阻止页面切换或滑动。
+        showLoading: false,
         ...options
     });
 }
