@@ -84,7 +84,7 @@
                 >
                     <text class="settings-label">关于梦见</text>
                     <view class="settings-value">
-                        <text>v1.0.0</text>
+                        <text>v{{ appVersion }}</text>
                         <image
                             class="arrow-icon"
                             src="/static/icons/arrow-right.svg"
@@ -132,7 +132,7 @@
 
             <!-- 版权信息 -->
             <view class="version-info">
-                <text>Drim v1.0.0</text>
+                <text>Drim v{{ appVersion }}</text>
                 <text class="copyright">Copyright © 2026 EternalHeart. All Rights Reserved.</text>
             </view>
         </view>
@@ -157,6 +157,7 @@ import { settingsApi } from '@/api/modules/settings';
 import { exportApi } from '@/api/modules/export';
 
 const userStore = useUserStore();
+const appVersion = import.meta.env.VITE_APP_VERSION;
 const settingsStore = useSettingsStore();
 const navBarHeight = ref(0);
 const showTimePicker = ref(false);

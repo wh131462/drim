@@ -20,7 +20,7 @@
                     />
                     <text class="app-name">梦见</text>
                     <text class="app-slogan">记录梦境，解读人生</text>
-                    <text class="app-version">v1.0.0</text>
+                    <text class="app-version">v{{ appVersion }}</text>
                 </view>
 
                 <!-- 设计理念 -->
@@ -123,7 +123,7 @@
 
                 <!-- 版权信息 -->
                 <view class="footer">
-                    <text class="footer-version">Drim v1.0.0</text>
+                    <text class="footer-version">Drim v{{ appVersion }}</text>
                     <text class="footer-copyright">&copy; 2026 EternalHeart</text>
                     <view class="footer-divider"></view>
                     <text class="footer-icp">冀ICP备19005334号-4X</text>
@@ -139,6 +139,7 @@ import { useUserStore } from '@/stores';
 import NavBar from '@/components/NavBar/index.vue';
 
 const userStore = useUserStore();
+const appVersion = import.meta.env.VITE_APP_VERSION;
 const navBarHeight = ref(0);
 
 function handleCopyEmail() {
