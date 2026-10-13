@@ -558,7 +558,7 @@ async function handleBatchDelete() {
 }
 
 function goToRecord() {
-    uni.switchTab({ url: '/pages/record/index' });
+    uni.navigateTo({ url: '/pages/record/editor' });
 }
 
 function formatDate(dateStr: string): string {

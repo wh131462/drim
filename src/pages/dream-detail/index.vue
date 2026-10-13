@@ -590,7 +590,6 @@ function handleEditFromSheet() {
     showActionSheet.value = false;
     setTimeout(() => {
         // 将当前梦境信息存入 storage，供记梦页面读取
-        // 包含 isEditMode 标志，因为 switchTab 不支持传参
         uni.removeStorageSync('editingVersion');
         uni.setStorageSync('editingDream', {
             dreamId: dreamId.value,
@@ -603,9 +602,8 @@ function handleEditFromSheet() {
             hasAnalysis: !!dream.value?.analysis,
             isEditMode: true // 标记为编辑模式
         });
-        // 记梦页是 tabbar 页面，需要使用 switchTab
-        uni.switchTab({
-            url: '/pages/record/index',
+        uni.navigateTo({
+            url: '/pages/record/editor',
             fail: () => {
                 uni.removeStorageSync('editingDream');
                 uni.showToast({ title: '跳转失败，请重试', icon: 'none' });

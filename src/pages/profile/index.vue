@@ -3,6 +3,7 @@
         class="page profile-page"
         :class="{ 'dark-mode': userStore.isDarkMode }"
     >
+        <text class="page-title">我的</text>
         <!-- 用户头部 -->
         <view class="profile-header">
             <view
@@ -287,17 +288,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import { useUserStore, useDreamStore } from '@/stores';
 import { dreamApi } from '@/api';
 import type { CalendarRecord } from '@/types/dream';
 import CustomTabBar from '@/custom-tab-bar/index.vue';
 import UserProfileModal from '@/components/UserProfileModal/index.vue';
 import { onShow } from '@dcloudio/uni-app';
+import { getPageHeadingMetrics } from '@/utils/navigation';
 
 const userStore = useUserStore();
 const dreamStore = useDreamStore();
-const statusBarHeight = ref(0);
+const headingMetrics = getPageHeadingMetrics();
 
 // 资料编辑弹窗
 const showProfileModal = ref(false);
@@ -443,7 +445,7 @@ function handleCheckinAction() {
             return;
         }
     }
-    uni.switchTab({ url: '/pages/record/index' });
+    uni.navigateTo({ url: '/pages/record/editor' });
 }
 
 async function loadCalendar() {
@@ -535,13 +537,6 @@ function onProfileComplete() {
     void userStore.fetchUserInfo().catch((error) => console.warn('资料更新后用户信息刷新失败:', error));
 }
 
-// 生命周期
-onMounted(() => {
-    // 获取状态栏高度
-    const systemInfo = uni.getSystemInfoSync();
-    statusBarHeight.value = systemInfo.statusBarHeight || 0;
-});
-
 // 页面显示时智能加载数据
 onShow(() => {
     if (today.value.toDateString() !== new Date().toDateString()) thisMonthLoaded.value = false;
@@ -559,13 +554,17 @@ onShow(() => {
 
 .profile-page {
     min-height: 100vh;
-    background: $bg-page;
+    background: #faf8fc;
     padding-bottom: 200rpx;
-    padding-top: calc(v-bind('statusBarHeight') * 2rpx + 32rpx);
+    padding-top: v-bind("headingMetrics.top + 'px'");
     transition: background-color 0.3s ease;
 
     &.dark-mode {
         background: $dark-bg-page;
+
+        .page-title {
+            color: $dark-text-primary;
+        }
 
         .profile-header {
             background: $dark-bg-card;
@@ -734,12 +733,19 @@ onShow(() => {
 }
 
 // 用户头部
+.page-title {
+    @include page-heading;
+    height: v-bind("headingMetrics.height + 'px'");
+    margin: 0 32rpx 24rpx;
+    color: $text-primary;
+}
+
 .profile-header {
     background: #fff;
     padding: 32rpx;
     display: flex;
     align-items: center;
-    margin: 0 40rpx 32rpx;
+    margin: 0 32rpx 32rpx;
     border-radius: 32rpx;
     position: relative;
     overflow: hidden;

@@ -2,6 +2,17 @@
  * 样式混入
  */
 
+// 页面内容标题
+@mixin page-heading {
+    display: flex;
+    align-items: center;
+    font-size: 42rpx;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0;
+    text-align: left;
+}
+
 // Flex 居中
 @mixin flex-center {
     display: flex;

@@ -476,7 +476,7 @@ function formatDreamDate(date: string) {
 }
 
 function goToRecord() {
-    uni.switchTab({ url: '/pages/record/index' });
+    uni.navigateTo({ url: '/pages/record/editor' });
 }
 
 function goToTarot() {

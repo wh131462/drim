@@ -313,8 +313,10 @@ import type { PublicDream, TagItem } from '@/api/modules/explore';
 import CustomTabBar from '@/custom-tab-bar/index.vue';
 import { insertAdsIntoList, getExploreFeedAdUnitId, isNativeAdAvailable } from '@/utils/ad';
 import { getTagIcon, getTagName } from '@/constants/tags';
+import { getPageHeadingMetrics } from '@/utils/navigation';
 
 const userStore = useUserStore();
+const headingMetrics = getPageHeadingMetrics();
 
 // 数据
 const searchKeyword = ref('');
@@ -595,7 +597,7 @@ onMounted(() => {
 
 .explore-page {
     height: 100vh;
-    background: $bg-page;
+    background: #faf8fc;
     display: flex;
     flex-direction: column;
 }
@@ -608,8 +610,8 @@ onMounted(() => {
 
 // 头部区域
 .explore-header {
-    background: $bg-page;
-    padding: 120rpx 32rpx 16rpx;
+    padding: 24rpx 32rpx 16rpx;
+    padding-top: v-bind("headingMetrics.top + 'px'");
     flex-shrink: 0;
 }
 
@@ -619,8 +621,8 @@ onMounted(() => {
 }
 
 .header-title {
-    font-size: 36rpx;
-    font-weight: 600;
+    @include page-heading;
+    height: v-bind("headingMetrics.height + 'px'");
     color: $text-primary;
     margin-bottom: 24rpx;
 }

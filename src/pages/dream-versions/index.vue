@@ -269,9 +269,8 @@ function editVersion(version: DreamVersion) {
         type: version.type
     });
 
-    // 使用 switchTab 跳转到 tabbar 页面
-    uni.switchTab({
-        url: '/pages/record/index',
+    uni.navigateTo({
+        url: '/pages/record/editor',
         success: () => {
             // 跳转成功后，记录页面会从 storage 读取编辑信息
             uni.showToast({

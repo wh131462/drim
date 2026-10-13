@@ -50,6 +50,13 @@
             }
         },
         {
+            "path": "pages/record/editor",
+            "style": {
+                "navigationBarTitleText": "记录梦境",
+                "navigationStyle": "custom"
+            }
+        },
+        {
             "path": "pages/result/index",
             "style": {
                 "navigationBarTitleText": "梦境解析",
