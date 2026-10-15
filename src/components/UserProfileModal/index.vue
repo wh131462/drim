@@ -22,10 +22,11 @@
                         @chooseavatar="onChooseAvatar"
                     >
                         <image
-                            v-if="avatarUrl"
+                            v-if="avatarUrl && avatarUrl !== failedAvatarUrl"
                             class="avatar-preview"
                             :src="avatarUrl"
                             mode="aspectFill"
+                            @error="failedAvatarUrl = avatarUrl"
                         />
                         <view
                             v-else
@@ -33,14 +34,14 @@
                         >
                             <image
                                 class="avatar-icon"
-                                src="/static/icons/user.svg"
+                                src="/static/icons/user.png"
                                 mode="aspectFit"
                             />
                         </view>
                         <view class="avatar-edit-badge">
                             <image
                                 class="edit-icon"
-                                src="/static/icons/edit.svg"
+                                src="/static/icons/edit.png"
                                 mode="aspectFit"
                             />
                         </view>
@@ -86,6 +87,7 @@
 import { ref, computed, watch } from 'vue';
 import { useUserStore } from '@/stores';
 import { userApi } from '@/api';
+import { getBaseUrl } from '@/api/request';
 
 const props = withDefaults(
     defineProps<{
@@ -109,6 +111,7 @@ const emit = defineEmits<{
 
 const userStore = useUserStore();
 const avatarUrl = ref(props.initialAvatar);
+const failedAvatarUrl = ref('');
 const avatarTempFile = ref('');
 const nickname = ref(props.initialNickname);
 const loading = ref(false);
@@ -156,7 +159,7 @@ async function uploadAvatar(): Promise<string> {
     }
 
     return new Promise((resolve, reject) => {
-        const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3333/api/v1';
+        const baseUrl = getBaseUrl();
         const token = uni.getStorageSync('token');
 
         uni.uploadFile({
@@ -170,25 +173,24 @@ async function uploadAvatar(): Promise<string> {
                 if (res.statusCode === 200 || res.statusCode === 201) {
                     try {
                         const data = JSON.parse(res.data);
-                        if (data.code === 0 && data.data?.url) {
+                        if (
+                            data.code === 0 &&
+                            typeof data.data?.url === 'string' &&
+                            /^https?:\/\//i.test(data.data.url)
+                        ) {
                             resolve(data.data.url);
                         } else {
-                            // 如果上传失败，使用临时URL（后端可能不支持上传）
-                            console.warn('头像上传接口返回异常，使用临时URL');
-                            resolve(avatarTempFile.value);
+                            reject(new Error('头像上传失败，请重试'));
                         }
                     } catch {
-                        resolve(avatarTempFile.value);
+                        reject(new Error('头像上传失败，请重试'));
                     }
                 } else {
-                    console.warn('头像上传失败，使用临时URL');
-                    resolve(avatarTempFile.value);
+                    reject(new Error('头像上传失败，请重试'));
                 }
             },
             fail: () => {
-                // 上传失败时使用临时URL
-                console.warn('头像上传失败，使用临时URL');
-                resolve(avatarTempFile.value);
+                reject(new Error('头像上传失败，请检查网络后重试'));
             }
         });
     });

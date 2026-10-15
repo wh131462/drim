@@ -11,21 +11,22 @@
                 @tap="handleAvatarClick"
             >
                 <image
-                    v-if="userStore.avatar"
+                    v-if="userStore.avatar && userStore.avatar !== failedAvatarUrl"
                     class="avatar-image"
                     :src="userStore.avatar"
                     mode="aspectFill"
+                    @error="failedAvatarUrl = userStore.avatar"
                 />
                 <image
                     v-else
                     class="avatar-icon"
-                    src="/static/icons/user.svg"
+                    src="/static/icons/user.png"
                     mode="aspectFit"
                 />
                 <view class="avatar-edit-hint">
                     <image
                         class="edit-icon"
-                        src="/static/icons/edit.svg"
+                        src="/static/icons/edit.png"
                         mode="aspectFit"
                     />
                 </view>
@@ -39,7 +40,7 @@
                     >
                         <image
                             class="vip-icon"
-                            src="/static/icons/star.svg"
+                            src="/static/icons/star.png"
                             mode="aspectFit"
                         />
                         <text>VIP</text>
@@ -54,7 +55,7 @@
         <view class="checkin-card">
             <image
                 class="checkin-icon"
-                src="/static/icons/moon.svg"
+                src="/static/icons/moon.png"
                 mode="aspectFit"
             />
             <view class="checkin-copy">
@@ -99,7 +100,7 @@
                     >
                         <image
                             class="nav-icon prev"
-                            src="/static/icons/arrow-right.svg"
+                            src="/static/icons/arrow-right.png"
                             mode="aspectFit"
                         />
                     </view>
@@ -116,7 +117,7 @@
                     >
                         <image
                             class="nav-icon"
-                            src="/static/icons/arrow-right.svg"
+                            src="/static/icons/arrow-right.png"
                             mode="aspectFit"
                         />
                     </view>
@@ -199,7 +200,7 @@
                     <view class="menu-icon-wrapper cyan">
                         <image
                             class="menu-icon"
-                            src="/static/icons/book.svg"
+                            src="/static/icons/book.png"
                             mode="aspectFit"
                         />
                     </view>
@@ -207,7 +208,7 @@
                 </view>
                 <image
                     class="menu-arrow"
-                    src="/static/icons/arrow-right.svg"
+                    src="/static/icons/arrow-right.png"
                     mode="aspectFit"
                 />
             </view>
@@ -219,7 +220,7 @@
                     <view class="menu-icon-wrapper gold">
                         <image
                             class="menu-icon"
-                            src="/static/icons/star.svg"
+                            src="/static/icons/star.png"
                             mode="aspectFit"
                         />
                     </view>
@@ -227,7 +228,7 @@
                 </view>
                 <image
                     class="menu-arrow"
-                    src="/static/icons/arrow-right.svg"
+                    src="/static/icons/arrow-right.png"
                     mode="aspectFit"
                 />
             </view>
@@ -239,7 +240,7 @@
                     <view class="menu-icon-wrapper cyan">
                         <image
                             class="menu-icon"
-                            src="/static/icons/achievement.svg"
+                            src="/static/icons/achievement.png"
                             mode="aspectFit"
                         />
                     </view>
@@ -247,7 +248,7 @@
                 </view>
                 <image
                     class="menu-arrow"
-                    src="/static/icons/arrow-right.svg"
+                    src="/static/icons/arrow-right.png"
                     mode="aspectFit"
                 />
             </view>
@@ -259,7 +260,7 @@
                     <view class="menu-icon-wrapper gray">
                         <image
                             class="menu-icon"
-                            src="/static/icons/settings.svg"
+                            src="/static/icons/settings.png"
                             mode="aspectFit"
                         />
                     </view>
@@ -267,7 +268,7 @@
                 </view>
                 <image
                     class="menu-arrow"
-                    src="/static/icons/arrow-right.svg"
+                    src="/static/icons/arrow-right.png"
                     mode="aspectFit"
                 />
             </view>
@@ -298,6 +299,7 @@ import { onShow } from '@dcloudio/uni-app';
 import { getPageHeadingMetrics } from '@/utils/navigation';
 
 const userStore = useUserStore();
+const failedAvatarUrl = ref<string | null>(null);
 const dreamStore = useDreamStore();
 const headingMetrics = getPageHeadingMetrics();
 

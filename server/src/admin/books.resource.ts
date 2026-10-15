@@ -201,7 +201,10 @@ export function booksResourceOptions(
             },
             description: { type: 'textarea' },
             reason: { type: 'textarea' },
-            coverImage: { description: '使用服务器 /assets/books/ 路径或可访问的 HTTPS 图片地址' },
+            coverImage: {
+                description:
+                    '使用服务器 /assets/books/ 路径或可访问的 HTTPS 图片地址；远程原地址图片变化后需重新保存书籍以更新缓存，建议更换图片地址'
+            },
             sortOrder: { description: '数字越小越靠前' },
             published: { description: '开启后小程序显示；关闭后从目录和书架隐藏' },
             clickCount: countProperty,

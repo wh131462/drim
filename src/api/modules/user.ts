@@ -10,7 +10,7 @@ export const userApi = {
      * 微信登录
      */
     login(params: LoginParams): Promise<LoginResponse> {
-        return post<LoginResponse>('/user/login/wechat', params);
+        return post<LoginResponse>('/user/login/wechat', params, { showLoading: false, showError: false });
     },
 
     /**

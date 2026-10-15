@@ -1,4 +1,4 @@
-import { post, getBaseUrl } from '../request';
+import { post } from '../request';
 
 export interface TarotDrawCard {
     id: number;
@@ -22,8 +22,13 @@ export interface TarotDraw {
 
 async function draw(mode: 'daily' | 'spread'): Promise<TarotDraw> {
     const result = await post<TarotDraw>(`/tarot/${mode}`, undefined, { showLoading: false, showError: false });
-    const origin = getBaseUrl().match(/^https?:\/\/[^/]+/i)?.[0] || '';
-    return { ...result, cards: result.cards.map((card) => ({ ...card, image: `${origin}${card.image}` })) };
+    return {
+        ...result,
+        cards: result.cards.map((card) => ({
+            ...card,
+            image: `/pages/tarot/static/${card.id}.jpg`
+        }))
+    };
 }
 
 export const tarotApi = {

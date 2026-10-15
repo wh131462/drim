@@ -22,7 +22,7 @@
                     <view class="search-bar">
                         <image
                             class="search-icon"
-                            src="/static/icons/search.svg"
+                            src="/static/icons/search.png"
                             mode="aspectFit"
                         />
                         <input
@@ -54,7 +54,7 @@
                 >
                     <image
                         class="discover-shortcut-image"
-                        src="/static/icons/shortcut-tarot.svg"
+                        src="/static/icons/shortcut-tarot.png"
                         mode="aspectFit"
                         aria-hidden="true"
                     />
@@ -66,7 +66,7 @@
                 >
                     <image
                         class="discover-shortcut-image"
-                        src="/static/icons/shortcut-psychology.svg"
+                        src="/static/icons/shortcut-psychology.png"
                         mode="aspectFit"
                         aria-hidden="true"
                     />
@@ -78,7 +78,7 @@
                 >
                     <image
                         class="discover-shortcut-image"
-                        src="/static/icons/book.svg"
+                        src="/static/icons/book.png"
                         mode="aspectFit"
                         aria-hidden="true"
                     />
@@ -220,7 +220,7 @@
                             >
                                 <image
                                     class="stat-icon"
-                                    src="/static/icons/heart.svg"
+                                    src="/static/icons/heart.png"
                                     mode="aspectFit"
                                 />
                                 <text>{{ item.data.likeCount || 0 }}</text>
@@ -228,7 +228,7 @@
                             <view class="stat-item">
                                 <image
                                     class="stat-icon"
-                                    src="/static/icons/eye.svg"
+                                    src="/static/icons/eye.png"
                                     mode="aspectFit"
                                 />
                                 <text>{{ item.data.viewCount || 0 }}</text>
@@ -293,7 +293,7 @@
             <view class="random-btn">
                 <image
                     class="random-icon"
-                    src="/static/icons/portal-door.svg"
+                    src="/static/icons/portal-door.png"
                     mode="aspectFit"
                 />
             </view>
@@ -383,7 +383,7 @@ const tagIcons: Record<string, string> = {
 
 function getFilterIcon(tag: string): string {
     const icon = tagIcons[getTagName(tag)];
-    return icon ? `/static/icons/${icon}.svg` : getTagIcon(tag);
+    return icon ? `/static/icons/${icon}.png` : getTagIcon(tag);
 }
 
 // 加载可用标签

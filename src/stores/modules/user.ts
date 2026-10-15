@@ -84,6 +84,7 @@ export const useUserStore = defineStore('user', {
                     const { code } = await new Promise<UniApp.LoginRes>((resolve, reject) => {
                         uni.login({
                             provider: 'weixin',
+                            timeout: 5000,
                             success: resolve,
                             fail: reject
                         });

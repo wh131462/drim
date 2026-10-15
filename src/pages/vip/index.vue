@@ -26,7 +26,7 @@
                 <view class="privilege-badge">
                     <image
                         class="privilege-badge-icon"
-                        src="/static/icons/sparkle.svg"
+                        src="/static/icons/sparkle.png"
                         mode="aspectFit"
                     />
                     <text class="privilege-text">特权生效中</text>
@@ -48,7 +48,7 @@
                         <view class="ad-icon-wrap">
                             <image
                                 class="ad-icon"
-                                src="/static/icons/video.svg"
+                                src="/static/icons/video.png"
                                 mode="aspectFit"
                             />
                         </view>
@@ -61,7 +61,7 @@
                         <text class="ad-reward">+10</text>
                         <image
                             class="ad-arrow"
-                            src="/static/icons/arrow-right.svg"
+                            src="/static/icons/arrow-right.png"
                             mode="aspectFit"
                         />
                     </view>
@@ -156,7 +156,7 @@
                     <view class="tip-item">
                         <image
                             class="tip-icon"
-                            src="/static/icons/lamp.svg"
+                            src="/static/icons/lamp.png"
                             mode="aspectFit"
                         />
                         <text>连续打卡7天可免费获得1天免广告特权</text>
@@ -164,7 +164,7 @@
                     <view class="tip-item">
                         <image
                             class="tip-icon"
-                            src="/static/icons/lamp.svg"
+                            src="/static/icons/lamp.png"
                             mode="aspectFit"
                         />
                         <text>看广告可额外获得积分奖励</text>
@@ -219,19 +219,19 @@ const canWatchAd = computed(() => adQuota.value.remaining > 0);
 
 // 积分获取方式 - 使用SVG图标
 const earnWays = [
-    { icon: '/static/icons/moon.svg', name: '每日记梦', points: 10 },
-    { icon: '/static/icons/check.svg', name: '完成任务', points: 10 },
-    { icon: '/static/icons/fire.svg', name: '连续打卡奖励', points: '20-200' },
-    { icon: '/static/icons/trophy.svg', name: '解锁成就', points: '10-100' },
-    { icon: '/static/icons/share.svg', name: '分享梦境', points: 5 }
+    { icon: '/static/icons/moon.png', name: '每日记梦', points: 10 },
+    { icon: '/static/icons/check.png', name: '完成任务', points: 10 },
+    { icon: '/static/icons/fire.png', name: '连续打卡奖励', points: '20-200' },
+    { icon: '/static/icons/trophy.png', name: '解锁成就', points: '10-100' },
+    { icon: '/static/icons/share.png', name: '分享梦境', points: 5 }
 ];
 
 // 权益数据 - 使用SVG图标
 const benefits = [
-    { icon: '/static/icons/ban.svg', name: '免广告', desc: '解析无需看广告' },
-    { icon: '/static/icons/infinity.svg', name: '无限润色', desc: '不限次数润色' },
-    { icon: '/static/icons/book.svg', name: '历史查看', desc: '查看全部历史记录' },
-    { icon: '/static/icons/crystal.svg', name: '深度解析', desc: '更详细的心理分析' }
+    { icon: '/static/icons/ban.png', name: '免广告', desc: '解析无需看广告' },
+    { icon: '/static/icons/infinity.png', name: '无限润色', desc: '不限次数润色' },
+    { icon: '/static/icons/book.png', name: '历史查看', desc: '查看全部历史记录' },
+    { icon: '/static/icons/crystal.png', name: '深度解析', desc: '更详细的心理分析' }
 ];
 
 // 兑换项目（从后端获取）

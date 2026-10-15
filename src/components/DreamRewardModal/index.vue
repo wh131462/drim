@@ -12,7 +12,7 @@
             <view class="success-icon">
                 <image
                     class="icon-svg"
-                    src="/static/icons/celebrate.svg"
+                    src="/static/icons/celebrate.png"
                     mode="aspectFit"
                 />
             </view>
@@ -32,7 +32,7 @@
                     <view class="reward-icon-wrap reward-icon-dream">
                         <image
                             class="reward-icon-svg"
-                            src="/static/icons/star-magic.svg"
+                            src="/static/icons/star-magic.png"
                             mode="aspectFit"
                         />
                     </view>
@@ -47,7 +47,7 @@
                     <view class="reward-icon-wrap reward-icon-streak">
                         <image
                             class="reward-icon-svg"
-                            src="/static/icons/clover.svg"
+                            src="/static/icons/clover.png"
                             mode="aspectFit"
                         />
                     </view>

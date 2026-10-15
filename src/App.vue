@@ -3,6 +3,7 @@ import { onLaunch, onShow, onHide } from '@dcloudio/uni-app';
 import { useUserStore } from '@/stores';
 
 const userStore = useUserStore();
+let initializing = false;
 
 onLaunch(async () => {
     console.log('App Launch');
@@ -36,6 +37,8 @@ onHide(() => {
  * 初始化登录
  */
 async function initLogin() {
+    if (initializing) return;
+    initializing = true;
     try {
         // 检查本地是否有token
         const hasToken = userStore.checkLogin();
@@ -49,50 +52,19 @@ async function initLogin() {
                 // 只有请求层已清除 token 才重新登录，网络波动继续使用本地会话。
                 if (!userStore.token) {
                     console.log('Token已失效，重新登录');
-                    await performLogin();
+                    await userStore.login();
                 } else {
                     console.warn('用户信息刷新失败，保留本地会话');
                 }
             }
         } else {
             // 没有token，执行登录
-            await performLogin();
+            await userStore.login();
         }
     } catch (error) {
         console.error('登录初始化失败:', error);
-    }
-}
-
-/**
- * 执行登录
- */
-async function performLogin() {
-    let retryCount = 0;
-    const maxRetries = 3;
-
-    while (retryCount < maxRetries) {
-        try {
-            await userStore.login();
-            console.log('登录成功');
-            return;
-        } catch (error: any) {
-            retryCount++;
-            console.error(`登录失败 (${retryCount}/${maxRetries}):`, error);
-
-            if (retryCount >= maxRetries) {
-                // 达到最大重试次数，显示错误提示
-                uni.showModal({
-                    title: '登录失败',
-                    content: '网络连接异常，请检查网络后重新打开小程序',
-                    showCancel: false,
-                    confirmText: '我知道了'
-                });
-                break;
-            }
-
-            // 等待一段时间后重试
-            await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
-        }
+    } finally {
+        initializing = false;
     }
 }
 </script>

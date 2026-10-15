@@ -23,10 +23,11 @@
         >
             <view class="private-avatar">
                 <image
-                    v-if="profile.avatar"
+                    v-if="profile.avatar && !avatarError"
                     class="avatar-image"
                     :src="profile.avatar"
                     mode="aspectFill"
+                    @error="avatarError = true"
                 />
                 <text
                     v-else
@@ -38,7 +39,7 @@
             <view class="private-icon">
                 <image
                     class="lock-icon"
-                    src="/static/icons/lock.svg"
+                    src="/static/icons/lock.png"
                     mode="aspectFit"
                 />
             </view>
@@ -79,7 +80,7 @@
                             >
                                 <image
                                     class="vip-icon"
-                                    src="/static/icons/star.svg"
+                                    src="/static/icons/star.png"
                                     mode="aspectFit"
                                 />
                                 <text>VIP</text>
@@ -141,7 +142,7 @@
                             >
                                 <image
                                     class="stat-icon"
-                                    src="/static/icons/heart.svg"
+                                    src="/static/icons/heart.png"
                                     mode="aspectFit"
                                 />
                                 <text>{{ dream.likeCount || 0 }}</text>
@@ -149,7 +150,7 @@
                             <view class="stat-item">
                                 <image
                                     class="stat-icon"
-                                    src="/static/icons/eye.svg"
+                                    src="/static/icons/eye.png"
                                     mode="aspectFit"
                                 />
                                 <text>{{ dream.viewCount || 0 }}</text>

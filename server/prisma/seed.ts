@@ -202,7 +202,7 @@ async function main() {
         },
         {
             key: 'share_image',
-            value: '/static/images/share.png',
+            value: '/static/logo.png',
             description: '默认分享图片'
         },
         {

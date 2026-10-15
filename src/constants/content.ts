@@ -12,12 +12,13 @@ export interface Book {
     tag: string;
     price: string;
     coverImage: string;
+    coverVersion?: string;
     description: string;
     reason: string;
     comingSoon?: boolean;
 }
 
-export const TAROT_BACK_IMAGE = '/static/tarot/back.jpg';
+export const TAROT_BACK_IMAGE = '/pages/tarot/static/back.jpg';
 
 export interface TestQuestion {
     text: string;

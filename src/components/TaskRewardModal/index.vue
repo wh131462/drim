@@ -12,7 +12,7 @@
             <view class="success-icon">
                 <image
                     class="icon-svg"
-                    :src="completed ? '/static/icons/celebrate.svg' : '/static/icons/sparkle.svg'"
+                    :src="completed ? '/static/icons/celebrate.png' : '/static/icons/sparkle.png'"
                     mode="aspectFit"
                 />
             </view>
@@ -40,7 +40,7 @@
                         <view class="option-icon-wrap option-icon-video">
                             <image
                                 class="option-icon-svg"
-                                src="/static/icons/video.svg"
+                                src="/static/icons/video.png"
                                 mode="aspectFit"
                             />
                         </view>
@@ -65,7 +65,7 @@
                         <view class="option-icon-wrap option-icon-clover">
                             <image
                                 class="option-icon-svg"
-                                src="/static/icons/clover.svg"
+                                src="/static/icons/clover.png"
                                 mode="aspectFit"
                             />
                         </view>

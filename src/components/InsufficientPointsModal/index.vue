@@ -12,7 +12,7 @@
             <view class="modal-icon">
                 <image
                     class="status-icon"
-                    :src="completed ? '/static/icons/celebrate.svg' : '/static/icons/warning.svg'"
+                    :src="completed ? '/static/icons/celebrate.png' : '/static/icons/warning.png'"
                     mode="aspectFit"
                     aria-hidden="true"
                 />
@@ -50,7 +50,7 @@
                         <view class="option-left">
                             <image
                                 class="option-icon"
-                                src="/static/icons/video.svg"
+                                src="/static/icons/video.png"
                                 mode="aspectFit"
                                 aria-hidden="true"
                             />
@@ -73,7 +73,7 @@
                         <view class="option-left">
                             <image
                                 class="option-icon"
-                                src="/static/icons/video.svg"
+                                src="/static/icons/video.png"
                                 mode="aspectFit"
                                 aria-hidden="true"
                             />
@@ -93,7 +93,7 @@
                     <view class="option-left">
                         <image
                             class="option-icon"
-                            src="/static/icons/crown.svg"
+                            src="/static/icons/crown.png"
                             mode="aspectFit"
                             aria-hidden="true"
                         />
@@ -105,7 +105,7 @@
                     <view class="option-arrow">
                         <image
                             class="arrow-icon"
-                            src="/static/icons/arrow-right.svg"
+                            src="/static/icons/arrow-right.png"
                             mode="aspectFit"
                             aria-hidden="true"
                         />

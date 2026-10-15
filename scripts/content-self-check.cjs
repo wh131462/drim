@@ -56,8 +56,12 @@ assert.equal(testResult('big5', [0, 1, 0, 1, 0]).traits.length, 5);
 assert.equal(testResult('big5', [0, 1, 0, 1, NaN]), null);
 
 const config = JSON.parse(fs.readFileSync(path.join(root, 'src/pages.json'), 'utf8'));
-const routes = new Set(config.pages.map((page) => page.path));
-assert.equal(routes.size, config.pages.length);
+const pagePaths = [
+    ...config.pages.map((page) => page.path),
+    ...(config.subPackages || []).flatMap((pkg) => pkg.pages.map((page) => `${pkg.root}/${page.path}`))
+];
+const routes = new Set(pagePaths);
+assert.equal(routes.size, pagePaths.length);
 for (const route of routes) assert.ok(fs.existsSync(path.join(root, `src/${route}.vue`)), `${route} is missing`);
 assert.equal(config.tabBar.list.length, 4);
 assert.deepEqual(

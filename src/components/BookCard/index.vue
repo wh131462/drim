@@ -9,13 +9,13 @@
             @tap="$emit('open', book.id)"
         >
             <image
-                v-if="!coverFailed"
+                v-if="!imageFailed && imageSrc"
                 class="book-jacket"
-                :src="book.coverImage"
+                :src="imageSrc"
                 mode="aspectFit"
                 :alt="`${book.title}封面`"
                 aria-hidden="true"
-                @error="coverFailed = true"
+                @error="onImageError"
             />
             <view
                 v-else
@@ -59,16 +59,13 @@
 </template>
 <script setup lang="ts">
 import type { Book } from '@/constants/content';
-import { ref, watch } from 'vue';
+import { useCachedImage } from '@/utils/use-cached-image';
 import { useUserStore } from '@/stores';
 const userStore = useUserStore();
 const props = defineProps<{ book: Book; saved: boolean; pending?: boolean; saveDisabled?: boolean; reason?: string }>();
-const coverFailed = ref(false);
-watch(
+const { imageSrc, imageFailed, onImageError } = useCachedImage(
     () => props.book.coverImage,
-    () => {
-        coverFailed.value = false;
-    }
+    () => props.book.coverVersion || ''
 );
 defineEmits<{ (event: 'save', id: string): void; (event: 'open', id: string): void }>();
 </script>

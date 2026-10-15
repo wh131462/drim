@@ -15,13 +15,6 @@
             }
         },
         {
-            "path": "pages/tarot/index",
-            "style": {
-                "navigationBarTitleText": "今日塔罗",
-                "navigationStyle": "custom"
-            }
-        },
-        {
             "path": "pages/tests/index",
             "style": {
                 "navigationBarTitleText": "心理测试",
@@ -146,6 +139,20 @@
                 "navigationBarTitleText": "关于梦见",
                 "navigationStyle": "custom"
             }
+        }
+    ],
+    "subPackages": [
+        {
+            "root": "pages/tarot",
+            "pages": [
+                {
+                    "path": "index",
+                    "style": {
+                        "navigationBarTitleText": "今日塔罗",
+                        "navigationStyle": "custom"
+                    }
+                }
+            ]
         }
     ],
     "globalStyle": {

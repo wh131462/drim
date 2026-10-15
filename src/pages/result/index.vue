@@ -36,7 +36,7 @@
                     <view class="crystal-inner">
                         <image
                             class="crystal-icon"
-                            src="/static/icons/crystal.svg"
+                            src="/static/icons/crystal.png"
                             mode="aspectFit"
                             aria-hidden="true"
                         />
@@ -78,7 +78,7 @@
         >
             <image
                 class="error-icon"
-                src="/static/icons/warning.svg"
+                src="/static/icons/warning.png"
                 mode="aspectFit"
                 aria-hidden="true"
             />
@@ -122,7 +122,7 @@
                     >
                         <image
                             class="reason-icon"
-                            src="/static/icons/sparkle.svg"
+                            src="/static/icons/sparkle.png"
                             mode="aspectFit"
                             aria-hidden="true"
                         />
@@ -531,12 +531,8 @@ function pollForResult(analysisId: string) {
                 pollForResult(analysisId);
             }
         } catch (err: any) {
-            if (pollCount < MAX_POLL_COUNT) {
-                pollForResult(analysisId);
-            } else {
-                error.value = err?.message || '获取解析结果失败';
-                loading.value = false;
-            }
+            error.value = err?.message || '获取解析结果失败，请稍后重试';
+            loading.value = false;
         }
     }, 1000);
 }

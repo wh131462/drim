@@ -11,7 +11,7 @@
             >
                 <image
                     class="back-icon"
-                    src="/static/icons/back.svg"
+                    src="/static/icons/back.png"
                     mode="aspectFit"
                 />
             </view>

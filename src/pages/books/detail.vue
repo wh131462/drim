@@ -27,20 +27,21 @@
         <template v-else-if="book">
             <view class="detail-heading">
                 <image
-                    v-if="!coverFailed"
-                    :key="coverRevision"
+                    v-if="!imageFailed && imageSrc"
                     class="detail-cover"
-                    :src="book.coverImage"
+                    :src="imageSrc"
                     mode="aspectFit"
                     :alt="`${book.title}封面`"
-                    @error="coverFailed = true"
+                    @error="onImageError"
                 />
                 <button
                     v-else
                     class="detail-cover detail-cover-retry"
-                    @tap="retryCover"
+                    :disabled="!imageFailed"
+                    @tap="retryImage"
                 >
-                    <view>封面加载失败</view><view>点击重试</view>
+                    <view>{{ imageFailed ? '封面加载失败' : '封面加载中' }}</view
+                    ><view v-if="imageFailed">点击重试</view>
                 </button>
                 <view class="detail-meta">
                     <text class="detail-title">{{ book.title }}</text>
@@ -101,6 +102,7 @@ import type { BookClickSource } from '@/api/modules/books';
 import type { Book } from '@/constants/content';
 import { useUserStore, useBooksStore } from '@/stores';
 import NavBar from '@/components/NavBar/index.vue';
+import { useCachedImage } from '@/utils/use-cached-image';
 
 const userStore = useUserStore();
 const booksStore = useBooksStore();
@@ -109,8 +111,10 @@ const book = ref<Book | null>(null);
 const loading = ref(true);
 const error = ref('');
 const favoritesError = ref(false);
-const coverFailed = ref(false);
-const coverRevision = ref(0);
+const { imageSrc, imageFailed, retryImage, onImageError } = useCachedImage(
+    () => book.value?.coverImage || '',
+    () => book.value?.coverVersion || ''
+);
 let id = '';
 let source: BookClickSource = 'catalog';
 const requestId = `book-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
@@ -132,12 +136,6 @@ watch(
         book.value = null;
         loading.value = false;
         error.value = '登录状态已变化，请重新加载';
-    }
-);
-watch(
-    () => book.value?.coverImage,
-    () => {
-        coverFailed.value = false;
     }
 );
 
@@ -192,11 +190,6 @@ async function refreshFavorites() {
     } catch {
         if (userStore.token === token) favoritesError.value = true;
     }
-}
-
-function retryCover() {
-    coverRevision.value++;
-    coverFailed.value = false;
 }
 
 async function saveBook() {

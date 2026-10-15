@@ -14,7 +14,7 @@
             <view class="stats-title">
                 <image
                     class="title-icon"
-                    src="/static/icons/compare.svg"
+                    src="/static/icons/compare.png"
                     mode="aspectFit"
                 />
                 <text>版本统计</text>
@@ -59,19 +59,19 @@
                     <image
                         v-if="version.isCurrent"
                         class="dot-icon"
-                        src="/static/icons/check.svg"
+                        src="/static/icons/check.png"
                         mode="aspectFit"
                     />
                     <image
                         v-else-if="version.type === 'polished'"
                         class="dot-icon"
-                        src="/static/icons/star.svg"
+                        src="/static/icons/star.png"
                         mode="aspectFit"
                     />
                     <image
                         v-else
                         class="dot-icon"
-                        src="/static/icons/edit.svg"
+                        src="/static/icons/edit.png"
                         mode="aspectFit"
                     />
                 </view>
@@ -91,7 +91,7 @@
                                 <template v-if="version.type === 'polished'">
                                     <image
                                         class="badge-icon"
-                                        src="/static/icons/star.svg"
+                                        src="/static/icons/star.png"
                                         mode="aspectFit"
                                     />
                                     <text>润色</text>
@@ -99,7 +99,7 @@
                                 <template v-else>
                                     <image
                                         class="badge-icon"
-                                        src="/static/icons/edit.svg"
+                                        src="/static/icons/edit.png"
                                         mode="aspectFit"
                                     />
                                     <text>{{ version.type === 'edited' ? '编辑版本' : '原始版本' }}</text>
@@ -108,7 +108,7 @@
                             <image
                                 v-if="version.isCurrent"
                                 class="current-star"
-                                src="/static/icons/star.svg"
+                                src="/static/icons/star.png"
                                 mode="aspectFit"
                             />
                         </view>
@@ -123,7 +123,7 @@
                         <view class="meta-item">
                             <image
                                 class="meta-icon"
-                                src="/static/icons/edit.svg"
+                                src="/static/icons/edit.png"
                                 mode="aspectFit"
                             />
                             <text>{{ version.content.length }} 字</text>
@@ -134,7 +134,7 @@
                         >
                             <image
                                 class="meta-icon"
-                                src="/static/icons/info.svg"
+                                src="/static/icons/info.png"
                                 mode="aspectFit"
                             />
                             <text>基于版本 #{{ getVersionNumber(version.polishedFrom) }}</text>
@@ -145,7 +145,7 @@
                         >
                             <image
                                 class="meta-icon"
-                                src="/static/icons/user.svg"
+                                src="/static/icons/user.png"
                                 mode="aspectFit"
                             />
                             <text>首次创建</text>
@@ -160,7 +160,7 @@
                         >
                             <image
                                 class="btn-icon"
-                                src="/static/icons/edit.svg"
+                                src="/static/icons/edit.png"
                                 mode="aspectFit"
                             />
                             <text>编辑</text>
@@ -171,7 +171,7 @@
                         >
                             <image
                                 class="btn-icon"
-                                src="/static/icons/copy.svg"
+                                src="/static/icons/copy.png"
                                 mode="aspectFit"
                             />
                             <text>复制</text>
@@ -183,7 +183,7 @@
                         >
                             <image
                                 class="btn-icon"
-                                src="/static/icons/check.svg"
+                                src="/static/icons/check.png"
                                 mode="aspectFit"
                             />
                             <text>切换</text>
@@ -205,7 +205,7 @@
             >
                 <image
                     class="empty-icon"
-                    src="/static/icons/edit.svg"
+                    src="/static/icons/edit.png"
                     mode="aspectFit"
                 />
                 <text class="empty-text">暂无版本历史</text>

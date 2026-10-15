@@ -62,26 +62,26 @@ const tabList = [
     {
         pagePath: '/pages/index/index',
         text: '首页',
-        iconPath: '/static/icons/home.svg',
-        selectedIconPath: '/static/icons/home.svg'
+        iconPath: '/static/icons/home.png',
+        selectedIconPath: '/static/icons/home.png'
     },
     {
         pagePath: '/pages/explore/index',
         text: '发现',
-        iconPath: '/static/icons/shortcut-explore.svg',
-        selectedIconPath: '/static/icons/shortcut-explore.svg'
+        iconPath: '/static/icons/shortcut-explore.png',
+        selectedIconPath: '/static/icons/shortcut-explore.png'
     },
     {
         pagePath: '/pages/record/index',
         text: '记梦',
-        iconPath: '/static/icons/edit.svg',
-        selectedIconPath: '/static/icons/edit.svg'
+        iconPath: '/static/icons/edit.png',
+        selectedIconPath: '/static/icons/edit.png'
     },
     {
         pagePath: '/pages/profile/index',
         text: '我的',
-        iconPath: '/static/icons/user.svg',
-        selectedIconPath: '/static/icons/user.svg'
+        iconPath: '/static/icons/user.png',
+        selectedIconPath: '/static/icons/user.png'
     }
 ];
 

@@ -20,12 +20,26 @@
                     <view class="record-btn-pulse"></view>
                     <image
                         class="record-icon"
-                        src="/static/icons/edit.svg"
+                        src="/static/icons/edit.png"
                         mode="aspectFit"
                     />
                     <text class="record-btn-text">记梦</text>
                 </view>
             </view>
+        </view>
+
+        <view
+            v-if="pageError"
+            class="home-load-error"
+            role="alert"
+        >
+            <text>{{ pageError }}</text>
+            <button
+                :disabled="pageLoading"
+                @tap="loadHome"
+            >
+                {{ pageLoading ? '连接中…' : '重新连接' }}
+            </button>
         </view>
 
         <!-- 快捷入口 -->
@@ -43,7 +57,7 @@
                 >
                     <image
                         class="shortcut-icon-image"
-                        src="/static/icons/shortcut-tarot.svg"
+                        src="/static/icons/shortcut-tarot.png"
                         mode="aspectFit"
                     />
                 </view>
@@ -62,7 +76,7 @@
                 >
                     <image
                         class="shortcut-icon-image"
-                        src="/static/icons/shortcut-psychology.svg"
+                        src="/static/icons/shortcut-psychology.png"
                         mode="aspectFit"
                     />
                 </view>
@@ -81,7 +95,7 @@
                 >
                     <image
                         class="shortcut-icon-image"
-                        src="/static/icons/shortcut-checkin.svg"
+                        src="/static/icons/shortcut-checkin.png"
                         mode="aspectFit"
                     />
                 </view>
@@ -100,7 +114,7 @@
                 >
                     <image
                         class="shortcut-icon-image"
-                        src="/static/icons/shortcut-explore.svg"
+                        src="/static/icons/shortcut-explore.png"
                         mode="aspectFit"
                     />
                 </view>
@@ -138,7 +152,7 @@
                             <view class="review-title">
                                 <image
                                     class="review-icon"
-                                    src="/static/icons/info.svg"
+                                    src="/static/icons/info.png"
                                     mode="aspectFit"
                                 />
                                 <text>{{ getDreamTitle(dream) }}</text>
@@ -196,7 +210,7 @@
                     <view class="review-title">
                         <image
                             class="review-icon"
-                            src="/static/icons/info.svg"
+                            src="/static/icons/info.png"
                             mode="aspectFit"
                         />
                         <text>{{ getDreamTitle(displayDreams[0]) }}</text>
@@ -275,7 +289,7 @@
                 <view class="task-header-left">
                     <image
                         class="task-label-icon"
-                        src="/static/icons/sparkle.svg"
+                        src="/static/icons/sparkle.png"
                         mode="aspectFit"
                     />
                     <text class="task-label">今日小任务</text>
@@ -283,7 +297,7 @@
                 <view class="task-reward-badge">
                     <image
                         class="reward-icon-svg"
-                        src="/static/icons/clover.svg"
+                        src="/static/icons/clover.png"
                         mode="aspectFit"
                     />
                     <text class="reward-value">+{{ taskStore.todayTask.rewardPoints }}</text>
@@ -305,7 +319,7 @@
                         <text class="task-hint">完成后好运+1</text>
                         <image
                             class="task-hint-icon"
-                            src="/static/icons/star-magic.svg"
+                            src="/static/icons/star-magic.png"
                             mode="aspectFit"
                         />
                     </view>
@@ -321,7 +335,7 @@
                     <image
                         v-if="taskStore.todayTask.status === 'completed'"
                         class="btn-icon"
-                        src="/static/icons/celebrate.svg"
+                        src="/static/icons/celebrate.png"
                         mode="aspectFit"
                     />
                     <text class="btn-text">{{
@@ -374,6 +388,8 @@ const settingsStore = useSettingsStore();
 const achievementStore = useAchievementStore();
 const taskStore = useTaskStore();
 const statusBarHeight = ref(0);
+const pageError = ref('');
+const pageLoading = ref(false);
 const currentTime = ref(new Date());
 
 // 资料填写弹窗
@@ -501,16 +517,16 @@ function goToDreamDetail(dreamId: string) {
 
 function getTaskIcon(taskType: string): string {
     const iconMap: Record<string, string> = {
-        meditation: '/static/icons/meditation.svg',
-        exercise: '/static/icons/running.svg',
-        reading: '/static/icons/book.svg',
-        gratitude: '/static/icons/gratitude.svg',
-        nature: '/static/icons/nature.svg',
-        music: '/static/icons/music.svg',
-        art: '/static/icons/art.svg',
-        social: '/static/icons/social.svg'
+        meditation: '/static/icons/meditation.png',
+        exercise: '/static/icons/running.png',
+        reading: '/static/icons/book.png',
+        gratitude: '/static/icons/gratitude.png',
+        nature: '/static/icons/nature.png',
+        music: '/static/icons/music.png',
+        art: '/static/icons/art.png',
+        social: '/static/icons/social.png'
     };
-    return iconMap[taskType] || '/static/icons/sparkle.svg';
+    return iconMap[taskType] || '/static/icons/sparkle.png';
 }
 
 // 运势评分渐变色
@@ -571,7 +587,7 @@ async function loadPageData() {
 // 资料填写完成
 function onProfileComplete() {
     // 刷新页面数据
-    loadPageData();
+    void loadHome();
 }
 
 // 跳过资料填写
@@ -597,22 +613,26 @@ onMounted(() => {
     statusBarHeight.value = systemInfo.statusBarHeight || 0;
 });
 
-onShow(async () => {
+async function loadHome() {
+    if (pageLoading.value) return;
+    pageLoading.value = true;
+    pageError.value = '';
     // 刷新欢迎语
     refreshWelcome();
 
-    // 每次页面显示时检查登录状态
-    if (!userStore.isLoggedIn) {
-        try {
+    try {
+        if (!userStore.isLoggedIn) {
             await userStore.login();
-        } catch (error) {
-            console.error('自动登录失败:', error);
-            return;
         }
+        await loadPageData();
+    } catch (error) {
+        pageError.value = error instanceof Error ? error.message : '无法连接服务，请检查网络后重试';
+    } finally {
+        pageLoading.value = false;
     }
-
-    // 已登录，加载数据
-    await loadPageData();
+}
+onShow(() => {
+    void loadHome();
 });
 </script>
 
@@ -620,6 +640,21 @@ onShow(async () => {
 @use '@/styles/variables.scss' as *;
 @use '@/styles/mixins.scss' as *;
 @use '@/styles/dark.scss' as *;
+
+.home-load-error {
+    margin: 0 32rpx 24rpx;
+    padding: 24rpx;
+    border-radius: 16rpx;
+    background: #f5effc;
+    color: #75588d;
+    font-size: 26rpx;
+    button {
+        margin-top: 16rpx;
+        background: transparent;
+        color: inherit;
+        font-size: 26rpx;
+    }
+}
 
 .home-page {
     min-height: 100vh;

@@ -10,8 +10,8 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3333/api
 // 是否使用 Mock 数据
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
-// 请求超时时间
-const TIMEOUT = 30000;
+// 本地服务未启动时尽快返回；线上请求保留原超时。
+const TIMEOUT = /^https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?(?:\/|$)/i.test(BASE_URL) ? 5000 : 30000;
 
 // 获取 token
 export function getToken(): string {
@@ -68,7 +68,8 @@ function formatAiError(message: string): string {
 // 请求方法
 export function request<T>(config: RequestConfig): Promise<T> {
     return new Promise((resolve, reject) => {
-        const { showLoading = true, showError = true, ...restConfig } = config;
+        const { showLoading = true, showError = true, timeout = TIMEOUT, ...restConfig } = config;
+        const token = getToken();
 
         if (showLoading) {
             uni.showLoading({ title: '加载中...', mask: true });
@@ -77,10 +78,10 @@ export function request<T>(config: RequestConfig): Promise<T> {
         uni.request({
             ...restConfig,
             url: `${BASE_URL}${config.url}`,
-            timeout: TIMEOUT,
+            timeout,
             header: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${getToken()}`,
+                Authorization: `Bearer ${token}`,
                 'X-Platform': getPlatform(),
                 'X-Version': getAppVersion(),
                 ...config.header
@@ -88,15 +89,16 @@ export function request<T>(config: RequestConfig): Promise<T> {
             success: (res) => {
                 const data = res.data as ApiResponse<T>;
 
-                if (data.code === 0) {
-                    resolve(data.data);
-                } else if (data.code === 401) {
-                    // Token 过期，清除登录状态
-                    handleUnauthorized();
+                if (res.statusCode === 401 || data?.code === 401) {
+                    // 并发旧请求只注销它们所属的会话，避免重复跳转或误清除新 token。
+                    if (token && token === getToken()) handleUnauthorized();
                     reject(new Error('登录已过期，请重新登录'));
+                } else if (res.statusCode >= 200 && res.statusCode < 300 && data?.code === 0) {
+                    resolve(data.data);
                 } else {
                     // 处理错误消息（可能是字符串或数组）
-                    let errorMsg = Array.isArray(data.message) ? data.message[0] : data.message || '请求失败';
+                    const message = Array.isArray(data?.message) ? data.message[0] : data?.message;
+                    let errorMsg = typeof message === 'string' && message ? message : '请求失败';
 
                     // AI 服务相关错误的友好提示
                     errorMsg = formatAiError(errorMsg);
@@ -108,7 +110,7 @@ export function request<T>(config: RequestConfig): Promise<T> {
                             duration: 2000
                         });
                     }
-                    reject(Object.assign(new Error(errorMsg), { code: data.code }));
+                    reject(Object.assign(new Error(errorMsg), { code: data?.code }));
                 }
             },
             fail: (err) => {
@@ -119,7 +121,11 @@ export function request<T>(config: RequestConfig): Promise<T> {
                         duration: 2000
                     });
                 }
-                reject(err);
+                reject(
+                    new Error(
+                        err.errMsg?.includes('timeout') ? '服务连接超时，请稍后重试' : '无法连接服务，请检查网络后重试'
+                    )
+                );
             },
             complete: () => {
                 if (showLoading) {

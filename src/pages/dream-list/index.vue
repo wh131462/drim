@@ -31,7 +31,7 @@
             <view class="search-input-wrapper">
                 <image
                     class="search-icon"
-                    src="/static/icons/search.svg"
+                    src="/static/icons/search.png"
                     mode="aspectFit"
                 />
                 <input
@@ -50,7 +50,7 @@
                 >
                     <image
                         class="clear-icon"
-                        src="/static/icons/close.svg"
+                        src="/static/icons/close.png"
                         mode="aspectFit"
                         aria-hidden="true"
                     />
@@ -163,7 +163,7 @@
                         <image
                             v-if="selectedIds.includes(dream.id)"
                             class="check-icon"
-                            src="/static/icons/check.svg"
+                            src="/static/icons/check.png"
                             mode="aspectFit"
                         />
                     </view>
@@ -202,7 +202,7 @@
                             >
                                 <image
                                     class="badge-icon"
-                                    src="/static/icons/eye.svg"
+                                    src="/static/icons/eye.png"
                                     mode="aspectFit"
                                 />
                             </view>
@@ -212,7 +212,7 @@
                             >
                                 <image
                                     class="badge-icon"
-                                    src="/static/icons/star.svg"
+                                    src="/static/icons/star.png"
                                     mode="aspectFit"
                                 />
                             </view>
@@ -255,7 +255,7 @@
             >
                 <image
                     class="empty-icon"
-                    src="/static/icons/moon.svg"
+                    src="/static/icons/moon.png"
                     mode="aspectFit"
                 />
                 <text class="empty-text">{{
@@ -289,7 +289,7 @@
                             <image
                                 v-if="isAllSelected"
                                 class="check-icon"
-                                src="/static/icons/check.svg"
+                                src="/static/icons/check.png"
                                 mode="aspectFit"
                             />
                         </view>
@@ -302,7 +302,7 @@
                     >
                         <image
                             class="delete-icon"
-                            src="/static/icons/delete.svg"
+                            src="/static/icons/delete.png"
                             mode="aspectFit"
                         />
                         <text>删除 {{ selectedIds.length > 0 ? `(${selectedIds.length})` : '' }}</text>
@@ -328,14 +328,14 @@ const navBarHeight = ref(0);
 
 // 情绪选项
 const emotions = [
-    { id: 'happy', name: '开心', icon: '/static/icons/happy.svg' },
-    { id: 'sad', name: '悲伤', icon: '/static/icons/emotion-sad.svg' },
-    { id: 'fear', name: '恐惧', icon: '/static/icons/emotion-fear.svg' },
-    { id: 'anxious', name: '焦虑', icon: '/static/icons/emotion-anxious.svg' },
-    { id: 'confused', name: '困惑', icon: '/static/icons/emotion-confused.svg' },
-    { id: 'excited', name: '兴奋', icon: '/static/icons/emotion-excited.svg' },
-    { id: 'calm', name: '平静', icon: '/static/icons/emotion-calm.svg' },
-    { id: 'love', name: '温暖', icon: '/static/icons/heart.svg' }
+    { id: 'happy', name: '开心', icon: '/static/icons/happy.png' },
+    { id: 'sad', name: '悲伤', icon: '/static/icons/emotion-sad.png' },
+    { id: 'fear', name: '恐惧', icon: '/static/icons/emotion-fear.png' },
+    { id: 'anxious', name: '焦虑', icon: '/static/icons/emotion-anxious.png' },
+    { id: 'confused', name: '困惑', icon: '/static/icons/emotion-confused.png' },
+    { id: 'excited', name: '兴奋', icon: '/static/icons/emotion-excited.png' },
+    { id: 'calm', name: '平静', icon: '/static/icons/emotion-calm.png' },
+    { id: 'love', name: '温暖', icon: '/static/icons/heart.png' }
 ];
 
 // 预设标签选项
@@ -364,7 +364,7 @@ function extractCustomTags(dreamList: Dream[]) {
             customTagList.value.push({
                 id: tagId,
                 name: tagId,
-                icon: '/static/icons/sparkle.svg'
+                icon: '/static/icons/sparkle.png'
             });
             existingIds.add(tagId);
         }
@@ -580,7 +580,7 @@ function formatDate(dateStr: string): string {
 
 function getEmotionIcon(emotion: string): string {
     const found = emotions.find((e) => e.id === emotion);
-    return found?.icon || '/static/icons/emotion-neutral.svg';
+    return found?.icon || '/static/icons/emotion-neutral.png';
 }
 
 function getEmotionName(emotion: string): string {

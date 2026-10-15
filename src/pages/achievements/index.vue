@@ -40,7 +40,7 @@
             >
                 <image
                     class="achievement-icon"
-                    src="/static/icons/trophy.svg"
+                    src="/static/icons/trophy.png"
                     mode="aspectFit"
                     aria-hidden="true"
                 />

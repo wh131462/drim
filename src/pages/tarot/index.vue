@@ -79,9 +79,10 @@
                                 :aria-hidden="!revealed.includes(index)"
                             >
                                 <image
+                                    :key="imageRetries[card.id] || 0"
                                     class="card-art"
                                     :class="{ reversed: card.reversed }"
-                                    :src="imageUrl(card)"
+                                    :src="card.image"
                                     mode="aspectFit"
                                     @error="imageErrors[card.id] = true"
                                     @load="imageErrors[card.id] = false"
@@ -154,7 +155,7 @@
                     <text>成长书单</text>
                     <image
                         class="book-link-icon"
-                        src="/static/icons/arrow-right.svg"
+                        src="/static/icons/arrow-right.png"
                         mode="aspectFit"
                         aria-hidden="true"
                     />
@@ -281,10 +282,6 @@ function redraw() {
 }
 function positionLabel(card: TarotDrawCard) {
     return { today: '今日一牌', past: '过去', present: '当下', future: '方向' }[card.position];
-}
-function imageUrl(card: TarotDrawCard) {
-    const retry = imageRetries.value[card.id];
-    return retry ? `${card.image}?retry=${retry}` : card.image;
 }
 function retryImage(card: TarotDrawCard) {
     imageErrors.value[card.id] = false;

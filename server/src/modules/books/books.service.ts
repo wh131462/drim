@@ -1,12 +1,26 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Book, Prisma } from '@prisma/client';
+import { stat } from 'fs/promises';
+import { join } from 'path';
 import { PrismaService } from '@/prisma/prisma.service';
 import { BookClickDto, BooksQueryDto } from './dto/books.dto';
 
 const publishedWhere = { published: true, deletedAt: null };
 const bookOrder = [{ sortOrder: 'asc' as const }, { id: 'asc' as const }];
 
-function formatBook(book: Book) {
+async function formatBook(book: Book) {
+    let coverVersion = book.updatedAt.toISOString();
+    if (/^\/assets\/books\/[a-zA-Z0-9][a-zA-Z0-9._-]*\.(jpg|jpeg|png|webp)$/.test(book.coverImage)) {
+        try {
+            const file = await stat(
+                join(__dirname, '..', '..', '..', 'public', book.coverImage.slice('/assets/'.length))
+            );
+            // shortcut: 同时保留修改时间与大小的图片替换无法识别，采用此类部署方式时改用内容哈希。
+            coverVersion = `${file.mtimeMs}-${file.size}`;
+        } catch {
+            // 文件暂时不可用时仍返回书籍信息，让客户端沿用缓存或显示占位。
+        }
+    }
     return {
         id: book.id,
         category: book.category,
@@ -15,6 +29,7 @@ function formatBook(book: Book) {
         tag: book.tag,
         price: book.price,
         coverImage: book.coverImage,
+        coverVersion,
         description: book.description,
         reason: book.reason,
         comingSoon: book.comingSoon
@@ -36,7 +51,7 @@ export class BooksService {
             this.prisma.book.findMany({ where, orderBy: bookOrder, skip: (page - 1) * pageSize, take: pageSize }),
             this.prisma.book.count({ where })
         ]);
-        return { items: books.map(formatBook), total, page, pageSize };
+        return { items: await Promise.all(books.map(formatBook)), total, page, pageSize };
     }
 
     async favorites(userId: string) {
@@ -70,7 +85,7 @@ export class BooksService {
                 }))
             );
         }
-        return books.map(formatBook);
+        return Promise.all(books.map(formatBook));
     }
 
     private async publishedBook(id: string) {

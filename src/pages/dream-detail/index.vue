@@ -40,7 +40,7 @@
                                 <image
                                     v-if="currentVersionType === 'polished'"
                                     class="badge-icon"
-                                    src="/static/icons/star.svg"
+                                    src="/static/icons/star.png"
                                     mode="aspectFit"
                                 />
                                 <text>{{
@@ -61,7 +61,7 @@
                             >
                                 <image
                                     class="privacy-icon"
-                                    src="/static/icons/lock.svg"
+                                    src="/static/icons/lock.png"
                                     mode="aspectFit"
                                 />
                                 <text>{{ dream.isPublic ? '公开' : '私密' }}</text>
@@ -77,7 +77,7 @@
                             >
                                 <image
                                     class="history-icon"
-                                    src="/static/icons/clock.svg"
+                                    src="/static/icons/clock.png"
                                     mode="aspectFit"
                                 />
                                 <text>历史</text>
@@ -119,7 +119,7 @@
                             <image
                                 v-else
                                 class="avatar-placeholder"
-                                src="/static/icons/user.svg"
+                                src="/static/icons/user.png"
                                 mode="aspectFit"
                                 aria-hidden="true"
                             />
@@ -144,7 +144,7 @@
                         >
                             <image
                                 class="stat-icon"
-                                src="/static/icons/heart.svg"
+                                src="/static/icons/heart.png"
                                 mode="aspectFit"
                             />
                             <text>{{ dream.likeCount || 0 }}</text>
@@ -152,7 +152,7 @@
                         <view class="stat-item">
                             <image
                                 class="stat-icon"
-                                src="/static/icons/eye.svg"
+                                src="/static/icons/eye.png"
                                 mode="aspectFit"
                             />
                             <text>{{ dream.viewCount || 0 }}</text>
@@ -168,7 +168,7 @@
                     <view class="card-header">
                         <image
                             class="card-title-icon"
-                            src="/static/icons/sparkle.svg"
+                            src="/static/icons/sparkle.png"
                             mode="aspectFit"
                             aria-hidden="true"
                         />
@@ -252,7 +252,7 @@
                         <view class="action-item-icon edit">
                             <image
                                 class="action-icon"
-                                src="/static/icons/edit.svg"
+                                src="/static/icons/edit.png"
                                 mode="aspectFit"
                             />
                         </view>
@@ -269,7 +269,7 @@
                         <view class="action-item-icon share">
                             <image
                                 class="action-icon"
-                                src="/static/icons/share.svg"
+                                src="/static/icons/share.png"
                                 mode="aspectFit"
                             />
                         </view>
@@ -287,7 +287,7 @@
                         <view class="action-item-icon delete">
                             <image
                                 class="action-icon"
-                                src="/static/icons/delete.svg"
+                                src="/static/icons/delete.png"
                                 mode="aspectFit"
                             />
                         </view>
@@ -325,7 +325,7 @@
                     >
                         <image
                             class="close-icon"
-                            src="/static/icons/close.svg"
+                            src="/static/icons/close.png"
                             mode="aspectFit"
                             aria-hidden="true"
                         />
@@ -340,7 +340,7 @@
                         <view class="share-card-icon wechat">
                             <image
                                 class="share-icon-img"
-                                src="/static/icons/share.svg"
+                                src="/static/icons/share.png"
                                 mode="aspectFit"
                             />
                         </view>
@@ -356,7 +356,7 @@
                         <view class="share-card-icon copy">
                             <image
                                 class="share-icon-img"
-                                src="/static/icons/copy.svg"
+                                src="/static/icons/copy.png"
                                 mode="aspectFit"
                             />
                         </view>

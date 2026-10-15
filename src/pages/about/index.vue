@@ -30,7 +30,7 @@
                         <view class="philosophy-item">
                             <view class="philosophy-icon">
                                 <image
-                                    src="/static/icons/moon.svg"
+                                    src="/static/icons/moon.png"
                                     mode="aspectFit"
                                 />
                             </view>
@@ -44,7 +44,7 @@
                         <view class="philosophy-item">
                             <view class="philosophy-icon">
                                 <image
-                                    src="/static/icons/sparkle.svg"
+                                    src="/static/icons/sparkle.png"
                                     mode="aspectFit"
                                 />
                             </view>
@@ -58,7 +58,7 @@
                         <view class="philosophy-item">
                             <view class="philosophy-icon">
                                 <image
-                                    src="/static/icons/star.svg"
+                                    src="/static/icons/star.png"
                                     mode="aspectFit"
                                 />
                             </view>
@@ -70,7 +70,7 @@
                         <view class="philosophy-item">
                             <view class="philosophy-icon">
                                 <image
-                                    src="/static/icons/trophy.svg"
+                                    src="/static/icons/trophy.png"
                                     mode="aspectFit"
                                 />
                             </view>

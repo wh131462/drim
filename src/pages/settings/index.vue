@@ -28,7 +28,7 @@
                         <text>{{ settings.reminderTime }}</text>
                         <image
                             class="arrow-icon"
-                            src="/static/icons/arrow-right.svg"
+                            src="/static/icons/arrow-right.png"
                             mode="aspectFit"
                         />
                     </view>
@@ -55,7 +55,7 @@
                     <view class="settings-value">
                         <image
                             class="arrow-icon"
-                            src="/static/icons/arrow-right.svg"
+                            src="/static/icons/arrow-right.png"
                             mode="aspectFit"
                         />
                     </view>
@@ -68,7 +68,7 @@
                     <view class="settings-value">
                         <image
                             class="arrow-icon"
-                            src="/static/icons/arrow-right.svg"
+                            src="/static/icons/arrow-right.png"
                             mode="aspectFit"
                         />
                     </view>
@@ -87,7 +87,7 @@
                         <text>v{{ appVersion }}</text>
                         <image
                             class="arrow-icon"
-                            src="/static/icons/arrow-right.svg"
+                            src="/static/icons/arrow-right.png"
                             mode="aspectFit"
                         />
                     </view>
@@ -100,7 +100,7 @@
                     <view class="settings-value">
                         <image
                             class="arrow-icon"
-                            src="/static/icons/arrow-right.svg"
+                            src="/static/icons/arrow-right.png"
                             mode="aspectFit"
                         />
                     </view>
@@ -113,7 +113,7 @@
                     <view class="settings-value">
                         <image
                             class="arrow-icon"
-                            src="/static/icons/arrow-right.svg"
+                            src="/static/icons/arrow-right.png"
                             mode="aspectFit"
                         />
                     </view>

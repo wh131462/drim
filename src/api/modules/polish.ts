@@ -53,7 +53,7 @@ export const polishApi = {
                 content,
                 prompt
             },
-            options
+            { timeout: 30000, ...options }
         );
     },
 
@@ -65,7 +65,7 @@ export const polishApi = {
         data?: { prompt?: string; basedOnVersionId?: string },
         options?: Partial<RequestConfig>
     ): Promise<PolishResult> {
-        return post<PolishResult>(`/polish/dream/${dreamId}`, data, options);
+        return post<PolishResult>(`/polish/dream/${dreamId}`, data, { timeout: 30000, ...options });
     },
 
     /**

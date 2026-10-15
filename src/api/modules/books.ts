@@ -21,9 +21,13 @@ const quiet = { showLoading: false, showError: false };
 
 function resolveCover(book: Book): Book {
     const origin = getBaseUrl().match(/^https?:\/\/[^/]+/i)?.[0] || '';
+    const cover = book.coverImage.startsWith('/assets/') ? `${origin}${book.coverImage}` : book.coverImage;
     return {
         ...book,
-        coverImage: book.coverImage.startsWith('/assets/') ? `${origin}${book.coverImage}` : book.coverImage
+        coverImage:
+            book.coverImage.startsWith('/assets/') && book.coverVersion
+                ? `${cover}?v=${encodeURIComponent(book.coverVersion)}`
+                : cover
     };
 }
 

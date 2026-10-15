@@ -58,7 +58,7 @@
                 >
                     <image
                         class="polish-icon"
-                        src="/static/icons/star.svg"
+                        src="/static/icons/star.png"
                         mode="aspectFit"
                     />
                     <text>AI 润色</text>
@@ -74,7 +74,7 @@
                     <text>{{ versionLabel }}</text>
                     <image
                         class="dropdown-icon"
-                        src="/static/icons/arrow-right.svg"
+                        src="/static/icons/arrow-right.png"
                         mode="aspectFit"
                     />
                 </view>
@@ -85,7 +85,7 @@
                 <view class="quota-hint">
                     <image
                         class="info-icon"
-                        src="/static/icons/info.svg"
+                        src="/static/icons/info.png"
                         mode="aspectFit"
                     />
                     <text v-if="userStore.isVip">VIP 无限润色</text>
@@ -133,7 +133,7 @@
                     >
                         <image
                             class="tag-remove-icon"
-                            src="/static/icons/close.svg"
+                            src="/static/icons/close.png"
                             mode="aspectFit"
                             aria-hidden="true"
                         />
@@ -146,7 +146,7 @@
                 >
                     <image
                         class="add-icon"
-                        src="/static/icons/plus.svg"
+                        src="/static/icons/plus.png"
                         mode="aspectFit"
                         aria-hidden="true"
                     />
@@ -173,7 +173,7 @@
                     <text>{{ emotionLabels[emotionIndex] }}</text>
                     <image
                         class="dropdown-icon"
-                        src="/static/icons/arrow-right.svg"
+                        src="/static/icons/arrow-right.png"
                         mode="aspectFit"
                         aria-hidden="true"
                     />
@@ -325,14 +325,14 @@ const currentVersionNumber = ref(1);
 const currentVersionType = ref<LocalVersion['type']>('original');
 const customTags = ref<Tag[]>([]);
 const dreamTags: Tag[] = [
-    { id: 'running', name: '追逐', icon: '/static/icons/running.svg', custom: false },
-    { id: 'flying', name: '飞行', icon: '/static/icons/plane.svg', custom: false },
-    { id: 'exam', name: '考试', icon: '/static/icons/exam.svg', custom: false },
-    { id: 'family', name: '亲人', icon: '/static/icons/family.svg', custom: false },
-    { id: 'water', name: '水', icon: '/static/icons/water.svg', custom: false },
-    { id: 'animal', name: '动物', icon: '/static/icons/animal.svg', custom: false },
-    { id: 'lost', name: '迷路', icon: '/static/icons/map.svg', custom: false },
-    { id: 'death', name: '死亡', icon: '/static/icons/death.svg', custom: false }
+    { id: 'running', name: '追逐', icon: '/static/icons/running.png', custom: false },
+    { id: 'flying', name: '飞行', icon: '/static/icons/plane.png', custom: false },
+    { id: 'exam', name: '考试', icon: '/static/icons/exam.png', custom: false },
+    { id: 'family', name: '亲人', icon: '/static/icons/family.png', custom: false },
+    { id: 'water', name: '水', icon: '/static/icons/water.png', custom: false },
+    { id: 'animal', name: '动物', icon: '/static/icons/animal.png', custom: false },
+    { id: 'lost', name: '迷路', icon: '/static/icons/map.png', custom: false },
+    { id: 'death', name: '死亡', icon: '/static/icons/death.png', custom: false }
 ];
 const emotions: { id: Emotion; name: string }[] = [
     { id: 'happy', name: '开心' },
@@ -396,7 +396,7 @@ function showAddTagDialog() {
             if (allDreamTags.value.some((tag) => tag.name === name || tag.id === name))
                 return uni.showToast({ title: '该元素已存在', icon: 'none' });
             if (selectedTags.value.length >= 3) return uni.showToast({ title: '最多选择3个标签', icon: 'none' });
-            customTags.value.push({ id: name, name, icon: '/static/icons/sparkle.svg', custom: true });
+            customTags.value.push({ id: name, name, icon: '/static/icons/sparkle.png', custom: true });
             selectedTags.value.push(name);
         }
     });
@@ -608,7 +608,7 @@ function hydrateEditor(dream: DreamDetail) {
     selectedTags.value = [...(dream.tags || [])];
     customTags.value = selectedTags.value
         .filter((id) => !dreamTags.some((tag) => tag.id === id))
-        .map((id) => ({ id, name: id, icon: '/static/icons/sparkle.svg', custom: true }));
+        .map((id) => ({ id, name: id, icon: '/static/icons/sparkle.png', custom: true }));
     selectedEmotion.value = dream.emotion || null;
     isPublic.value = !!dream.isPublic;
     hasAnalysis.value = !!(dream.analysis || dream.hasAnalysis);
